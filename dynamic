@@ -1,16 +1,12 @@
 #!/bin/bash
-array=(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16)
-
 desktop_dir="" # full path to "username"'s image folder instead of using PWD
 
 while true; do
 	date=$(date +%H | sed 's/\<0//g')
 	if [[ "$olddate" != "$date" ]]; then
-		for (( k=0; k<=${#array[@]} ; k++ )); do
-			if [[ "$date" == "${array[$k]}" ]]; then
-				~/bin/ksetwallpaper "$PWD/mojave_dynamic/mojave_dynamic_${array[$k]}.jpeg"
-			fi
-		done
+		~/bin/ksetwallpaper "$PWD/mojave_dynamic/mojave_dynamic_$date.jpeg"
 	fi
-    olddate=$date
+	olddate=$date
 done
+
+# date=$(date +%H | sed 's/\<0//g') ; ~/bin/ksetwallpaper ~/Desktop/Mojave_Dynamic/dynamic-wall/mojave_dynamic/mojave_dynamic_$date.jpeg
