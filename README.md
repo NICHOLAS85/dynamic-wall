@@ -14,7 +14,7 @@ Not so fancy, but I expect you to know what to do.
 
 #### Cronjob
 
-You can use a cron to call the script. I offer an onliner with no need for the `dynamic` script
+You can use a cron to call the script. Make sure you just comment out the while bits and leave the rest.
 ```
 */30 * * * * ~/bin/dynamic`
 ```
