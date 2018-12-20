@@ -16,5 +16,5 @@ Not so fancy, but I expect you to know what to do.
 
 You can use a cron to call the script. I offer an onliner with no need for the `dynamic` script
 ```
-*/30 * * * * date=$(date +%H | sed 's/\<0//g'); ~/bin/ksetwallpaper PATH_HERE/mojave_dynamic/mojave_dynamic_$date.jpeg
+*/30 * * * * ~/bin/dynamic`
 ```
