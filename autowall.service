@@ -1,0 +1,7 @@
+[Unit]
+Description=Automate Dynamic Wallpaper Loading
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /home/nicholas/bin/dynamic
+
