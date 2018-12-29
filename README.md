@@ -4,15 +4,17 @@ Various edits to the dynamic wallpaper scripts from [Raitaro](https://gitlab.com
 
 
 #### Installation:  
-*Only tested on a Debian system*
+*Only tested on a Debian system for KDE plasma*
 
-replace every instance of `nicholas` to your username in the scripts. Present in ksetwallpaper, dynamic, autowall.service, and autowall.sh
+replace every instance of `nicholas` to your username in the scripts. Found in ksetwallpaper, dynamic, autowall.service, and autowall.sh
 
-move bin into your home directory. ```chmod +x dynamic``` and ```chmod +x ksetwallpaper``` to make them executable 
+move bin into your home directory. ```chmod +x ~/bin/dynamic && chmod +x ~/bin/ksetwallpaper``` to make scripts executable 
 
 move autowall.service and autowall.timer into `/etc/systemd/system/` 
 
-```systemctl enable /etc/systemd/system/autowall.timer``` and ```systemctl start /etc/systemd/system/autowall.timer``` to turn on timer and start script. Timer set to 15 minutes, can be adjusted in autowall.timer
+Run ```systemctl daemon-reload```, ```systemctl enable /etc/systemd/system/autowall.timer``` and ```systemctl start /etc/systemd/system/autowall.timer``` to turn on timer and start script. Timer set to 15 minutes, can be adjusted in autowall.timer
+
+To check the status of the services use ```systemctl status autowall.timer  autowall.service```
 
 
 #### Setting wallpaper after waking from suspension
@@ -21,3 +23,4 @@ move autowall.sh to `/lib/systemd/system-sleep`
 
 ```chmod a+x autowall.sh``` to allow script to run
  
+ To check the status of your wake up script use ```journalctl -b -u systemd-suspend.service```
