@@ -1,18 +1,19 @@
 #!/bin/bash
+usrnm=$(grep -i ':x:1000:' -A 0 /etc/passwd | sed 's/:x:1000:.*//')
 
 full_image_path=$(realpath "$1")
 
 #Run process as currently logged in user, export display and DBUS session, and then evaluate wallpaper script
-sudo -u nicholas \
+sudo -u $usrnm \
 DISPLAY=:0 \
 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 qdbus org.kde.plasmashell /PlasmaShell evaluateScript '
     var allDesktops = desktops();
-    for (i=0;i<allDesktops.length;i++) 
+    for (i=0;i<allDesktops.length;i++)
     {
         d = allDesktops[i];
         d.wallpaperPlugin = "org.kde.image";
         d.currentConfigGroup = Array("Wallpaper", "org.kde.image", "General");
         d.writeConfig("Image", "file://'${full_image_path}'")
     }
-' 
+'
