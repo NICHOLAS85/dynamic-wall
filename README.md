@@ -10,11 +10,11 @@ replace every instance of `nicholas` to your username in the scripts. Found in a
 
 move bin into your home directory. ```chmod +x ~/bin/dynamic && chmod +x ~/bin/ksetwallpaper``` to make scripts executable
 
-move autowall.service and autowall.timer into `/etc/systemd/system/`
+move autowall.service and autowall.timer into `~/.config/systemd/user/`, might not exist so create it with `mkdir -p ~/.config/systemd/user/`
 
-Run ```systemctl daemon-reload```, ```systemctl enable /etc/systemd/system/autowall.timer``` and ```systemctl start /etc/systemd/system/autowall.timer``` to turn on timer and start script. Timer set to 15 minutes by default, can be adjusted in autowall.timer
+Run `systemctl enable ~/.config/systemd/user/autowall.service && systemctl enable ~/.config/systemd/user/autowall.service && systemctl daemon-reload && systemctl start autowall.timer`to turn on timer and start script. Timer set to 15 minutes by default, can be adjusted in autowall.timer
 
-To check the status of the services use ```systemctl status autowall.timer  autowall.service```
+To check the status of the services use `systemctl status autowall.timer  autowall.service`
 
 
 #### Setting wallpaper after waking from suspension

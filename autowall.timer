@@ -4,5 +4,6 @@ Description=Dynamic wall timer
 [Timer]
 OnBootSec=15m
 OnUnitActiveSec=15m
+
 [Install]
 WantedBy=multi-user.target timers.target
