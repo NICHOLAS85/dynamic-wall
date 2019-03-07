@@ -1,0 +1,20 @@
+#!/bin/bash
+
+desktop_dir="/home/nicholas/bin/mojave_dynamic" # full path to "username"'s image folder instead of using PWD
+kset_dir="/home/nicholas/bin/ksetwallpaper" # full path to "usernames"'s ksetwallpaper script
+cur_theme="mojave_dynamic_"
+echo "Theme currently in use is $cur_theme"
+
+	date=$(date +%H | sed 's/\<0//g')
+	if [[ "$olddate" != "$date" ]]; then
+		if [[ "$date" -le "9" ]]; then
+			$kset_dir "$desktop_dir/$cur_theme$(($date - 4)).jpeg"
+		elif [[ "$date" -le "16" ]]; then
+			$kset_dir "$desktop_dir/$cur_theme$(($date - 5)).jpeg"
+		elif [[ "$date" -le "21" ]]; then
+			$kset_dir "$desktop_dir/$cur_theme$(($date - 6)).jpeg"
+		else
+			$kset_dir "$desktop_dir/'$cur_theme'16.jpeg"
+		fi
+	fi
+	olddate=$date

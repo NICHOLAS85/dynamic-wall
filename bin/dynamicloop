@@ -1,0 +1,25 @@
+#!/bin/bash
+
+desktop_dir="/home/nicholas/bin/mojave_dynamic" # full path to "username"'s image folder instead of using PWD
+kset_dir="/home/nicholas/bin/ksetwallpaper" # full path to "usernames"'s kset script instead of relative directories
+
+while true; do
+
+	date=$(date +%H | sed 's/\<0//g')
+	if [[ "$olddate" != "$date" ]]; then
+		if [[ "$date" -le "9" ]]; then
+			$kset_dir "$desktop_dir/mojave_dynamic_$(($date - 4)).jpeg"
+		elif [[ "$date" -le "16" ]]; then
+			$kset_dir "$desktop_dir/mojave_dynamic_$(($date - 5)).jpeg"
+		elif [[ "$date" -le "21" ]]; then
+			$kset_dir "$desktop_dir/mojave_dynamic_$(($date - 6)).jpeg"
+		else
+			$kset_dir "$desktop_dir/mojave_dynamic_16.jpeg"
+		fi
+	fi
+	olddate=$date
+	sleep 15m
+done
+
+ #date=$(date +%H | sed 's/\<0//g') ; ~/bin/ksetwallpaper ~/Desktop/Mojave_Dynamic/dynamic-wall/mojave_dynamic/mojave_dynamic_$date.jpeg
+ 
