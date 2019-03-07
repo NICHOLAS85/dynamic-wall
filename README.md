@@ -24,3 +24,7 @@ move autowall.sh to `/lib/systemd/system-sleep`
 ```chmod a+x autowall.sh``` to allow script to run
  
  To check the status of your wake up script use ```journalctl -b -u systemd-suspend.service```
+
+### Other Notes ###
+
+If you find some live wallpapers in the .heic format, use the the [libheif decoder](https://strukturag.github.io/libheif/) to convert it into usable jpegs, and add it into the script.
