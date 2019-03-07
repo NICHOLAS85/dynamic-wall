@@ -1,20 +1,29 @@
 #!/bin/bash
 
-desktop_dir="/home/nicholas/bin/mojave_dynamic" # full path to "username"'s image folder instead of using PWD
-kset_dir="/home/nicholas/bin/ksetwallpaper" # full path to "usernames"'s ksetwallpaper script
-cur_theme="mojave_dynamic_"
-echo "Theme currently in use is $cur_theme"
+cur_theme="NewOrleans"
+img_dir="$HOME/bin/$cur_theme" # full path to "username"'s image folder instead of using PWD
+kset_dir="$HOME/bin/ksetwallpaper" # full path to "usernames"'s ksetwallpaper script
+date=$(date +%H | sed 's/\<0//g')
+timeoffset=10
 
-	date=$(date +%H | sed 's/\<0//g')
+echo "Theme currently in use is $cur_theme"
+echo "Current image directory is $img_dir"
+echo "Current ksetwallpaper directory is $kset_dir"
+echo "Time is currently $date"
+
 	if [[ "$olddate" != "$date" ]]; then
 		if [[ "$date" -le "9" ]]; then
-			$kset_dir "$desktop_dir/$cur_theme$(($date - 4)).jpeg"
+			$kset_dir "$img_dir/$cur_theme$(($date - 4 + $timeoffset)).jpeg"
+			echo "$cur_theme$(($date - 4 + $timeoffset)).jpeg"
 		elif [[ "$date" -le "16" ]]; then
-			$kset_dir "$desktop_dir/$cur_theme$(($date - 5)).jpeg"
+			$kset_dir "$img_dir/$cur_theme$(($date - 5 + $timeoffset)).jpeg"
+			echo "$cur_theme$(($date - 5 + $timeoffset)).jpeg"
 		elif [[ "$date" -le "21" ]]; then
-			$kset_dir "$desktop_dir/$cur_theme$(($date - 6)).jpeg"
+			$kset_dir "$img_dir/$cur_theme$(($date - 6 + $timeoffset)).jpeg"
+			echo "$cur_theme$(($date - 6 + $timeoffset)).jpeg"
 		else
-			$kset_dir "$desktop_dir/'$cur_theme'16.jpeg"
+			$kset_dir "$img_dir/'$cur_theme'16.jpeg"
+			echo "$cur_theme/'16'.jpeg"
 		fi
 	fi
 	olddate=$date
