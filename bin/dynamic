@@ -1,10 +1,7 @@
 #!/bin/bash
+. $HOME/bin/dynamicwall.config
 
-cur_theme="NewOrleans"
-img_dir="$HOME/bin/$cur_theme" # full path to "username"'s image folder instead of using PWD
-kset_dir="$HOME/bin/ksetwallpaper" # full path to "usernames"'s ksetwallpaper script
 date=$(date +%H | sed 's/\<0//g')
-timeoffset=10
 
 echo "Theme currently in use is $cur_theme"
 echo "Current image directory is $img_dir"
