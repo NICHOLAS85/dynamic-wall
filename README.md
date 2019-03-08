@@ -30,4 +30,4 @@ All config options can be found in `dynamicwall.config`, adjust settings here. I
 
 ### Other Notes ###
 
-If you find some live wallpapers in the .heic format, use the the [libheif decoder](https://strukturag.github.io/libheif/) to convert it into usable jpegs, and add it into the themes folder. Image names must match theme folder name up until the number. ex /NewOrleans/NewOrleans1.jpg
+If you find some live wallpapers in the .heic format, use the the [libheif decoder](https://strukturag.github.io/libheif/) to convert it into usable jpegs, and add it into the themes folder. Image names must match theme folder name up until the number. ex `/NewOrleans/NewOrleans1.jpg`
