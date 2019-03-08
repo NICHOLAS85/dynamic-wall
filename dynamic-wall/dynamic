@@ -5,7 +5,7 @@ usrnm=$(grep -i ':x:1000:' -A 0 /etc/passwd | sed 's/:x:1000:.*//')
 . /home/$usrnm/bin/dynamic-wall/dynamicwall.config
 
 # Compares current refresh rate to config file and updates systemd if they dont match
-active_refreshrate=$(sed -n -e 's/^.*OnBootSec=//p' $usrnm/.config/systemd/user/autowall.timer)
+active_refreshrate=$(sed -n -e 's/^.*OnBootSec=//p' /home/$usrnm/.config/systemd/user/autowall.timer)
 echo "$refreshrate vs $active_refreshrate"
 if [ "$refreshrate" != "$active_refreshrate" ]; then
 	sed -i '/OnBootSec=/!b;cOnBootSec='$refreshrate ~/.config/systemd/user/autowall.timer.d/10-timer.conf
