@@ -10,9 +10,9 @@ replace every instance of `nicholas` to your username in the scripts. Found in a
 
 move bin into your home directory. ```chmod +x ~/bin/dynamic && chmod +x ~/bin/ksetwallpaper``` to make scripts executable
 
-move autowall.service and autowall.timer into `~/.config/systemd/user/`, might not exist so create it with `mkdir -p ~/.config/systemd/user/`
+move autowall.service, autowall.timer, and autowall.timer.d into `~/.config/systemd/user/`, might not exist so create it with `mkdir -p ~/.config/systemd/user/`
 
-Run `systemctl enable ~/.config/systemd/user/autowall.service && systemctl enable ~/.config/systemd/user/autowall.service && systemctl daemon-reload && systemctl start autowall.timer`to turn on timer and start script. Timer set to 15 minutes by default, can be adjusted in autowall.timer
+Run `ln -s ~/.config/systemd/user/autowall.timer.d/ /etc/systemd/system/ && systemctl enable ~/.config/systemd/user/autowall.service && systemctl enable ~/.config/systemd/user/autowall.service && systemctl daemon-reload && systemctl start autowall.timer`to turn on timer and start script. Timer set to 15 minutes by default, can be adjusted in dynamicwall.config
 
 To check the status of the services use `systemctl status autowall.timer  autowall.service`
 

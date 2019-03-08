@@ -1,5 +1,5 @@
 [Unit]
-Description=Dynamic wall timer
+Description=dynamic-wall timer
 
 [Timer]
 OnBootSec=15m

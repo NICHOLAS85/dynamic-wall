@@ -4,6 +4,16 @@ usrnm=$(grep -i ':x:1000:' -A 0 /etc/passwd | sed 's/:x:1000:.*//')
 # Source Config File
 . /home/$usrnm/bin/dynamicwall.config
 
+# Compares current refresh rate to config file and updates systemd if they dont match
+active_refreshrate=$(sed -n -e 's/^.*OnBootSec=//p' $usrnm/.config/systemd/user/autowall.timer)
+echo "$refreshrate vs $active_refreshrate"
+if [ "$refreshrate" != "$active_refreshrate" ]; then
+	sed -i '/OnBootSec=/!b;cOnBootSec='$refreshrate ~/.config/systemd/user/autowall.timer.d/10-timer.conf
+	sed -i '/OnUnitActiveSec=/!b;cOnUnitActiveSec='$refreshrate ~/.config/systemd/user/autowall.timer.d/10-timer.conf
+	kdialog --title "Dynamic Wallpaper" --passivepopup "Configuration change detected, reloading systemd daemons" 3
+	systemctl daemon-reload
+fi
+
 # Get current time
 date=$(date +%H | sed 's/\<0//g')
 
@@ -29,4 +39,4 @@ echo "Time offset by $timeoffset"
 			$kset_dir "$theme_dir/'$cur_theme'16.jpeg"
 		fi
 	fi
-	olddate=$date
+	sed -i '/olddate=/!b;colddate='$date /home/$usrnm/bin/dynamicwall.config
