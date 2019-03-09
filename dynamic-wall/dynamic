@@ -31,16 +31,16 @@ echo "Time offset by $timeoffset"
 	if [[ "$olddate" != "$date" ]]; then
 		if [[ "$date" -le "9" ]]; then
 			echo "exec $kset_dir $theme_dir/$cur_theme/$cur_theme$(($date - 4 + $timeoffset)).jpg"
-			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 4 + $timeoffset))."jp*g
+			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 4 + $timeoffset))."jpeg
 		elif [[ "$date" -le "16" ]]; then
 			echo "exec $kset_dir $theme_dir/$cur_theme/$cur_theme$(($date - 5 + $timeoffset)).jpg"
-			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 5 + $timeoffset))."jp*g
+			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 5 + $timeoffset))."jpeg
 		elif [[ "$date" -le "21" ]]; then
 			echo "exec $kset_dir $theme_dir/$cur_theme/$cur_theme$(($date - 6 + $timeoffset)).jpg"
-			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 6 + $timeoffset))."jp*g
+			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 6 + $timeoffset))."jpeg
 		else
 			echo "exec $kset_dir $theme_dir/$cur_theme/'$cur_theme'16.jpeg"
-			$kset_dir "$theme_dir/'$cur_theme'16."jp*g
+			$kset_dir "$theme_dir/'$cur_theme'16."jpeg
 		fi
 		sed -i '/olddate=/!b;colddate='$date /home/$usrnm/bin/dynamic-wall/dynamicwall.config
 	else
