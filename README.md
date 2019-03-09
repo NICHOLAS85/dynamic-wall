@@ -31,3 +31,6 @@ All config options can be found in `dynamicwall.config`, adjust settings here. I
 ### Other Notes ###
 
 If you find some live wallpapers in the .heic format, use the the [libheif decoder](https://strukturag.github.io/libheif/) to convert it into usable jpegs, and add it into the themes folder. Image names must match theme folder name up until the number. ex /NewOrleans/NewOrleans1.jpg
+
+If you've compiled libheif from the source heif-convert in the examples folder to convert your .heic into usable .jpg's. Follow this format `./path/to/heif-convert /path/to/encoded/image.heic /path/to/theme/folder`. Make sure the theme folder and image file names match
+Only compatiple with images ending in .jpeg or .jpg at the moment
