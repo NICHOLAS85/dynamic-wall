@@ -12,7 +12,7 @@ move bin into your home directory. ```chmod +x ~/bin/dynamic-wall/dynamic && chm
 
 move autowall.service, autowall.timer, and autowall.timer.d into `~/.config/systemd/user/`, might not exist so create it with `mkdir -p ~/.config/systemd/user/`
 
-Run `ln -s ~/.config/systemd/user/autowall.timer.d/ /etc/systemd/system/ && systemctl enable ~/.config/systemd/user/autowall.service && systemctl enable ~/.config/systemd/user/autowall.service && systemctl daemon-reload && systemctl start autowall.timer`to turn on timer and start script. Timer set to 30 minutes by default, can be adjusted in dynamicwall.config
+Run `sudo ln -s -f ~/.config/systemd/user/dynamicwall.timer.d/ /etc/systemd/system/ && systemctl enable ~/.config/systemd/user/dynamicwall.service && systemctl enable ~/.config/systemd/user/dynamicwall.timer && systemctl daemon-reload && systemctl start dynamicwall.timer`to turn on timer and start script. Timer set to 30 minutes by default, can be adjusted in dynamicwall.config
 
 To check the status of the services use `systemctl status autowall.timer  autowall.service`
 

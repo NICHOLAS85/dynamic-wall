@@ -8,8 +8,8 @@ usrnm=$(grep -i ':x:1000:' -A 0 /etc/passwd | sed 's/:x:1000:.*//')
 
 echo "$refreshrate vs $active_refreshrate"
 if [ "$refreshrate" != "$active_refreshrate" ]; then
-	sed -i '/OnBootSec='$active_refreshrate'/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/autowall.timer.d/2-timer.conf
-	sed -i '/OnUnitActiveSec='$active_refreshrate'/!b;cOnUnitActiveSec='$refreshrate /home/$usrnm/.config/systemd/user/autowall.timer.d/2-timer.conf
+	sed -i '/OnBootSec='$active_refreshrate'/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
+	sed -i '/OnUnitActiveSec='$active_refreshrate'/!b;cOnUnitActiveSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
 	sed -i '/active_refreshrate=/!b;cactive_refreshrate='$refreshrate /home/$usrnm/bin/dynamic-wall/dynamicwall.config
 	sudo -u $usrnm \
 	DISPLAY=:0 \
