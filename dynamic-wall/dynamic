@@ -5,11 +5,12 @@ usrnm=$(grep -i ':x:1000:' -A 0 /etc/passwd | sed 's/:x:1000:.*//')
 . /home/$usrnm/bin/dynamic-wall/dynamicwall.config
 
 # Compares current refresh rate to config file and updates systemd if they dont match
-active_refreshrate=$(sed -n -e 's/^.*OnBootSec=//p' /home/$usrnm/.config/systemd/user/autowall.timer)
+
 echo "$refreshrate vs $active_refreshrate"
 if [ "$refreshrate" != "$active_refreshrate" ]; then
-	sed -i '/OnBootSec=/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/autowall.timer.d/10-timer.conf
-	sed -i '/OnUnitActiveSec=/!b;cOnUnitActiveSec='$refreshrate /home/$usrnm/.config/systemd/user/autowall.timer.d/10-timer.conf
+	sed -i '/OnBootSec='$active_refreshrate'/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
+	sed -i '/OnUnitActiveSec='$active_refreshrate'/!b;cOnUnitActiveSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
+	sed -i '/active_refreshrate=/!b;cactive_refreshrate='$refreshrate /home/$usrnm/bin/dynamic-wall/dynamicwall.config
 	sudo -u $usrnm \
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
@@ -41,7 +42,7 @@ echo "Time offset by $timeoffset"
 			echo "exec $kset_dir $theme_dir/$cur_theme/'$cur_theme'16.jpeg"
 			$kset_dir "$theme_dir/'$cur_theme'16."jp*g
 		fi
+		sed -i '/olddate=/!b;colddate='$date /home/$usrnm/bin/dynamic-wall/dynamicwall.config
 	else
 		echo "time hasnt changed!"
 	fi
-	sed -i '/olddate=/!b;colddate='$date /home/$usrnm/bin/dynamic-wall/dynamicwall.config
