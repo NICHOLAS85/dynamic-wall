@@ -2,7 +2,7 @@
 
 usrnm=$(grep -i ':x:1000:' -A 0 /etc/passwd | sed 's/:x:1000:.*//')
 # Source Config File
-. /home/$usrnm/bin/dynamicwall.config
+. /home/$usrnm/bin/dynamic-wall/dynamicwall.config
 
 # Compares current refresh rate to config file and updates systemd if they dont match
 active_refreshrate=$(sed -n -e 's/^.*OnBootSec=//p' $usrnm/.config/systemd/user/autowall.timer)
@@ -39,4 +39,4 @@ echo "Time offset by $timeoffset"
 			$kset_dir "$theme_dir/'$cur_theme'16.jpeg"
 		fi
 	fi
-	sed -i '/olddate=/!b;colddate='$date /home/$usrnm/bin/dynamicwall.config
+	sed -i '/olddate=/!b;colddate='$date /home/$usrnm/bin/dynamic-wall/dynamicwall.config

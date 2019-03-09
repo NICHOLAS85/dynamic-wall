@@ -8,7 +8,7 @@ Various edits to the dynamic wallpaper scripts from [Raitaro](https://gitlab.com
 
 replace every instance of `nicholas` to your username in the scripts. Found in autowall.service, and autowall.sh
 
-move bin into your home directory. ```chmod +x ~/bin/dynamic && chmod +x ~/bin/ksetwallpaper``` to make scripts executable
+move bin into your home directory. ```chmod +x ~/bin/dynamic-wall/dynamic && chmod +x ~/bin/dynamic-wall/ksetwallpaper``` to make scripts executable
 
 move autowall.service, autowall.timer, and autowall.timer.d into `~/.config/systemd/user/`, might not exist so create it with `mkdir -p ~/.config/systemd/user/`
 
