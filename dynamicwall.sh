@@ -6,7 +6,7 @@ case $1/$2 in
     ;;
   post/*)
     echo "Waking up from $2..."
-    echo "Triggering autowall.sh..."
+    echo "Triggering dynamicwall.sh..."
     systemctl start dynamicwall.service
     ;;
 esac
