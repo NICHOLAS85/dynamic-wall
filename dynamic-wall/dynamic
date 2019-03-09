@@ -5,7 +5,6 @@ usrnm=$(grep -i ':x:1000:' -A 0 /etc/passwd | sed 's/:x:1000:.*//')
 . /home/$usrnm/bin/dynamic-wall/dynamicwall.config
 
 # Compares current refresh rate to config file and updates systemd if they dont match
-
 echo "$refreshrate vs $active_refreshrate"
 if [ "$refreshrate" != "$active_refreshrate" ]; then
 	sed -i '/OnBootSec='$active_refreshrate'/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
@@ -27,20 +26,22 @@ echo "Current ksetwallpaper directory is $kset_dir"
 echo "Time is currently $date"
 echo "Time offset by $timeoffset"
 
-#Check if time has changed since last exec, then set wallpaper based on time
+# Check if time has changed since last exec, then set wallpaper based on time
 	if [[ "$olddate" != "$date" ]]; then
+		# Change .jpeg file extension to .jpg before running the script
+		pushd "/home/$usrnm/bin/dynamic-wall/themes/$cur_theme/";for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg"; done;popd
 		if [[ "$date" -le "9" ]]; then
 			echo "exec $kset_dir $theme_dir/$cur_theme/$cur_theme$(($date - 4 + $timeoffset)).jpg"
-			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 4 + $timeoffset))."jp*g
+			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 4 + $timeoffset))."jpg
 		elif [[ "$date" -le "16" ]]; then
 			echo "exec $kset_dir $theme_dir/$cur_theme/$cur_theme$(($date - 5 + $timeoffset)).jpg"
-			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 5 + $timeoffset))."jp*g
+			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 5 + $timeoffset))."jpg
 		elif [[ "$date" -le "21" ]]; then
 			echo "exec $kset_dir $theme_dir/$cur_theme/$cur_theme$(($date - 6 + $timeoffset)).jpg"
-			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 6 + $timeoffset))."jp*g
+			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 6 + $timeoffset))."jpg
 		else
-			echo "exec $kset_dir $theme_dir/$cur_theme/'$cur_theme'16.jpeg"
-			$kset_dir "$theme_dir/'$cur_theme'16."jp*g
+			echo "exec $kset_dir $theme_dir/$cur_theme/'$cur_theme'16.jpg"
+			$kset_dir "$theme_dir/'$cur_theme'16."jpg
 		fi
 		sed -i '/olddate=/!b;colddate='$date /home/$usrnm/bin/dynamic-wall/dynamicwall.config
 	else
