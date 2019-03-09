@@ -1,5 +1,5 @@
 #!/bin/sh
-usrnm=$(grep -i ':x:1000:' -A 0 /etc/passwd | sed 's/:x:1000:.*//')
+
 case $1/$2 in
   pre/*)
     echo "Going to $2..."
