@@ -112,7 +112,7 @@ find_theme config
 #	. /home/$usrnm/bin/dynamic-wall/default.config
 #fi
 
-if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] || [[ "$refreshrate" == [[:xdigit:]][mh] ]] ; then
+if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
 	echo "Refresh rate is invalid, loading default.config"
 	sudo -u $usrnm \
 	DISPLAY=:0 \
@@ -140,8 +140,8 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		for (( date = 0; date < 24; date++ )); do
 			main_script
 			sleep 1.5
-			inc=$((`qdbus $dbusRef Get "" "value"` + 1))
-			qdbus $dbusRef Set "" "value" $inc;
+			inc=$((`qdbus $dbusRef Get "" "date"` + 0))
+			qdbus $dbusRef Set "" "date" $inc;
 		done
 		date=$(date +%H | sed 's/\<0//g')
 		active_theme=$cur_theme
