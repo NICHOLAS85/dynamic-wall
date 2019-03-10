@@ -1,24 +1,181 @@
 #!/bin/bash
 
+# Get current user
 usrnm=$(grep -i ':x:1000:' -A 0 /etc/passwd | sed 's/:x:1000:.*//')
+# Get current time
+date=$(date +%H | sed 's/\<0//g')
+
 # Source Config File
 . /home/$usrnm/bin/dynamic-wall/dynamicwall.config
 
-# Compares current refresh rate to config file and updates systemd if they dont match
-echo "$refreshrate vs $active_refreshrate"
-if [ "$refreshrate" != "$active_refreshrate" ]; then
-	sed -i '/OnBootSec='$active_refreshrate'/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
-	sed -i '/OnUnitActiveSec='$active_refreshrate'/!b;cOnUnitActiveSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
-	sed -i '/active_refreshrate=/!b;cactive_refreshrate='$refreshrate /home/$usrnm/bin/dynamic-wall/dynamicwall.config
+function main_script() {
+	# Change .jpeg file extension to .jpg before running the script
+	pushd "/home/$usrnm/bin/dynamic-wall/themes/$active_theme/";for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd
+	if [[ "$date" -le "4" ]]; then
+		echo "exec $kset_dir $theme_dir/$active_theme/'$active_theme'16.jpg"
+		$kset_dir "$theme_dir/$active_theme/$active_theme"16.jpg
+	elif [[ "$date" -le "9" ]]; then
+		echo "exec $kset_dir $theme_dir/$active_theme/$active_theme$(($date - 4 + $timeoffset)).jpg"
+		$kset_dir "$theme_dir/$active_theme/$active_theme$(($date - 4 + $timeoffset))."jpg
+	elif [[ "$date" -le "16" ]]; then
+		echo "exec $kset_dir $theme_dir/$active_theme/$active_theme$(($date - 5 + $timeoffset)).jpg"
+		$kset_dir "$theme_dir/$active_theme/$active_theme$(($date - 5 + $timeoffset))."jpg
+	elif [[ "$date" -le "21" ]]; then
+		echo "exec $kset_dir $theme_dir/$active_theme/$active_theme$(($date - 6 + $timeoffset)).jpg"
+		$kset_dir "$theme_dir/$active_theme/$active_theme$(($date - 6 + $timeoffset))."jpg
+	else
+		echo "exec $kset_dir $theme_dir/$active_theme/'$active_theme'16.jpg"
+		$kset_dir "$theme_dir/$active_theme/$active_theme"16.jpg
+	fi
+	sed -i '/olddate=/!b;colddate='$date /home/$usrnm/bin/dynamic-wall/dynamicwall.config
+	sed -i '/olddate=/!b;colddate='$date /home/$usrnm/bin/dynamic-wall/default.config
+}
+
+function update_refreshrate() {
+		sed -i '/OnBootSec='$active_refreshrate'/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
+		sed -i '/OnUnitActiveSec='$active_refreshrate'/!b;cOnUnitActiveSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
+		sed -i '/active_refreshrate=/!b;cactive_refreshrate='$refreshrate /home/$usrnm/bin/dynamic-wall/dynamicwall.config
+		sed -i '/active_refreshrate=/!b;cactive_refreshrate='$refreshrate /home/$usrnm/bin/dynamic-wall/default.config
+		sudo -u $usrnm \
+		DISPLAY=:0 \
+		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+		kdialog --title "Dynamic Wallpaper" --passivepopup "Refresh rate updated, reloading systemd daemons" 5
+		systemctl daemon-reload
+}
+
+function update_theme() {
+	sed -i '/active_theme=/!b;cactive_theme='$cur_theme /home/$usrnm/bin/dynamic-wall/dynamicwall.config
+	sed -i '/active_theme=/!b;cactive_theme='$cur_theme /home/$usrnm/bin/dynamic-wall/default.config
 	sudo -u $usrnm \
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-	kdialog --title "Dynamic Wallpaper" --passivepopup "Configuration change detected, reloading systemd daemons" 3
-	systemctl daemon-reload
+	kdialog --title "Dynamic Wallpaper" --passivepopup "Theme updated to $cur_theme" 3
+	echo "theme updated"
+}
+
+function update_timeoffset() {
+		sed -i '/active_timeoffset=/!b;cactive_timeoffset='$timeoffset /home/$usrnm/bin/dynamic-wall/dynamicwall.config
+		sed -i '/active_timeoffset=/!b;cactive_timeoffset='$timeoffset /home/$usrnm/bin/dynamic-wall/default.config
+		sudo -u $usrnm \
+		DISPLAY=:0 \
+		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+		kdialog --title "Dynamic Wallpaper" --passivepopup "Time offset updated to $timeoffset" 3
+		echo "time offset updated"
+}
+
+function find_theme() {
+if [ "$1" = "config" ]; then
+	if ! ls -1 /home/$usrnm/bin/dynamic-wall/themes/$cur_theme/$cur_theme* > /dev/null 2>&1; then
+		echo "Did not find theme $cur_theme, loading default.config"
+			sudo -u $usrnm \
+			DISPLAY=:0 \
+			DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+			kdialog --title "Dynamic Wallpaper" --passivepopup "Could not find $cur_theme, falling back to default.config" 4
+			. /home/$usrnm/bin/dynamic-wall/default.config
+	fi
+else
+		if ls -1 /home/$usrnm/bin/dynamic-wall/themes/$1/$1* > /dev/null 2>&1; then
+			return 1
+		else
+			echo "Could not locate theme \"$1\""
+			kdialog --title "Dynamic Wallpaper" --passivepopup "Could not locate theme \"$1\"" 4
+			return 0
+		fi
+	fi
+}
+
+# Checks if timeoffset is a number and then if it is range
+if ! [ $timeoffset -eq $timeoffset 2> /dev/null ]; then
+	echo "Time offset is invalid, loading default.config"
+	sudo -u $usrnm \
+	DISPLAY=:0 \
+	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+	kdialog --title "Dynamic Wallpaper" --passivepopup "Invalid Time Offset($timeoffset), falling back to default.config" 4
+	. /home/$usrnm/bin/dynamic-wall/default.config
+elif ! [[ "$timeoffset" -le "24" && "$timeoffset" -ge "-24" ]]; then
+	echo "Time offset is out of range, loading default.config"
+	sudo -u $usrnm \
+	DISPLAY=:0 \
+	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+	kdialog --title "Dynamic Wallpaper" --passivepopup "Time Offset is out of range($timeoffset), falling back to default.config" 4
+	. /home/$usrnm/bin/dynamic-wall/default.config
 fi
 
-# Get current time
-date=$(date +%H | sed 's/\<0//g')
+find_theme config
+
+#if ! ls -1 /home/$usrnm/bin/dynamic-wall/themes/$cur_theme/$cur_theme* > /dev/null 2>&1; then
+#	echo "Did not find theme $cur_theme, loading default.config"
+#	sudo -u $usrnm \
+#	DISPLAY=:0 \
+#	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+#	kdialog --title "Dynamic Wallpaper" --passivepopup "Could not find $cur_theme, falling back to default.config" 4
+#	. /home/$usrnm/bin/dynamic-wall/default.config
+#fi
+
+if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] || [[ "$refreshrate" == [[:xdigit:]][mh] ]] ; then
+	echo "Refresh rate is invalid, loading default.config"
+	sudo -u $usrnm \
+	DISPLAY=:0 \
+	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+	kdialog --title "Dynamic Wallpaper" --passivepopup "Invalid Refresh Rate($refreshrate), falling back to default.config" 3
+	. /home/$usrnm/bin/dynamic-wall/default.config
+fi
+
+# Check if argument was plassed
+if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
+	if [[ $2 = "" ]]; then
+		printf "no theme selected to preview\nusage: ./home/$usrnm/bin/dynamic-wall/dynamic [--preview] <theme>\n"
+	else
+		find_theme $2
+		if [ $? = 1 ]; then
+			active_theme=$2
+		else
+			main_script
+			kdialog --title "Dynamic Wallpaper" --passivepopup "Reverting to normal..." 4
+			echo "exiting..."
+			exit
+
+		fi
+		dbusRef=`kdialog --progressbar "Previewing" 24`
+		for (( date = 0; date < 24; date++ )); do
+			main_script
+			sleep 1.5
+			inc=$((`qdbus $dbusRef Get "" "value"` + 1))
+			qdbus $dbusRef Set "" "value" $inc;
+		done
+		date=$(date +%H | sed 's/\<0//g')
+		active_theme=$cur_theme
+		main_script
+		qdbus $dbusRef close
+		kdialog --title "Dynamic Wallpaper" --passivepopup "Preview Complete, reverting to normal..." 4
+	fi
+elif ! [[ $2 = "" ]]; then
+	echo "Too many arguments, proceeding as normal"
+elif [[ $1 = "--force" ]] || [[ $1 = "-f" ]]; then
+	echo "Force script to run"
+	main_script
+elif [[ $1 = "--update" ]] || [[ $1 = "-u" ]]; then
+	echo "updated config and forced run"
+	update_refreshrate
+	update_theme
+	update_timeoffset
+	main_script
+elif ! [[ $1 = "" ]]; then
+	echo "unknown argument passed, proceeding as normal"
+fi
+
+# Compares current values to config file and updates config if they dont match
+if [[ "$refreshrate" != "$active_refreshrate" ]]; then
+	update_refreshrate
+fi
+
+if [[ $timeoffset != $active_timeoffset ]]; then
+	update_timeoffset
+fi
+
+if [[ "$active_theme" != "$cur_theme" ]]; then
+	update_theme
+fi
 
 echo "Theme currently in use is $cur_theme"
 echo "Current theme directory is $theme_dir"
@@ -27,23 +184,8 @@ echo "Time is currently $date"
 echo "Time offset by $timeoffset"
 
 # Check if time has changed since last exec, then set wallpaper based on time
-	if [[ "$olddate" != "$date" ]]; then
-		# Change .jpeg file extension to .jpg before running the script
-		pushd "/home/$usrnm/bin/dynamic-wall/themes/$cur_theme/";for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg"; done;popd
-		if [[ "$date" -le "9" ]]; then
-			echo "exec $kset_dir $theme_dir/$cur_theme/$cur_theme$(($date - 4 + $timeoffset)).jpg"
-			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 4 + $timeoffset))."jpg
-		elif [[ "$date" -le "16" ]]; then
-			echo "exec $kset_dir $theme_dir/$cur_theme/$cur_theme$(($date - 5 + $timeoffset)).jpg"
-			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 5 + $timeoffset))."jpg
-		elif [[ "$date" -le "21" ]]; then
-			echo "exec $kset_dir $theme_dir/$cur_theme/$cur_theme$(($date - 6 + $timeoffset)).jpg"
-			$kset_dir "$theme_dir/$cur_theme/$cur_theme$(($date - 6 + $timeoffset))."jpg
-		else
-			echo "exec $kset_dir $theme_dir/$cur_theme/'$cur_theme'16.jpg"
-			$kset_dir "$theme_dir/'$cur_theme'16."jpg
-		fi
-		sed -i '/olddate=/!b;colddate='$date /home/$usrnm/bin/dynamic-wall/dynamicwall.config
-	else
-		echo "time hasnt changed!"
-	fi
+if [[ "$olddate" != "$date" ]]; then
+	main_script
+else
+	echo "time hasnt changed!"
+fi

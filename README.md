@@ -25,13 +25,24 @@ move dynamicwall.sh to `/lib/systemd/system-sleep`
 
  To check the status of your wake up script use `journalctl -b -u systemd-suspend.service`
 
+### Usage ###
+The systemd service and sleep-sleep script will run automatically. If you want to manually force the script to run(useful if you've changed your theme and don't want for it to update automatically) use the command `~/bin/dynamic-wall/dynamic --force` or run it with `-f`.
+
+If you've updated your config and want to apply changes immediately use the `--update` or `-u` argument.
+
+If you want to preview 24 hours of the theme you've set in the config use the `--preview` or `-p` argument then type the name of the theme you want to preview. ex `~/bin/dynamic-wall/dynamic --preview mojave_dynamic`
+
 ### Configuration ###
 All config options can be found in `dynamicwall.config`, adjust settings here. If you mess up your config `default.config` is a backup.
+
+Options include using a custom theme, offsetting the scripts detected time in order to shift wallpaper ahead or behind, refresh rate at which wallpaper updates (Only 16 images are used so higher numbers do not equal smoother transitions), manually inputting the and changing the default directories for the theme folder.
+
+Configuration is checked every time the script is run and detects changes automatically, updating the active settings with the new configuration options. Use the `-u` argument to immediately apply changes seen in the Usage section above.
 
 ### Other Notes ###
 
 If you find some live wallpapers in the .heic format, use the the [libheif decoder](https://strukturag.github.io/libheif/) to convert it into usable jpegs, and add it into the themes folder. Image names must match theme folder name up until the number. ex `/NewOrleans/NewOrleans1.jpg`
 
-If you've compiled libheif from the source use heif-convert in the examples folder to convert your .heic into usable .jpg's. Follow this format `./path/to/heif-convert /path/to/encoded/image.heic /path/to/theme/folder/image.jpg`. Make sure the theme folder and image file names match.
+If you've compiled libheif from the source use heif-convert in the examples folder to convert your .heic into usable .jpeg's. Follow this format `./path/to/heif-convert /path/to/encoded/image.heic /path/to/theme/folder/image.jpg`. Make sure the theme folder and image file names match.
 
 Only compatible with images ending in .jpeg or .jpg at the moment.
