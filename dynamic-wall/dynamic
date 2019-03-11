@@ -146,7 +146,7 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		for (( date = 0; date < 24; date++ )); do
 			main_script
 			sleep 1.5
-			inc=$((`qdbus $dbusRef Get "" "value"` + 0))
+			inc=$((`qdbus $dbusRef Get "" "value"` + 1))
 			qdbus $dbusRef Set "" "value" $inc;
 		done
 		echo "Preview Complete, reverting to normal..."
