@@ -9,32 +9,47 @@ date=$(date +%H | sed 's/\<0//g')
 . /home/$usrnm/bin/dynamic-wall/dynamicwall.config
 
 function main_script() {
-	# Change .jpeg file extension to .jpg before running the script
 	if [[ "$date" -le "4" ]]; then
-		echo "exec $kset_dir $theme_dir/$active_theme/'$active_theme'16.jpg"
-		$kset_dir "$theme_dir/$active_theme/$active_theme"16.jpg
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.jpg"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme"16.jpg
 	elif [[ "$date" -le "9" ]]; then
-		echo "exec $kset_dir $theme_dir/$active_theme/$active_theme$(($date - 4 + $timeoffset)).jpg"
-		$kset_dir "$theme_dir/$active_theme/$active_theme$(($date - 4 + $timeoffset))."jpg
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 4 + $timeoffset)).jpg"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 4 + $timeoffset))."jpg
 	elif [[ "$date" -le "16" ]]; then
-		echo "exec $kset_dir $theme_dir/$active_theme/$active_theme$(($date - 5 + $timeoffset)).jpg"
-		$kset_dir "$theme_dir/$active_theme/$active_theme$(($date - 5 + $timeoffset))."jpg
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 5 + $timeoffset)).jpg"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 5 + $timeoffset))."jpg
 	elif [[ "$date" -le "21" ]]; then
-		echo "exec $kset_dir $theme_dir/$active_theme/$active_theme$(($date - 6 + $timeoffset)).jpg"
-		$kset_dir "$theme_dir/$active_theme/$active_theme$(($date - 6 + $timeoffset))."jpg
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 6 + $timeoffset)).jpg"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 6 + $timeoffset))."jpg
 	else
-		echo "exec $kset_dir $theme_dir/$active_theme/'$active_theme'16.jpg"
-		$kset_dir "$theme_dir/$active_theme/$active_theme"16.jpg
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.jpg"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme"16.jpg
 	fi
-	sed -i '/olddate=/!b;colddate='$date /home/$usrnm/bin/dynamic-wall/dynamicwall.config
-	sed -i '/olddate=/!b;colddate='$date /home/$usrnm/bin/dynamic-wall/default.config
+	echo $date > $oldvar_dir/.olddate
+}
+
+function set_wallpaper() {
+	full_image_path=$(realpath "$1")
+	#Run process as currently logged in user, export display and DBUS session, and then evaluate wallpaper script
+	sudo -u $usrnm \
+	DISPLAY=:0 \
+	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+	qdbus org.kde.plasmashell /PlasmaShell evaluateScript '
+	    var allDesktops = desktops();
+	    for (i=0;i<allDesktops.length;i++)
+	    {
+	        d = allDesktops[i];
+	        d.wallpaperPlugin = "org.kde.image";
+	        d.currentConfigGroup = Array("Wallpaper", "org.kde.image", "General");
+	        d.writeConfig("Image", "file://'${full_image_path}'")
+	    }
+	'
 }
 
 function update_refreshrate() {
 		sed -i '/OnBootSec='$active_refreshrate'/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
 		sed -i '/OnUnitActiveSec='$active_refreshrate'/!b;cOnUnitActiveSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
-		sed -i '/active_refreshrate=/!b;cactive_refreshrate='$refreshrate /home/$usrnm/bin/dynamic-wall/dynamicwall.config
-		sed -i '/active_refreshrate=/!b;cactive_refreshrate='$refreshrate /home/$usrnm/bin/dynamic-wall/default.config
+		echo $refreshrate > $oldvar_dir/.active_refreshrate
 		sudo -u $usrnm \
 		DISPLAY=:0 \
 		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
@@ -43,8 +58,8 @@ function update_refreshrate() {
 }
 
 function update_theme() {
-	sed -i '/active_theme=/!b;cactive_theme='$cur_theme /home/$usrnm/bin/dynamic-wall/dynamicwall.config
-	sed -i '/active_theme=/!b;cactive_theme='$cur_theme /home/$usrnm/bin/dynamic-wall/default.config
+	echo $cur_theme > $oldvar_dir/.active_theme
+	# Change .jpeg file extension to .jpg before running the script
 	pushd "/home/$usrnm/bin/dynamic-wall/themes/$active_theme/";for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd
 	sudo -u $usrnm \
 	DISPLAY=:0 \
@@ -54,8 +69,7 @@ function update_theme() {
 }
 
 function update_timeoffset() {
-		sed -i '/active_timeoffset=/!b;cactive_timeoffset='$timeoffset /home/$usrnm/bin/dynamic-wall/dynamicwall.config
-		sed -i '/active_timeoffset=/!b;cactive_timeoffset='$timeoffset /home/$usrnm/bin/dynamic-wall/default.config
+		echo $timeoffset > $oldvar_dir/.active_timeoffset
 		sudo -u $usrnm \
 		DISPLAY=:0 \
 		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
@@ -177,7 +191,6 @@ fi
 
 echo "Theme currently in use is $cur_theme"
 echo "Current theme directory is $theme_dir"
-echo "Current ksetwallpaper directory is $kset_dir"
 echo "Time is currently $date"
 echo "Time offset by $timeoffset"
 
