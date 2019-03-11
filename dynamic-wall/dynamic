@@ -10,7 +10,6 @@ date=$(date +%H | sed 's/\<0//g')
 
 function main_script() {
 	# Change .jpeg file extension to .jpg before running the script
-	pushd "/home/$usrnm/bin/dynamic-wall/themes/$active_theme/";for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd
 	if [[ "$date" -le "4" ]]; then
 		echo "exec $kset_dir $theme_dir/$active_theme/'$active_theme'16.jpg"
 		$kset_dir "$theme_dir/$active_theme/$active_theme"16.jpg
@@ -46,10 +45,11 @@ function update_refreshrate() {
 function update_theme() {
 	sed -i '/active_theme=/!b;cactive_theme='$cur_theme /home/$usrnm/bin/dynamic-wall/dynamicwall.config
 	sed -i '/active_theme=/!b;cactive_theme='$cur_theme /home/$usrnm/bin/dynamic-wall/default.config
+	pushd "/home/$usrnm/bin/dynamic-wall/themes/$active_theme/";for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd
 	sudo -u $usrnm \
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-	kdialog --title "Dynamic Wallpaper" --passivepopup "Theme updated to $cur_theme" 3
+	kdialog --title "Dynamic Wallpaper" --passivepopup "Theme updated to $cur_theme" 4
 	echo "theme updated"
 }
 
@@ -64,17 +64,18 @@ function update_timeoffset() {
 }
 
 function find_theme() {
-if [ "$1" = "config" ]; then
-	if ! ls -1 /home/$usrnm/bin/dynamic-wall/themes/$cur_theme/$cur_theme* > /dev/null 2>&1; then
-		echo "Did not find theme $cur_theme, loading default.config"
-			sudo -u $usrnm \
-			DISPLAY=:0 \
-			DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-			kdialog --title "Dynamic Wallpaper" --passivepopup "Could not find $cur_theme, falling back to default.config" 4
-			. /home/$usrnm/bin/dynamic-wall/default.config
-	fi
-else
+	if [ "$1" = "config" ]; then
+		if ! ls -1 /home/$usrnm/bin/dynamic-wall/themes/$cur_theme/$cur_theme* > /dev/null 2>&1; then
+			echo "Did not find theme $cur_theme, loading default.config"
+				sudo -u $usrnm \
+				DISPLAY=:0 \
+				DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+				kdialog --title "Dynamic Wallpaper" --passivepopup "Could not find $cur_theme, falling back to default.config" 4
+				. /home/$usrnm/bin/dynamic-wall/default.config
+		fi
+	else
 		if ls -1 /home/$usrnm/bin/dynamic-wall/themes/$1/$1* > /dev/null 2>&1; then
+			pushd "/home/$usrnm/bin/dynamic-wall/themes/$1/";for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd
 			return 1
 		else
 			echo "Could not locate theme \"$1\""
@@ -103,16 +104,7 @@ fi
 
 find_theme config
 
-#if ! ls -1 /home/$usrnm/bin/dynamic-wall/themes/$cur_theme/$cur_theme* > /dev/null 2>&1; then
-#	echo "Did not find theme $cur_theme, loading default.config"
-#	sudo -u $usrnm \
-#	DISPLAY=:0 \
-#	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-#	kdialog --title "Dynamic Wallpaper" --passivepopup "Could not find $cur_theme, falling back to default.config" 4
-#	. /home/$usrnm/bin/dynamic-wall/default.config
-#fi
-
-if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] || [[ "$refreshrate" == [[:xdigit:]][mh] ]] ; then
+if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
 	echo "Refresh rate is invalid, loading default.config"
 	sudo -u $usrnm \
 	DISPLAY=:0 \
@@ -125,12 +117,12 @@ fi
 if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 	if [[ $2 = "" ]]; then
 		printf "no theme selected to preview\nusage: ./home/$usrnm/bin/dynamic-wall/dynamic [--preview] <theme>\n"
+		exit
 	else
 		find_theme $2
-		if [ $? = 1 ]; then
+		if [[ $? = 1 ]]; then
 			active_theme=$2
 		else
-			main_script
 			kdialog --title "Dynamic Wallpaper" --passivepopup "Reverting to normal..." 4
 			echo "exiting..."
 			exit
@@ -143,28 +135,32 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 			inc=$((`qdbus $dbusRef Get "" "value"` + 1))
 			qdbus $dbusRef Set "" "value" $inc;
 		done
+		echo "Preview Complete, reverting to normal..."
 		date=$(date +%H | sed 's/\<0//g')
 		active_theme=$cur_theme
 		main_script
 		qdbus $dbusRef close
-		kdialog --title "Dynamic Wallpaper" --passivepopup "Preview Complete, reverting to normal..." 4
+		exit
 	fi
 elif ! [[ $2 = "" ]]; then
 	echo "Too many arguments, proceeding as normal"
 elif [[ $1 = "--force" ]] || [[ $1 = "-f" ]]; then
-	echo "Force script to run"
+	echo "Force script to run, ignoring config changes"
 	main_script
+	exit
 elif [[ $1 = "--update" ]] || [[ $1 = "-u" ]]; then
 	echo "updated config and forced run"
 	update_refreshrate
 	update_theme
 	update_timeoffset
 	main_script
+	exit
 elif ! [[ $1 = "" ]]; then
-	echo "unknown argument passed, proceeding as normal"
+	echo "unknown argument passed, exiting..."
+	exit
 fi
 
-# Compares current values to config file and updates config if they dont match
+# Compares current values to config file and updates config if they dont match, fallsback to defaults if new values are not valid
 if [[ "$refreshrate" != "$active_refreshrate" ]]; then
 	update_refreshrate
 fi
@@ -175,6 +171,8 @@ fi
 
 if [[ "$active_theme" != "$cur_theme" ]]; then
 	update_theme
+	active_theme=$cur_theme
+	main_script
 fi
 
 echo "Theme currently in use is $cur_theme"
