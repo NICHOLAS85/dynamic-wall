@@ -68,3 +68,7 @@ If you find some dynamic wallpapers in the .heic format, use the [libheif decode
 If you've compiled libheif from the source use heif-convert in the examples folder to convert your .heic into usable .jpeg's. Follow this format `./path/to/heif-convert /path/to/encoded/image.heic /path/to/theme_folder/image/image.jpg`. Make sure the theme folder and image file names match. The images are automatically labeled with the correct number needed, if not just renumber them to reorder them.
 
 Only compatible with images ending in .jpeg or .jpg at the moment.
+
+### TODO ###
+* Create install/uninstall script
+* Find licensing information for included themes
