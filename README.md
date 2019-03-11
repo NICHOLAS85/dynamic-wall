@@ -9,20 +9,24 @@ Various edits to the dynamic wallpaper scripts from [Raitaro](https://gitlab.com
 Replace every instance of `nicholas` to your username in the scripts. Found in dynamicwall.service
 
 move bin into your home directory.
-run ```sh
+Run to make script executable.
+```sh
 chmod +x ~/bin/dynamic-wall/dynamic && chmod
 ```
-to make script executable.
 
-move dynamicwall.service, dynamicwall.timer, and dynamicwall.timer.d into `~/.config/systemd/user/`, might not exist so create it with ```sh
+move dynamicwall.service, dynamicwall.timer, and dynamicwall.timer.d into `~/.config/systemd/user/`, might not exist so create it with
+```sh
 mkdir -p ~/.config/systemd/user/
 ```
 
-Run ```sh
+Run
+```sh
 sudo ln -s -f ~/.config/systemd/user/dynamicwall.timer.d/ /etc/systemd/system/ && systemctl enable ~/.config/systemd/user/dynamicwall.service ~/.config/systemd/user/dynamicwall.timer && systemctl daemon-reload && systemctl start dynamicwall.timer
-``` to turn on timer and start script. Timer set to 30 minutes by default, can be adjusted in dynamicwall.config
+```
+to turn on timer and start script. Timer set to 30 minutes by default, can be adjusted in dynamicwall.config
 
-To check the status of the services use ```sh
+To check the status of the services run
+```sh
 systemctl status dynamicwall.timer  dynamicwall.service
 ```
 
@@ -31,11 +35,13 @@ systemctl status dynamicwall.timer  dynamicwall.service
 
 move dynamicwall.sh to `/lib/systemd/system-sleep`
 
-Run```sh
-chmod a+x dynamicwall.sh```
-to allow script to run.
+Run to allow script to run.
+```sh
+chmod a+x dynamicwall.sh
+```
 
-To check the status of your wake up script use ```sh
+To check the status of your wake up script run
+```sh
 journalctl -b -u systemd-suspend.service
 ```
 
