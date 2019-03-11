@@ -60,12 +60,13 @@ function update_refreshrate() {
 function update_theme() {
 	echo $cur_theme > $oldvar_dir/.active_theme
 	# Change .jpeg file extension to .jpg before running the script
-	pushd "/home/$usrnm/bin/dynamic-wall/themes/$active_theme/";for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd
+	pushd "$theme_dir/$active_theme/";for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd
 	sudo -u $usrnm \
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 	kdialog --title "Dynamic Wallpaper" --passivepopup "Theme updated to $cur_theme" 4
 	echo "theme updated"
+	active_theme=$cur_theme
 }
 
 function update_timeoffset() {
@@ -79,23 +80,32 @@ function update_timeoffset() {
 
 function find_theme() {
 	if [ "$1" = "config" ]; then
-		if ! ls -1 /home/$usrnm/bin/dynamic-wall/themes/$cur_theme/$cur_theme* > /dev/null 2>&1; then
-			echo "Did not find theme $cur_theme, loading default.config"
+		if ! ls -1 $theme_dir/$cur_theme/$cur_theme* > /dev/null 2>&1; then
+			printf "Did not find theme $cur_theme\nYour theme_dir may not be set correctly or your cur_theme may be mispelt, check your dynamicwall.config\nLoading default.config"
 				sudo -u $usrnm \
 				DISPLAY=:0 \
 				DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 				kdialog --title "Dynamic Wallpaper" --passivepopup "Could not find $cur_theme, falling back to default.config" 4
-				. /home/$usrnm/bin/dynamic-wall/default.config
+				find_defaults
 		fi
 	else
-		if ls -1 /home/$usrnm/bin/dynamic-wall/themes/$1/$1* > /dev/null 2>&1; then
-			pushd "/home/$usrnm/bin/dynamic-wall/themes/$1/";for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd
+		if ls -1 $theme_dir/$1/$1* > /dev/null 2>&1; then
+			pushd "$theme_dir/$1/";for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd
 			return 1
 		else
 			echo "Could not locate theme \"$1\""
 			kdialog --title "Dynamic Wallpaper" --passivepopup "Could not locate theme \"$1\"" 4
 			return 0
 		fi
+	fi
+}
+
+function find_defaults() {
+	. /home/$usrnm/bin/dynamic-wall/default.config
+	find_theme $cur_theme
+	if ! [[ $? = 1 ]]; then
+		echo "Can't locate default theme directory, exiting..."
+		exit
 	fi
 }
 
@@ -106,28 +116,47 @@ if ! [ $timeoffset -eq $timeoffset 2> /dev/null ]; then
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 	kdialog --title "Dynamic Wallpaper" --passivepopup "Invalid Time Offset($timeoffset), falling back to default.config" 4
-	. /home/$usrnm/bin/dynamic-wall/default.config
+	find_defaults
 elif ! [[ "$timeoffset" -le "24" && "$timeoffset" -ge "-24" ]]; then
 	echo "Time offset is out of range, loading default.config"
 	sudo -u $usrnm \
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 	kdialog --title "Dynamic Wallpaper" --passivepopup "Time Offset is out of range($timeoffset), falling back to default.config" 4
-	. /home/$usrnm/bin/dynamic-wall/default.config
+	find_defaults
 fi
 
+# Checks if users current theme exist
 find_theme config
 
+# Checks if refreshrate is in a valid format
 if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
 	echo "Refresh rate is invalid, loading default.config"
 	sudo -u $usrnm \
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 	kdialog --title "Dynamic Wallpaper" --passivepopup "Invalid Refresh Rate($refreshrate), falling back to default.config" 3
-	. /home/$usrnm/bin/dynamic-wall/default.config
+	find_defaults
 fi
 
-# Check if argument was plassed
+# Checks if date is a number and then if its in a valid range
+if ! [ $date -eq $date 2> /dev/null ]; then
+	echo "Date returning invalid value, loading default.config"
+	sudo -u $usrnm \
+	DISPLAY=:0 \
+	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+	kdialog --title "Dynamic Wallpaper" --passivepopup "Invalid date($date), falling back to default.config" 4
+	find_defaults
+elif ! [[ "$date" -le "24" && "$date" -ge "0" ]]; then
+	echo "Date is out of range, this shouldn't happen... loading default.config"
+	sudo -u $usrnm \
+	DISPLAY=:0 \
+	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+	kdialog --title "Dynamic Wallpaper" --passivepopup "Date is out of range($date), falling back to default.config" 4
+	find_defaults
+fi
+
+# Check what argument was passed to script
 if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 	if [[ $2 = "" ]]; then
 		printf "no theme selected to preview\nusage: ./home/$usrnm/bin/dynamic-wall/dynamic [--preview] <theme>\n"
@@ -157,7 +186,8 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		exit
 	fi
 elif ! [[ $2 = "" ]]; then
-	echo "Too many arguments, proceeding as normal"
+	echo "Incompatible arguments, use one at a time, exiting..."
+	exit
 elif [[ $1 = "--force" ]] || [[ $1 = "-f" ]]; then
 	echo "Force script to run, ignoring config changes"
 	main_script
@@ -179,13 +209,12 @@ if [[ "$refreshrate" != "$active_refreshrate" ]]; then
 	update_refreshrate
 fi
 
-if [[ $timeoffset != $active_timeoffset ]]; then
+if [[ "$timeoffset" != "$active_timeoffset" ]]; then
 	update_timeoffset
 fi
 
 if [[ "$active_theme" != "$cur_theme" ]]; then
 	update_theme
-	active_theme=$cur_theme
 	main_script
 fi
 
@@ -198,5 +227,5 @@ echo "Time offset by $timeoffset"
 if [[ "$olddate" != "$date" ]]; then
 	main_script
 else
-	echo "time hasnt changed!"
+	echo "Time hasn't changed since last run, doing nothing..."
 fi
