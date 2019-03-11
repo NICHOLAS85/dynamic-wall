@@ -1,6 +1,6 @@
 # Dynamic wall
 
-Various edits to the dynamic wallpaper scripts from [Raitaro](https://gitlab.com/RaitaroH/dynamic-wall) which was based on [/u/Electronicbrain work](https://www.reddit.com/r/unixporn/comments/a7mga5/plasma_a_clone_of_macos_mojaves_dynamic_wallpaper/). These edits integrate the script into KDE with systemd timers instead of using while do loops. An additional script was also created to change the wallpaper when the computer wakes from suspension. Many new features have been added and can be seen below.
+Started as various edits to the dynamic wallpaper scripts from [Raitaro](https://gitlab.com/RaitaroH/dynamic-wall) which was based on [/u/Electronicbrain work](https://www.reddit.com/r/unixporn/comments/a7mga5/plasma_a_clone_of_macos_mojaves_dynamic_wallpaper/). These edits evolved into a complex script that integrate into a KDE with systemd timers instead of using while do loops. An additional script was also created to change the wallpaper when the computer wakes from suspension. Many new features have been added and can be seen below.
 
 
 #### Installation:  
@@ -10,7 +10,8 @@ Various edits to the dynamic wallpaper scripts from [Raitaro](https://gitlab.com
 
 Replace every instance of `nicholas` to your username in the scripts. Found in dynamicwall.service
 
-move bin into your home directory.
+Move dynamic-wall into `~/bin/`
+
 Run to make script executable.
 ```sh
 chmod +x ~/bin/dynamic-wall/dynamic && chmod
@@ -21,11 +22,10 @@ move dynamicwall.service, dynamicwall.timer, and dynamicwall.timer.d into `~/.co
 mkdir -p ~/.config/systemd/user/
 ```
 
-Run
+Run to turn on timer and start script. Timer set to 30 minutes by default, can be adjusted in dynamicwall.config
 ```sh
 sudo ln -s -f ~/.config/systemd/user/dynamicwall.timer.d/ /etc/systemd/system/ && systemctl enable ~/.config/systemd/user/dynamicwall.service ~/.config/systemd/user/dynamicwall.timer && systemctl daemon-reload && systemctl start dynamicwall.timer
 ```
-to turn on timer and start script. Timer set to 30 minutes by default, can be adjusted in dynamicwall.config
 
 To check the status of the services run
 ```sh
