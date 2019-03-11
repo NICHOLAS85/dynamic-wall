@@ -11,7 +11,8 @@ Replace every instance of `nicholas` to your username in the scripts. Found in d
 move bin into your home directory.
 run ```sh
 chmod +x ~/bin/dynamic-wall/dynamic && chmod
-``` to make script executable.
+```
+to make script executable.
 
 move dynamicwall.service, dynamicwall.timer, and dynamicwall.timer.d into `~/.config/systemd/user/`, might not exist so create it with ```sh
 mkdir -p ~/.config/systemd/user/
