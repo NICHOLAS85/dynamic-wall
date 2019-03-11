@@ -5,6 +5,7 @@ Various edits to the dynamic wallpaper scripts from [Raitaro](https://gitlab.com
 
 #### Installation:  
 *Only tested on a Debian system*
+
 *Only compatible with distros that use KDE Plasma as their DE*
 
 Replace every instance of `nicholas` to your username in the scripts. Found in dynamicwall.service
