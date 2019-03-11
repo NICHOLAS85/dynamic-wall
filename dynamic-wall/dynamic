@@ -54,13 +54,14 @@ function update_refreshrate() {
 		DISPLAY=:0 \
 		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 		kdialog --title "Dynamic Wallpaper" --passivepopup "Refresh rate updated, reloading systemd daemons" 5
+		echo "refresh rate updated"
 		systemctl daemon-reload
 }
 
 function update_theme() {
 	echo $cur_theme > $oldvar_dir/.active_theme
 	# Change .jpeg file extension to .jpg before running the script
-	pushd "$theme_dir/$active_theme/";for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd
+	pushd "$theme_dir/$active_theme/" > /dev/null 2>&1;for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd > /dev/null 2>&1
 	sudo -u $usrnm \
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
@@ -90,7 +91,7 @@ function find_theme() {
 		fi
 	else
 		if ls -1 $theme_dir/$1/$1* > /dev/null 2>&1; then
-			pushd "$theme_dir/$1/";for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd
+			pushd "$theme_dir/$1/" > /dev/null 2>&1;for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd > /dev/null 2>&1
 			return 1
 		else
 			echo "Could not locate theme \"$1\""
@@ -169,20 +170,25 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 			kdialog --title "Dynamic Wallpaper" --passivepopup "Reverting to normal..." 4
 			echo "exiting..."
 			exit
-
 		fi
+		trap "break" INT
 		dbusRef=`kdialog --progressbar "Previewing" 24`
+		qdbus $dbusRef showCancelButton true
 		for (( date = 0; date < 24; date++ )); do
 			main_script
 			sleep 1.5
 			inc=$((`qdbus $dbusRef Get "" "value"` + 1))
 			qdbus $dbusRef Set "" "value" $inc;
+			if ! qdbus $dbusRef wasCancelled > /dev/null 2>&1; then
+				qdbus $dbusRef close
+				break
+			fi
 		done
+		qdbus $dbusRef close
 		echo "Preview Complete, reverting to normal..."
 		date=$(date +%H | sed 's/\<0//g')
 		active_theme=$cur_theme
 		main_script
-		qdbus $dbusRef close
 		exit
 	fi
 elif ! [[ $2 = "" ]]; then
