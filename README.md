@@ -74,3 +74,4 @@ Only compatible with images ending in .jpeg or .jpg at the moment.
 ### TODO ###
 * Create install/uninstall script
 * Find licensing information for included themes
+* Create a Randomize wallpaper option
