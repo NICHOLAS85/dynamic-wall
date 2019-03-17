@@ -2,8 +2,8 @@
 Description=dynamic-wall timer
 
 [Timer]
-OnBootSec=15m
-OnUnitActiveSec=15m
+OnBootSec=30m
+OnUnitActiveSec=30m
 
 [Install]
 WantedBy=multi-user.target timers.target
