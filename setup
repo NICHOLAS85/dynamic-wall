@@ -1,20 +1,5 @@
 #!/bin/bash
 
-#  Copyright (C) 2015-2018  RSM
-#
-#  This program is free software; you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License 3 as published by
-#   the Free Software Foundation.
-#
-#  This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-#   along with this program; if not, write to the Free Software Foundation,
-#   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA.
-
 DW_VERSION="2019.3.17"
 
 if [ "$EUID" -ne 0 ]
@@ -23,25 +8,27 @@ if [ "$EUID" -ne 0 ]
 fi
 
 usrnm=$(logname)
-#
+
+if ! [ -f /bin/systemctl ]; then
+	echo -e "\e[00;31m Warning: systemd seems to be missing. Dynamic-Wall will not work. Run this setup with the --cron argument if you wish to use cron instead of systemd.\e[00m"
+  exit
+fi
+
 # Set the scripts permisions
-#
+
 echo -e "\e[00;32m[1/4] Setting Permissions...\e[00m"
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-cd $DIR
-#chmod a+x ./remove
+cd $DIR || exit; echo "Error, exiting..."
+chmod a+x ./remove
 chmod a+x ./lib/systemd/system-sleep/dynamicwall.sh
 chmod +x ./bin/dynamic-wall/dynamic
 
-#
 # Remove previous versions
-#
-echo -e "\e[00;32m[2/4] Removing previous versions...\e[00m"
-#./remove -s
 
-#
+echo -e "\e[00;32m[2/4] Removing previous versions...\e[00m"
+./remove -s
+
 # Start the installation
-#
 
 echo -e "\e[00;32m\n[3/4] Copying the software files...\e[00m"
 
@@ -79,9 +66,7 @@ install_files "/.config/systemd/user/dynamicwall.timer.d" "$usrnm" "hidden"
 
 install_files "/lib/systemd/system-sleep"
 
-##
-## Post installation
-##
+# Post installation
 
 echo -e "\e[00;32m\n[4/4] Creating the software links...\e[00m"
 
@@ -97,5 +82,5 @@ echo ""
 
 echo -e "\e[00;32m\n Dynamic-Wall v$DW_VERSION is installed. Enjoy !\e[00m"
 
-echo -e "\e[00;32m\n Running dynamic once\e[00m"
+echo -e "\e[00;32m\n Updating configuration and running dynamic once\e[00m"
 /bin/bash /home/nicholas/bin/dynamic-wall/dynamic -u
