@@ -2,6 +2,13 @@
 
 Started as various edits to the dynamic wallpaper scripts from [Raitaro](https://gitlab.com/RaitaroH/dynamic-wall) which was based on [/u/Electronicbrain work](https://www.reddit.com/r/unixporn/comments/a7mga5/plasma_a_clone_of_macos_mojaves_dynamic_wallpaper/). These edits evolved into a complex script that integrate into a KDE with systemd timers instead of using while do loops. An additional script was also created to change the wallpaper when the computer wakes from suspension. Many new features have been added and can be seen below.
 
+#### Jump to
+
+-   [Usage](#usage)
+-   [Configuration](#configuration)
+-   [Other Notes](#other-notes)
+-   [Credits](#credits)
+-   [TODO](#todo)
 
 #### Installation:  
 *Only tested on a Debian system*
