@@ -31,7 +31,7 @@ mkdir -p ~/.config/systemd/user/
 
 Run to turn on timer and start script. Timer set to 30 minutes by default, can be adjusted in dynamicwall.config
 ```sh
-sudo ln -s -f ~/.config/systemd/user/dynamicwall.timer.d/ /etc/systemd/system/ && sudo systemctl enable ~/.config/systemd/user/dynamicwall.service ~/.config/systemd/user/dynamicwall.timer && systemctl daemon-reload && systemctl start dynamicwall.timer
+sudo ln -s -f ~/.config/systemd/user/dynamicwall.timer.d/ /etc/systemd/system/ && sudo systemctl enable ~/.config/systemd/user/dynamicwall.service ~/.config/systemd/user/dynamicwall.timer && systemctl start dynamicwall.timer
 ```
 
 To check the status of the timer and service run

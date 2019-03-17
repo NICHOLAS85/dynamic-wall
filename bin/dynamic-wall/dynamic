@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Get current user
-usrnm=$(grep -i ':x:1000:' -A 0 /etc/passwd | sed 's/:x:1000:.*//')
+usrnm=$(logname)
 # Get current time
 date=$(date +%H | sed 's/\<0//g')
 # shellcheck source=/dev/null
@@ -111,14 +111,14 @@ function find_defaults() {
 }
 
 # Checks if timeoffset is a number and then if it is range
-if ! [ $timeoffset -eq $timeoffset 2> /dev/null ]; then
+# 2> /dev/null
+if ! [ $timeoffset -eq $timeoffset ]; then
 	echo "Time offset is invalid, loading default.config"
 	sudo -u $usrnm \
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 	kdialog --title "Dynamic Wallpaper" --passivepopup "Invalid Time Offset($timeoffset), falling back to default.config" 4
 	find_defaults
-elif ! [[ "$timeoffset" -le "24" && "$timeoffset" -ge "-24" ]]; then
 elif ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
 	echo "Time offset is out of range, loading default.config"
 	sudo -u $usrnm \
@@ -148,7 +148,8 @@ if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate"
 fi
 
 # Checks if date is a number and then if its in a valid range
-if ! [ $date -eq $date 2> /dev/null ]; then
+#2> /dev/null
+if ! [ $date -eq $date ]; then
 	echo "Date returning invalid value, loading default.config"
 	sudo -u $usrnm \
 	DISPLAY=:0 \

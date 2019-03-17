@@ -1,0 +1,96 @@
+#!/bin/bash
+
+#  Copyright (C) 2015-2018  RSM
+#
+#  This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License 3 as published by
+#   the Free Software Foundation.
+#
+#  This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software Foundation,
+#   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA.
+
+DW_VERSION="2019.3.17"
+
+if [ "$EUID" -ne 0 ]
+  then echo "The script must be run as root."
+  exit
+fi
+
+#
+# Set the scripts permisions
+#
+echo -e "\e[00;32m[1/4] Setting Permissions..\e[00m"
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+cd $DIR
+chmod a+x ./remove
+chmod a+x ./lib/systemd/system-sleep/dynamicwall.sh
+chmod +x ./bin/dynamic-wall/dynamic
+
+#
+# Remove previous versions
+#
+echo -e "\e[00;32m[2/4] Removing previous versions..\e[00m"
+#./remove -s
+
+#
+# Start the installation
+#
+
+echo -e "\e[00;32m\n[3/4] Copying the software files...\e[00m"
+
+
+function install_files(){
+    if $2 = "" ;then
+      echo "installing: $1"
+
+      install -d $1
+      install -D $DIR$1/* $1
+    elif $3 = "hidden"; then
+      echo "installing: $1"
+
+      install -d /home/$2/$1
+      install -D $DIR$1/* /home/$2/.$1
+    else
+      echo "installing: $1"
+
+      install -d /home/$2/$1
+      install -D $DIR$1/* /home/$2/$1
+    fi
+}
+
+install_files "/bin" "$(logname)"
+install_files "/bin/dynamic-wall" "$(logname)"
+install_files "/bin/dynamic-wall/oldvar" "$(logname)"
+install_files "/bin/dynamic-wall/themes" "$(logname)"
+install_files "/bin/dynamic-wall/themes/EarthView" "$(logname)"
+install_files "/bin/dynamic-wall/themes/mojave_dynamic" "$(logname)"
+install_files "/bin/dynamic-wall/themes/NewOrleans" "$(logname)"
+
+install_files "/config/systemd/user" "$(logname)" "hidden"
+install_files "/config/systemd/user/dynamicwall.timer.d" "$(logname)" "hidden"
+
+install_files "/lib/systemd/system-sleep"
+
+##
+## Post installation
+##
+
+echo -e "\e[00;32m\n[4/4] Creating the software links...\e[00m"
+
+if [ -f /bin/systemctl ]; then
+	echo -e "\n\033[0;33mEnabling and starting systemd...\033[0m"
+    ln -s -f /home/"$(logname)"/.config/systemd/user/dynamicwall.timer.d/ /etc/systemd/system/
+    systemctl enable /home/"$(logname)"/.config/systemd/user/dynamicwall.service /home/"$(logname)"/.config/systemd/user/dynamicwall.timer
+    systemctl start dynamicwall.timer
+else
+	echo -e "\e[00;31m Warning: systemd seems to be missing. Dynamic-Wall will not work.\e[00m"
+fi
+echo ""
+
+echo -e "\e[00;32m\n Dynamic-Wall v$DW_VERSION is installed. Enjoy !\e[00m"
