@@ -17,37 +17,14 @@ Started as various edits to the dynamic wallpaper scripts from [Raitaro](https:/
 
 Replace every instance of `nicholas` to your username in the scripts. Found in dynamicwall.service
 
-Move dynamic-wall into `~/bin/`
+run setup as root `sudo ./setup`
 
-Run to make script executable.
-```sh
-chmod +x ~/bin/dynamic-wall/dynamic
-```
-
-move dynamicwall.service, dynamicwall.timer, and dynamicwall.timer.d into `~/.config/systemd/user/`, might not exist so create it with
-```sh
-mkdir -p ~/.config/systemd/user/
-```
-
-Run to turn on timer and start script. Timer set to 30 minutes by default, can be adjusted in dynamicwall.config
-```sh
-sudo ln -s -f ~/.config/systemd/user/dynamicwall.timer.d/ /etc/systemd/system/ && sudo systemctl enable ~/.config/systemd/user/dynamicwall.service ~/.config/systemd/user/dynamicwall.timer && systemctl start dynamicwall.timer
-```
+This will also create a script in `/lib/systemd/system-sleep/` called dynamicwall.sh. This script simply updates the wallpaper when your computer wakes from suspension. You can delete it if you would like to implement this functionality some other way.
 
 To check the status of the timer and service run
 ```sh
 systemctl status dynamicwall.timer dynamicwall.service
 ```
-
-
-#### Setting wallpaper after waking from suspension
-
-Run to allow script to run
-```sh
-chmod a+x dynamicwall.sh
-```
-
-move dynamicwall.sh to `/lib/systemd/system-sleep`
 
 To check the status of your wake up scripts run
 ```sh
@@ -69,7 +46,7 @@ The systemd service and system-sleep script will automatically change your wallp
 
 If you want to manually force the script to run use the command `~/bin/dynamic-wall/dynamic --force` or run it with `-f`. This option uses your last saved config and ignores any changes added since.
 
-Use the `--update` or `-u` argument if you want to forcibly save all your settings. The script should automatically detect changes, but this can be used as a backup.
+Use the `--update` or `-u` argument if you want to forcibly save all your settings and run once. The script should automatically detect changes, but this can be used as a backup.
 
 If you want to preview 24 hours of a specific theme use the `--preview` or `-p` argument then type the name of the theme you want to preview. ex: `~/bin/dynamic-wall/dynamic --preview mojave_dynamic`
 
@@ -105,7 +82,8 @@ mojave_dynamic theme created by Apple (<https://www.apple.com/macos/mojave/>)
 
 
 ## TODO
--   [ ]  Create install/uninstall script
+-   [x]  Create install script
+-   [ ]  Create uninstall script
 -   [x]  Find credit for included themes
 -   [ ]  Create a Randomize wallpaper option
 -   [ ]  Support other image types
