@@ -25,7 +25,7 @@ fi
 #
 # Set the scripts permisions
 #
-echo -e "\e[00;32m[1/4] Setting Permissions..\e[00m"
+echo -e "\e[00;32m[1/4] Setting Permissions...\e[00m"
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd $DIR
 #chmod a+x ./remove
@@ -35,7 +35,7 @@ chmod +x ./bin/dynamic-wall/dynamic
 #
 # Remove previous versions
 #
-echo -e "\e[00;32m[2/4] Removing previous versions..\e[00m"
+echo -e "\e[00;32m[2/4] Removing previous versions...\e[00m"
 #./remove -s
 
 #
@@ -67,10 +67,7 @@ function install_files(){
 install_files "/bin" "$(logname)"
 install_files "/bin/dynamic-wall" "$(logname)"
 install_files "/bin/dynamic-wall/oldvar" "$(logname)"
-cp -p $DIR/bin/dynamic-wall/oldvar/.active_refreshrate /home/"$(logname)"/bin/dynamic-wall/oldvar/
-cp -p $DIR/bin/dynamic-wall/oldvar/.active_theme /home/"$(logname)"/bin/dynamic-wall/oldvar/
-cp -p $DIR/bin/dynamic-wall/oldvar/.active_timeoffset /home/"$(logname)"/bin/dynamic-wall/oldvar/
-cp -p $DIR/bin/dynamic-wall/oldvar/.olddate /home/"$(logname)"/bin/dynamic-wall/oldvar/
+cp -pR $DIR/bin/dynamic-wall/oldvar /home/"$(logname)"/bin/dynamic-wall/
 install_files "/bin/dynamic-wall/themes" "$(logname)"
 install_files "/bin/dynamic-wall/themes/EarthView" "$(logname)"
 install_files "/bin/dynamic-wall/themes/mojave_dynamic" "$(logname)"
