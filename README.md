@@ -11,7 +11,7 @@ Started as various edits to the dynamic wallpaper scripts from [Raitaro](https:/
 -   [Credits](#credits)
 -   [TODO](#todo)
 
-## Installation:  
+## Installation  
 *Only tested on a Debian system*
 
 *Only compatible with distros that use KDE Plasma as their DE*
