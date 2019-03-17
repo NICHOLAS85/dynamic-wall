@@ -13,25 +13,25 @@ function main_script() {
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.jpg"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme"16.jpg
 	elif [[ "$date" -le "9" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 4 + $timeoffset)).jpg"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 4 + $timeoffset))."jpg
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 4)).jpg"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 4))."jpg
 	elif [[ "$date" -le "16" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 5 + $timeoffset)).jpg"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 5 + $timeoffset))."jpg
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 5)).jpg"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 5))."jpg
 	elif [[ "$date" -le "21" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 6 + $timeoffset)).jpg"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 6 + $timeoffset))."jpg
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 6)).jpg"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 6))."jpg
 	else
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.jpg"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme"16.jpg
 	fi
-	echo $date > $oldvar_dir/.olddate
+	echo "$date" > "$oldvar_dir"/.olddate
 }
 
 function set_wallpaper() {
 	full_image_path=$(realpath "$1")
 	#Run process as currently logged in user, export display and DBUS session, and then evaluate wallpaper script
-	sudo -u $usrnm \
+	sudo -u "$usrnm" \
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 	qdbus org.kde.plasmashell /PlasmaShell evaluateScript '
@@ -49,8 +49,8 @@ function set_wallpaper() {
 function update_refreshrate() {
 		sed -i '/OnBootSec='$active_refreshrate'/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
 		sed -i '/OnUnitActiveSec='$active_refreshrate'/!b;cOnUnitActiveSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
-		echo $refreshrate > $oldvar_dir/.active_refreshrate
-		sudo -u $usrnm \
+		echo "$refreshrate" > "$oldvar_dir"/.active_refreshrate
+		sudo -u "$usrnm" \
 		DISPLAY=:0 \
 		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 		kdialog --title "Dynamic Wallpaper" --passivepopup "Refresh rate updated, reloading systemd daemons" 5
@@ -59,10 +59,10 @@ function update_refreshrate() {
 }
 
 function update_theme() {
-	echo $cur_theme > $oldvar_dir/.active_theme
+	echo "$cur_theme" > "$oldvar_dir"/.active_theme
 	# Change .jpeg file extension to .jpg before running the script
 	pushd "$theme_dir/$active_theme/" > /dev/null 2>&1;for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd > /dev/null 2>&1
-	sudo -u $usrnm \
+	sudo -u "$usrnm" \
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 	kdialog --title "Dynamic Wallpaper" --passivepopup "Theme updated to $cur_theme" 4
@@ -81,7 +81,7 @@ function update_timeoffset() {
 
 function find_theme() {
 	if [ "$1" = "config" ]; then
-		if ! ls -1 $theme_dir/$cur_theme/$cur_theme* > /dev/null 2>&1; then
+		if ! ls -1 "$theme_dir"/"$cur_theme"/$cur_theme* > /dev/null 2>&1; then
 			printf "Did not find theme $cur_theme\nYour theme_dir may not be set correctly or your cur_theme may be mispelt, check your dynamicwall.config\nLoading default.config"
 				sudo -u $usrnm \
 				DISPLAY=:0 \
@@ -90,7 +90,7 @@ function find_theme() {
 				find_defaults
 		fi
 	else
-		if ls -1 $theme_dir/$1/$1* > /dev/null 2>&1; then
+		if ls -1 "$theme_dir"/$1/$1* > /dev/null 2>&1; then
 			pushd "$theme_dir/$1/" > /dev/null 2>&1;for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd > /dev/null 2>&1
 			return 1
 		else
@@ -119,12 +119,19 @@ if ! [ $timeoffset -eq $timeoffset 2> /dev/null ]; then
 	kdialog --title "Dynamic Wallpaper" --passivepopup "Invalid Time Offset($timeoffset), falling back to default.config" 4
 	find_defaults
 elif ! [[ "$timeoffset" -le "24" && "$timeoffset" -ge "-24" ]]; then
+elif ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
 	echo "Time offset is out of range, loading default.config"
 	sudo -u $usrnm \
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 	kdialog --title "Dynamic Wallpaper" --passivepopup "Time Offset is out of range($timeoffset), falling back to default.config" 4
 	find_defaults
+elif [[ $(($date + $timeoffset)) -gt 24 ]]; then
+	date=$(($date - 24 + $timeoffset))
+elif [[ $(($date + $timeoffset)) -lt 0 ]]; then
+	date=$(($date + 24 + $timeoffset))
+else
+	date=$(($date + $timeoffset))
 fi
 
 # Checks if users current theme exist
@@ -172,9 +179,9 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 			exit
 		fi
 		trap "break" INT
-		dbusRef=`kdialog --progressbar "Previewing" 24`
+		dbusRef=$(kdialog --progressbar "Previewing" 20)
 		qdbus $dbusRef showCancelButton true
-		for (( date = 0; date < 24; date++ )); do
+		for (( date = 3; date < 24; date++ )); do
 			main_script
 			sleep 1.5
 			inc=$((`qdbus $dbusRef Get "" "value"` + 1))
@@ -186,7 +193,7 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		done
 		qdbus $dbusRef close
 		echo "Preview Complete, reverting to normal..."
-		date=$(date +%H | sed 's/\<0//g')
+		date=$olddate
 		active_theme=$cur_theme
 		main_script
 		exit
@@ -195,18 +202,18 @@ elif ! [[ $2 = "" ]]; then
 	echo "Incompatible arguments, use one at a time, exiting..."
 	exit
 elif [[ $1 = "--force" ]] || [[ $1 = "-f" ]]; then
-	echo "Force script to run, ignoring config changes"
+	echo "Forced script to run, ignoring config changes"
 	main_script
 	exit
 elif [[ $1 = "--update" ]] || [[ $1 = "-u" ]]; then
-	echo "updated config and forced run"
+	echo "Updated config and forced run"
 	update_refreshrate
 	update_theme
 	update_timeoffset
 	main_script
 	exit
 elif ! [[ $1 = "" ]]; then
-	echo "unknown argument passed, exiting..."
+	echo "Unknown argument passed, exiting..."
 	exit
 fi
 
