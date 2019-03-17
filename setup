@@ -28,7 +28,7 @@ fi
 echo -e "\e[00;32m[1/4] Setting Permissions..\e[00m"
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd $DIR
-chmod a+x ./remove
+#chmod a+x ./remove
 chmod a+x ./lib/systemd/system-sleep/dynamicwall.sh
 chmod +x ./bin/dynamic-wall/dynamic
 
@@ -46,34 +46,38 @@ echo -e "\e[00;32m\n[3/4] Copying the software files...\e[00m"
 
 
 function install_files(){
-    if $2 = "" ;then
+    if [ "$2" = "" ];then
       echo "installing: $1"
 
-      install -d $1
-      install -D $DIR$1/* $1
-    elif $3 = "hidden"; then
+      install -o $(logname) -g $(logname) -d $1
+      install -o $(logname) -g $(logname) -D $DIR$1/* $1
+    elif [ "$3" = "hidden" ]; then
       echo "installing: $1"
 
-      install -d /home/$2/$1
-      install -D $DIR$1/* /home/$2/.$1
+      install -o $(logname) -g $(logname) -d /home/$2/$1
+      install -o $(logname) -g $(logname) -D $DIR$1/* /home/$2/$1
     else
       echo "installing: $1"
 
-      install -d /home/$2/$1
-      install -D $DIR$1/* /home/$2/$1
+      install -o $(logname) -g $(logname) -d /home/$2/$1
+      install -o $(logname) -g $(logname) -D $DIR$1/* /home/$2/$1
     fi
 }
 
 install_files "/bin" "$(logname)"
 install_files "/bin/dynamic-wall" "$(logname)"
 install_files "/bin/dynamic-wall/oldvar" "$(logname)"
+cp -p $DIR/bin/dynamic-wall/oldvar/.active_refreshrate /home/"$(logname)"/bin/dynamic-wall/oldvar/
+cp -p $DIR/bin/dynamic-wall/oldvar/.active_theme /home/"$(logname)"/bin/dynamic-wall/oldvar/
+cp -p $DIR/bin/dynamic-wall/oldvar/.active_timeoffset /home/"$(logname)"/bin/dynamic-wall/oldvar/
+cp -p $DIR/bin/dynamic-wall/oldvar/.olddate /home/"$(logname)"/bin/dynamic-wall/oldvar/
 install_files "/bin/dynamic-wall/themes" "$(logname)"
 install_files "/bin/dynamic-wall/themes/EarthView" "$(logname)"
 install_files "/bin/dynamic-wall/themes/mojave_dynamic" "$(logname)"
 install_files "/bin/dynamic-wall/themes/NewOrleans" "$(logname)"
 
-install_files "/config/systemd/user" "$(logname)" "hidden"
-install_files "/config/systemd/user/dynamicwall.timer.d" "$(logname)" "hidden"
+install_files "/.config/systemd/user" "$(logname)" "hidden"
+install_files "/.config/systemd/user/dynamicwall.timer.d" "$(logname)" "hidden"
 
 install_files "/lib/systemd/system-sleep"
 
@@ -94,3 +98,6 @@ fi
 echo ""
 
 echo -e "\e[00;32m\n Dynamic-Wall v$DW_VERSION is installed. Enjoy !\e[00m"
+
+echo -e "\e[00;32m\n Running dynamic once\e[00m"
+/bin/bash /home/nicholas/bin/dynamic-wall/dynamic -u
