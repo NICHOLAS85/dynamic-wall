@@ -6,7 +6,7 @@ usrnm=$(logname)
 date=$(date +%H | sed 's/\<0//g')
 # shellcheck source=/dev/null
 # Source Config File
-. /home/"$usrnm"/bin/dynamic-wall/dynamicwall.config
+. /home/"$usrnm"/bin/dynamic-wall/dynamicwall.config || echo "Can't find user config, loading defaults..."; . /home/"$usrnm"/bin/dynamic-wall/default.config || echo "Can't find user config or default config, exiting..."; exit
 
 function main_script() {
 	if [[ "$date" -le "4" ]]; then
@@ -62,6 +62,7 @@ function update_theme() {
 	echo "$cur_theme" > "$oldvar_dir"/.active_theme
 	# Change .jpeg file extension to .jpg before running the script
 	pushd "$theme_dir/$active_theme/" > /dev/null 2>&1;for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd > /dev/null 2>&1
+	sleep .5
 	sudo -u "$usrnm" \
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \

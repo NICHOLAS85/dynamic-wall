@@ -16,8 +16,6 @@ Started as various edits to the dynamic wallpaper scripts from [Raitaro](https:/
 
 *Only compatible with distros that use KDE Plasma as their DE*
 
-Replace every instance of `nicholas` to your username in the scripts. Found in dynamicwall.service
-
 run setup as root:
 ```sh
 sudo ./setup
@@ -44,12 +42,14 @@ sudo ./setup --cron
 
 This will avoid installing any of the systemd service and timer files, as well as stop from installing the system-sleep script.
 
-Now you can create a cronjob to call your script. ex: `*/30 * * * * ~/bin/dynamic-wall/dynamic`
+Now you can create a cronjob to call your script. ex:
+
+`*/30 * * * * ~/bin/dynamic-wall/dynamic`
 
 I haven't tested the above, but in theory it should work perfectly fine as a cronjob.
 
 ## Usage
-The systemd service and system-sleep script will automatically change your wallpaper at your set interval. If you want to update your wallpaper immediately simply run the script manually via `./bin/dynamic-wall/dynamic` or `systemctl start dynamicwall`
+The systemd service and system-sleep script will automatically change your wallpaper at your set interval if an hour has passed in the day, otherwise it will not do anything. If you want to update your wallpaper immediately simply run the script manually via `./bin/dynamic-wall/dynamic` or `systemctl start dynamicwall`
 
 If you want to manually force the script to run use the command `~/bin/dynamic-wall/dynamic --force` or run it with `-f`. This option uses your last saved config and ignores any changes added since.
 
@@ -69,7 +69,7 @@ Available config options:
 
 \* Unused if installed with --cron
 
-dynamicwall.config is checked every time the script is run and detects changes automatically, applying these changes immediately if they are valid. Use run the script or use the `-u` argument to immediately apply changes as seen in the Usage section above.
+dynamicwall.config is checked every time the script is run and detects changes automatically, applying these changes immediately if they are valid. Run the script or use the `-u` argument to immediately apply changes as seen in the Usage section above.
 
 ## Other Notes
 

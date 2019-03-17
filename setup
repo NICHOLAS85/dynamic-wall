@@ -16,21 +16,23 @@ fi
 
 # Set the scripts permisions
 
-echo -e "\e[00;32m[1/4] Setting Permissions...\e[00m"
+echo -e "\e[00;32m[1/5] Setting Permissions...\e[00m"
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd $DIR || exit; echo "Error, exiting..."
 chmod a+x ./remove
 chmod a+x ./lib/systemd/system-sleep/dynamicwall.sh
 chmod +x ./bin/dynamic-wall/dynamic
 
+echo -e "\e[00;32m[2/5] Updating dynamicwall.service unit...\e[00m"
+sed -i "s/USERNAME/$usrnm/g" $DIR/config/systemd/user/dynamicwall.service
 # Remove previous versions
 
-echo -e "\e[00;32m[2/4] Removing previous versions...\e[00m"
+echo -e "\e[00;32m[3/5] Removing previous versions...\e[00m"
 ./remove -s
 
 # Start the installation
 
-echo -e "\e[00;32m\n[3/4] Copying the software files...\e[00m"
+echo -e "\e[00;32m\n[4/5] Copying the software files...\e[00m"
 
 
 function install_files(){
@@ -68,7 +70,7 @@ install_files "/lib/systemd/system-sleep"
 
 # Post installation
 
-echo -e "\e[00;32m\n[4/4] Creating the software links...\e[00m"
+echo -e "\e[00;32m\n[5/5] Creating the software links...\e[00m"
 
 if [ -f /bin/systemctl ]; then
 	echo -e "\n\033[0;33mEnabling and starting systemd...\033[0m"
@@ -78,9 +80,8 @@ if [ -f /bin/systemctl ]; then
 else
 	echo -e "\e[00;31m Warning: systemd seems to be missing. Dynamic-Wall will not work.\e[00m"
 fi
-echo ""
 
 echo -e "\e[00;32m\n Dynamic-Wall v$DW_VERSION is installed. Enjoy !\e[00m"
 
 echo -e "\e[00;32m\n Updating configuration and running dynamic once\e[00m"
-/bin/bash /home/nicholas/bin/dynamic-wall/dynamic -u
+/bin/bash /home/$usrnm/bin/dynamic-wall/dynamic -u
