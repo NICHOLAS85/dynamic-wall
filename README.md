@@ -5,6 +5,7 @@ Started as various edits to the dynamic wallpaper scripts from [Raitaro](https:/
 #### Jump to
 
 -   [Usage](#usage)
+-   [Cron](#cronjob-instead-of-systemd-timers)
 -   [Configuration](#configuration)
 -   [Other Notes](#other-notes)
 -   [Credits](#credits)
@@ -17,25 +18,31 @@ Started as various edits to the dynamic wallpaper scripts from [Raitaro](https:/
 
 Replace every instance of `nicholas` to your username in the scripts. Found in dynamicwall.service
 
-run setup as root `sudo ./setup`
+run setup as root:
+```sh
+sudo ./setup
+```
 
 This will also create a script in `/lib/systemd/system-sleep/` called dynamicwall.sh. This script simply updates the wallpaper when your computer wakes from suspension. You can delete it if you would like to implement this functionality some other way.
 
-To check the status of the timer and service run
+To check the status of the timer and service run:
 ```sh
 systemctl status dynamicwall.timer dynamicwall.service
 ```
 
-To check the status of your wake up scripts run
+To check the status of your wake up scripts run:
 ```sh
 journalctl -b -u systemd-suspend.service
 ```
 
-#### Cronjob instead of Systemd timers
+## Cronjob instead of Systemd timers
 
-If you would like to install this script and use cron instead of systemd, simply do not install dynamicwall.service, dynamicwall.timer, and  dynamicwall.timerd.
+If you would like to install this script and use cron instead of systemd, simply run setup with the --cron argument:
+```sh
+sudo ./setup --cron
+```
 
-You will need to adjust your dynamicwall.sh system-sleep script to include a complete path to the script. Replace `systemctl start dynamicwall.service` with `/home/[USERNAME]/bin/dynamic-wall/dynamic`
+This will avoid installing any of the systemd service and timer files, as well as stop from installing the system-sleep script.
 
 Now you can create a cronjob to call your script. ex: `*/30 * * * * ~/bin/dynamic-wall/dynamic`
 
@@ -54,11 +61,13 @@ If you want to preview 24 hours of a specific theme use the `--preview` or `-p` 
 All config options can be found in `dynamicwall.config`, adjust settings here. If you mess up your config `default.config` is a backup.
 
 Available config options:
-*   `cur_theme`: Select the theme which will be used
-*   `timeoffset`: Number of hours the cycle is shifted by
-*   `refreshrate`: Rate at which script is called automatically. Only 16 images are cycled so higher numbers ≠ smoother transitions
-*   `theme_dir`: Path to your theme folder, if you decide to store it elsewhere
-*   `date`: Freeze wallpaper cycle at specific time of day
+*   `cur_theme`: Select the theme which will be used.
+*   `timeoffset`: Number of hours the cycle is shifted by.
+*   `refreshrate`\*: Rate at which script is called automatically. Only 16 images are cycled so higher numbers ≠ smoother transitions.
+*   `theme_dir`: Path to your theme folder, if you decide to store it elsewhere.
+*   `date`: Freeze wallpaper cycle at specific time of day.
+
+\* Unused if installed with --cron
 
 dynamicwall.config is checked every time the script is run and detects changes automatically, applying these changes immediately if they are valid. Use run the script or use the `-u` argument to immediately apply changes as seen in the Usage section above.
 
@@ -85,6 +94,8 @@ mojave_dynamic theme created by Apple (<https://www.apple.com/macos/mojave/>)
 -   [x]  Create install script
 -   [ ]  Create uninstall script
 -   [x]  Find credit for included themes
+-   [ ]  Support cron
+-   [ ]  Create a silent mode, to hide KDE notifications
 -   [ ]  Create a Randomize wallpaper option
 -   [ ]  Support other image types
 -   [ ]  Create timeoffset which is read from a themes folder
