@@ -22,6 +22,7 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
+usrnm=$(logname)
 #
 # Set the scripts permisions
 #
@@ -49,32 +50,32 @@ function install_files(){
     if [ "$2" = "" ];then
       echo "installing: $1"
 
-      install -o $(logname) -g $(logname) -d $1
-      install -o $(logname) -g $(logname) -D $DIR$1/* $1
+      install -o "$usrnm" -g "$usrnm" -d $1
+      install -o "$usrnm" -g "$usrnm" -D $DIR$1/* $1
     elif [ "$3" = "hidden" ]; then
       echo "installing: $1"
 
-      install -o $(logname) -g $(logname) -d /home/$2/$1
-      install -o $(logname) -g $(logname) -D $DIR$1/* /home/$2/$1
+      install -o "$usrnm" -g "$usrnm" -d /home/$2/$1
+      install -o "$usrnm" -g "$usrnm" -D $DIR$1/* /home/$2/$1
     else
       echo "installing: $1"
 
-      install -o $(logname) -g $(logname) -d /home/$2/$1
-      install -o $(logname) -g $(logname) -D $DIR$1/* /home/$2/$1
+      install -o "$usrnm" -g "$usrnm" -d /home/$2/$1
+      install -o "$usrnm" -g "$usrnm" -D $DIR$1/* /home/$2/$1
     fi
 }
 
-install_files "/bin" "$(logname)"
-install_files "/bin/dynamic-wall" "$(logname)"
-install_files "/bin/dynamic-wall/oldvar" "$(logname)"
-cp -pR $DIR/bin/dynamic-wall/oldvar /home/"$(logname)"/bin/dynamic-wall/
-install_files "/bin/dynamic-wall/themes" "$(logname)"
-install_files "/bin/dynamic-wall/themes/EarthView" "$(logname)"
-install_files "/bin/dynamic-wall/themes/mojave_dynamic" "$(logname)"
-install_files "/bin/dynamic-wall/themes/NewOrleans" "$(logname)"
+install_files "/bin" "$usrnm"
+install_files "/bin/dynamic-wall" "$usrnm"
+install_files "/bin/dynamic-wall/oldvar" "$usrnm"
+cp -pR $DIR/bin/dynamic-wall/oldvar /home/"$usrnm"/bin/dynamic-wall/
+install_files "/bin/dynamic-wall/themes" "$usrnm"
+install_files "/bin/dynamic-wall/themes/EarthView" "$usrnm"
+install_files "/bin/dynamic-wall/themes/mojave_dynamic" "$usrnm"
+install_files "/bin/dynamic-wall/themes/NewOrleans" "$usrnm"
 
-install_files "/.config/systemd/user" "$(logname)" "hidden"
-install_files "/.config/systemd/user/dynamicwall.timer.d" "$(logname)" "hidden"
+install_files "/.config/systemd/user" "$usrnm" "hidden"
+install_files "/.config/systemd/user/dynamicwall.timer.d" "$usrnm" "hidden"
 
 install_files "/lib/systemd/system-sleep"
 
@@ -86,8 +87,8 @@ echo -e "\e[00;32m\n[4/4] Creating the software links...\e[00m"
 
 if [ -f /bin/systemctl ]; then
 	echo -e "\n\033[0;33mEnabling and starting systemd...\033[0m"
-    ln -s -f /home/"$(logname)"/.config/systemd/user/dynamicwall.timer.d/ /etc/systemd/system/
-    systemctl enable /home/"$(logname)"/.config/systemd/user/dynamicwall.service /home/"$(logname)"/.config/systemd/user/dynamicwall.timer
+    ln -s -f /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/ /etc/systemd/system/
+    systemctl enable /home/"$usrnm"/.config/systemd/user/dynamicwall.service /home/"$usrnm"/.config/systemd/user/dynamicwall.timer
     systemctl start dynamicwall.timer
 else
 	echo -e "\e[00;31m Warning: systemd seems to be missing. Dynamic-Wall will not work.\e[00m"
