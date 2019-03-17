@@ -105,8 +105,8 @@ mojave_dynamic theme created by Apple (<https://www.apple.com/macos/mojave/>)
 
 
 ## TODO
-- [ ] Create install/uninstall script
-- [x] Find credit for included themes
-- [ ] Create a Randomize wallpaper option
-- [ ] Support other image types
-- [ ] Create timeoffset which is read from a themes folder
+-   [ ]  Create install/uninstall script
+-   [x]  Find credit for included themes
+-   [ ]  Create a Randomize wallpaper option
+-   [ ]  Support other image types
+-   [ ]  Create timeoffset which is read from a themes folder
