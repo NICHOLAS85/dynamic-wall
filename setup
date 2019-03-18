@@ -18,7 +18,7 @@ fi
 
 echo -e "\e[00;32m[1/5] Setting Permissions...\e[00m"
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-cd $DIR || echo "Error, exiting..."; exit
+cd $DIR
 chmod a+x ./remove
 chmod a+x ./lib/systemd/system-sleep/dynamicwall.sh
 chmod +x ./bin/dynamic-wall/dynamic
@@ -47,8 +47,8 @@ function install_files(){
     elif [ "$3" = "hidden" ]; then
       echo "installing: $1"
 
-      install -o "$usrnm" -g "$usrnm" -d /home/$2/$1
-      install -o "$usrnm" -g "$usrnm" -D $DIR$1/* /home/$2/$1
+      install -o "$usrnm" -g "$usrnm" -d /home/$2/.$1
+      install -o "$usrnm" -g "$usrnm" -D $DIR/$1/* /home/$2/.$1
     else
       echo "installing: $1"
 
@@ -66,8 +66,8 @@ install_files "/bin/dynamic-wall/themes/EarthView" "$usrnm"
 install_files "/bin/dynamic-wall/themes/mojave_dynamic" "$usrnm"
 install_files "/bin/dynamic-wall/themes/NewOrleans" "$usrnm"
 
-install_files "/.config/systemd/user" "$usrnm" "hidden"
-install_files "/.config/systemd/user/dynamicwall.timer.d" "$usrnm" "hidden"
+install_files "config/systemd/user" "$usrnm" "hidden"
+install_files "config/systemd/user/dynamicwall.timer.d" "$usrnm" "hidden"
 
 install_files "/lib/systemd/system-sleep"
 
