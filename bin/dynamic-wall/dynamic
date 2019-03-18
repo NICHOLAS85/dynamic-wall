@@ -6,7 +6,8 @@ usrnm=$(logname)
 date=$(date +%H | sed 's/\<0//g')
 # shellcheck source=/dev/null
 # Source Config File
-. /home/"$usrnm"/bin/dynamic-wall/dynamicwall.config || echo "Can't find user config, loading defaults..."; . /home/"$usrnm"/bin/dynamic-wall/default.config || echo "Can't find user config or default config, exiting..."; exit
+. /home/"$usrnm"/bin/dynamic-wall/dynamicwall.config
+#|| echo "Can't find user config, loading defaults..."; . /home/"$usrnm"/bin/dynamic-wall/default.config || echo "Can't find user config or default config, exiting..."; exit
 
 function main_script() {
 	if [[ "$date" -le "4" ]]; then
