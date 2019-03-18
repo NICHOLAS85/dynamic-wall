@@ -18,17 +18,20 @@ fi
 
 echo -e "\e[00;32m[1/5] Setting Permissions...\e[00m"
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-cd $DIR || exit; echo "Error, exiting..."
+cd $DIR || echo "Error, exiting..."; exit
 chmod a+x ./remove
 chmod a+x ./lib/systemd/system-sleep/dynamicwall.sh
 chmod +x ./bin/dynamic-wall/dynamic
 
-echo -e "\e[00;32m[2/5] Updating dynamicwall.service unit...\e[00m"
-sed -i "s/USERNAME/$usrnm/g" $DIR/config/systemd/user/dynamicwall.service
 # Remove previous versions
 
-echo -e "\e[00;32m[3/5] Removing previous versions...\e[00m"
+echo -e "\e[00;32m[2/5] Removing previous versions...\e[00m"
 ./remove -s
+
+# Update username dependent path
+
+echo -e "\e[00;32m[3/5] Updating dynamicwall.service unit...\e[00m"
+sed -i "s/USERNAME/$usrnm/g" $DIR/config/systemd/user/dynamicwall.service
 
 # Start the installation
 

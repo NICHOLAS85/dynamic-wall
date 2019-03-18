@@ -92,6 +92,7 @@ mojave_dynamic theme created by Apple (<https://www.apple.com/macos/mojave/>)
 
 ## TODO
 -   [x]  Create install script
+    -   [ ]  Save config options when updating
 -   [ ]  Create uninstall script
 -   [x]  Find credit for included themes
 -   [ ]  Support cron
