@@ -18,7 +18,7 @@ Started as various edits to the dynamic wallpaper scripts from [Raitaro](https:/
 
 To install run setup as root:
 ```sh
-sudo ./setup
+sudo ./install
 ```
 
 To uninstall run remove as root:
