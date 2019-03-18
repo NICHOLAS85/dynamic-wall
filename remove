@@ -8,7 +8,7 @@ fi
 usrnm=$(logname)
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-cd $DIR
+cd $DIR || { echo "Error, exiting..."; exit; }
 
 if [ -f /bin/systemctl ]; then
 	echo -e "\n\033[0;33mDisabling the systemd daemon...\033[0m"
