@@ -11,22 +11,22 @@ DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd $DIR || { echo "Error, exiting..."; exit; }
 
 if [ -f /bin/systemctl ]; then
-	echo -e "\n\033[0;33mDisabling the systemd daemon...\033[0m"
+	echo -e "\n\033[0;33mDisabling dynamicwall systemd daemons...\033[0m"
   systemctl stop dynamicwall.timer
   systemctl disable dynamicwall.service dynamicwall.timer
   echo ""
 fi
 
+echo -e "\033[0;33mRemoving software links..\033[0m"
+rm -f /usr/local/bin/dynamicwall
+
 if [ -f /bin/systemctl ]; then
-  echo -e "\033[0;33mRemoving the software links..\033[0m"
 	echo -e "\n\033[0;33mRemoving dynamicwall.timer.d dropin...\033[0m"
   rm -f /etc/systemd/system/dynamicwall.timer.d
   echo ""
 fi
 
-
-echo -e "\033[0;33mRemoving the software files and directories..\033[0m"
-
+echo -e "\033[0;33mRemoving software files and directories..\033[0m"
 
 function remove_file(){
 

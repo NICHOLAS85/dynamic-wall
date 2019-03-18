@@ -49,26 +49,26 @@ This will avoid installing any of the systemd service and timer files, as well a
 
 Now you can create a cronjob to call your script. ex:
 
-`*/30 * * * * ~/bin/dynamic-wall/dynamic`
+`*/30 * * * * ~/bin/dynamic-wall/dynamicwall`
 
 I haven't tested the above, but in theory it should work perfectly fine as a cronjob.
 
 ## Usage
-The systemd service and system-sleep script will automatically change your wallpaper at your set interval if an hour has passed in the day, otherwise it will not do anything. If you want to update your wallpaper immediately simply run the script manually via `./bin/dynamic-wall/dynamic` or `systemctl start dynamicwall`
+The systemd service and system-sleep script will automatically change your wallpaper at your set interval if an hour has passed in the day, otherwise it will not do anything. If you want to update your wallpaper immediately simply run the script manually via `dynamicwall` or `systemctl start dynamicwall`
 
-If you want to manually force the script to run use the command `~/bin/dynamic-wall/dynamic --force` or run it with `-f`. This option uses your last saved config and ignores any changes added since.
+If you want to manually force the script to run use the command `dynamicwall --force` or run it with `-f`. This option uses your last saved config and ignores any changes added to your config files since.
 
 Use the `--update` or `-u` argument if you want to forcibly save all your settings and run once. The script should automatically detect changes, but this can be used as a backup.
 
-If you want to preview 24 hours of a specific theme use the `--preview` or `-p` argument then type the name of the theme you want to preview. ex: `~/bin/dynamic-wall/dynamic --preview mojave_dynamic`
+If you want to preview 24 hours of a specific theme use the `--preview` or `-p` argument then type the name of the theme you want to preview. ex: `dynamicwall --preview mojave_dynamic`
 
 ## Configuration
 All config options can be found in `dynamicwall.config`, adjust settings here. If you mess up your config `default.config` is a backup.
 
 Available config options:
-*   `cur_theme`: Select the theme which will be used.
+*   `cur_theme`: Choose the theme which will be used.
 *   `timeoffset`: Number of hours the cycle is shifted by.
-*   `refreshrate`\*: Rate at which script is called automatically. Only 16 images are cycled so higher numbers ≠ smoother transitions.
+*   `refreshrate`\*: Rate at which script is called by Systemd. Only 16 images are cycled so higher numbers ≠ smoother transitions.
 *   `theme_dir`: Path to your theme folder, if you decide to store it elsewhere.
 *   `date`: Freeze wallpaper cycle at specific time of day.
 
@@ -78,9 +78,9 @@ dynamicwall.config is checked every time the script is run and detects changes a
 
 ## Other Notes
 
-If you find some dynamic wallpapers in the .heic format, use the [libheif decoder](https://github.com/strukturag/libheif) to convert it into usable jpegs, and add it into the themes folder. Image names must match the theme folder's name up until the number. ex: `/theme_folder/NewOrleans/NewOrleans1.jpg`
+If you find some dynamic wallpapers in the .heic format, use the [libheif decoder](https://github.com/strukturag/libheif) to convert it into usable jpegs, and add it into the themes folder. Image names must match the theme folder's name up until the number. ex: `/themes/NewOrleans/NewOrleans1.jpg`
 
-If you've compiled libheif from the source use heif-convert in the examples folder to convert your .heic into usable .jpeg's. Follow this format `./path/to/heif-convert /path/to/encoded/image.heic /path/to/theme_folder/image/image.jpg`. Make sure the theme folder and image file names match. The images are automatically numbered. If for some reason the images are numbered out of order, just rename them and change their numbers.
+If you've compiled libheif from the source use heif-convert in the examples folder to convert your .heic into usable .jpeg's. Follow this format `./path/to/heif-convert /path/to/encoded/image.heic /path/to/themes/image/image.jpg`. Make sure the theme folder and image file names match. The images are automatically numbered. If for some reason the images are numbered out of order, just rename them and change their numbers.
 
 If you don't feel like installing libheif, Strukturag has hosted an example site which allows you to extract images from .heic files one at a time. [Here's a link](https://strukturag.github.io/libheif/)
 

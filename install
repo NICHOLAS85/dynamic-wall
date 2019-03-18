@@ -28,7 +28,7 @@ chmod +x ./bin/dynamic-wall/dynamic
 echo -e "\e[00;32m[2/5] Removing previous versions...\e[00m"
 ./remove -s
 
-# Update username dependent path
+# Update username dependent fields
 
 echo -e "\e[00;32m[3/5] Updating dynamicwall.service unit...\e[00m"
 sed -i "s/USERNAME/$usrnm/g" $DIR/config/systemd/user/dynamicwall.service
@@ -74,6 +74,7 @@ install_files "/lib/systemd/system-sleep"
 # Post installation
 
 echo -e "\e[00;32m\n[5/5] Creating the software links...\e[00m"
+ln -s -f /home/"$usrnm"/bin/dynamic-wall/dynamicwall /usr/local/bin/dynamicwall
 
 if [ -f /bin/systemctl ]; then
 	echo -e "\n\033[0;33mEnabling and starting systemd...\033[0m"
