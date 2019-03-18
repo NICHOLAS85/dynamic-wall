@@ -16,9 +16,14 @@ Started as various edits to the dynamic wallpaper scripts from [Raitaro](https:/
 
 *Only compatible with distros that use KDE Plasma as their DE*
 
-run setup as root:
+To install run setup as root:
 ```sh
 sudo ./setup
+```
+
+To uninstall run remove as root:
+```sh
+sudo ./remove
 ```
 
 This will also create a script in `/lib/systemd/system-sleep/` called dynamicwall.sh. This script simply updates the wallpaper when your computer wakes from suspension. You can delete it if you would like to implement this functionality some other way.
