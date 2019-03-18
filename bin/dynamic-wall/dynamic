@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Get current user
-usrnm=$(logname)
+usrnm=$(grep -i ':x:1000:' -A 0 /etc/passwd | sed 's/:x:1000:.*//')
 # Get current time
 date=$(date +%H | sed 's/\<0//g')
 # shellcheck source=/dev/null
