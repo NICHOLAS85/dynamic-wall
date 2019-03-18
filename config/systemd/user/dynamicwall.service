@@ -3,4 +3,6 @@ Description=dynamic-wall
 
 [Service]
 Type=oneshot
+User=USERNAME
+Group=USERNAME
 ExecStart=/bin/bash /home/USERNAME/bin/dynamic-wall/dynamic
