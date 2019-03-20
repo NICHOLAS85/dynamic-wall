@@ -35,7 +35,7 @@ echo -e "\e[00;32m[2/5] Removing previous versions...\e[00m"
 
 # Update username dependent fields
 
-echo -e "\e[00;32m[3/5] Updating dynamicwall.service unit...\e[00m"
+echo -e "\e[00;32m[3/5] Updating user dependent fields...\e[00m"
 sed -i "s/USERNAME/$usrnm/g" $DIR/config/systemd/user/dynamicwall.service
 
 # Start the installation
