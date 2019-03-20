@@ -57,20 +57,48 @@ function update_refreshrate() {
 		echo "refresh rate updated"
 		systemctl daemon-reload
 	elif [[ $scheduler = "cron" ]]; then
-		if [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][m] ]] || [[ "$refreshrate" == [[:xdigit:]][m] ]]; then
-			refreshrate_c=${refreshrate%?}
-			sudo crontab -u $usrnm -l | grep -v "/home/$usrnm/bin/dynamic-wall/dynamicwall"  | sudo crontab -u $usrnm -
-			sudo crontab -u $usrnm -l | { cat; echo "*/$refreshrate_c * * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | sudo crontab -u $usrnm -
-		elif [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][h] ]] || [[ "$refreshrate" == [[:xdigit:]][h] ]]; then
-			refreshrate_c=${refreshrate%?}
-			sudo crontab -u $usrnm -l | grep -v "/home/$usrnm/bin/dynamic-wall/dynamicwall"  | sudo crontab -u $usrnm -
-			sudo crontab -u $usrnm -l | { cat; echo "* */$refreshrate_c * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | sudo crontab -u $usrnm -
-		fi
-		sudo -u "$usrnm" \
-		DISPLAY=:0 \
-		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-		kdialog --title "Dynamic Wallpaper" --passivepopup "Refresh rate updated, crontab refreshed" 5
-		echo "refresh rate updated"
+        #necessary loop to prompt user for password needed for crontab update
+        wrongpass=0
+        skip=false
+        while true; do 
+            if ! sudo -n true; then
+                if [ $wrongpass = 0 ]; then
+                    passwd=$(kdialog --title "Dynamic Wall" --password "Enter password to update crontab")
+                else
+                    passwd=$(kdialog --title "Dynamic Wall" --password "Try Again") #Changes prompt when an incorrect password is entered
+                fi
+            fi
+        if [ $? = 0 ]; then #checks if ok or cancel was selected
+            echo "Selected: OK"
+            if echo "$passwd" | sudo -Svp ''; then
+                echo "correct password"
+                break
+            else
+                echo "Wrong Password entered"
+                wrongpass=1
+            fi
+        else
+            echo "Selected: Cancel"
+            skip=true
+            break
+        fi
+        done
+        if [[ $skip = "false" ]]; then
+            if [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][m] ]] || [[ "$refreshrate" == [[:xdigit:]][m] ]]; then
+                refreshrate_c=${refreshrate%?}
+                echo $passwd | sudo sh -c 'crontab -u '$usrnm' -l | grep -v "/home/'$usrnm'/bin/dynamic-wall/dynamicwall"  | crontab -u '$usrnm' - && crontab -u '$usrnm' -l | { cat; echo "*/'$refreshrate_c' * * * * /home/'$usrnm'/bin/dynamic-wall/dynamicwall"; } | crontab -u '$usrnm' -'
+            elif [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][h] ]] || [[ "$refreshrate" == [[:xdigit:]][h] ]]; then
+                refreshrate_c=${refreshrate%?}
+                echo $passwd | sudo sh -c 'crontab -u '$usrnm' -l | grep -v "/home/'$usrnm'/bin/dynamic-wall/dynamicwall"  | crontab -u '$usrnm' - && crontab -u '$usrnm' -l | { cat; echo "* */'$refreshrate_c' * * * /home/'$usrnm'/bin/dynamic-wall/dynamicwall"; } | crontab -u '$usrnm' -'
+            fi
+            sudo -u "$usrnm" \
+            DISPLAY=:0 \
+            DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+            kdialog --title "Dynamic Wallpaper" --passivepopup "Refresh rate updated, crontab refreshed" 5
+            echo "refresh rate updated"
+        else
+            echo "skipped"
+        fi
 	else
 		sudo -u "$usrnm" \
 		DISPLAY=:0 \
