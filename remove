@@ -17,8 +17,10 @@ if [ -f /bin/systemctl ]; then
   systemctl disable dynamicwall.service dynamicwall.timer
   echo ""
 fi
+echo -e "\033[0;33mRemoving cronjob...\033[0m"
+crontab -u $usrnm -l | grep -v "perl /home/$usrnm/bin/dynamic-wall/dynamicwall"  | crontab -u $usrnm -
 
-echo -e "\033[0;33mRemoving software links..\033[0m"
+echo -e "\033[0;33mRemoving software links...\033[0m"
 rm -f /usr/local/bin/dynamicwall
 
 if [ -f /bin/systemctl ]; then
@@ -27,7 +29,7 @@ if [ -f /bin/systemctl ]; then
   echo ""
 fi
 
-echo -e "\033[0;33mRemoving software files and directories..\033[0m"
+echo -e "\033[0;33mRemoving software files and directories...\033[0m"
 
 function remove_file(){
 
