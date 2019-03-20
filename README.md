@@ -12,7 +12,7 @@ Started as various edits to the dynamic wallpaper scripts from [Raitaro](https:/
 -   [TODO](#todo)
 
 ## Installation  
-***Only tested Debian Testing, and Manjaro Linux***
+***Only tested Debian Testing and Manjaro Linux***
 
 ***Only compatible with distros that use KDE Plasma as their DE***
 
