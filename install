@@ -40,8 +40,10 @@ sed -i "s/USERNAME/$usrnm/g" $DIR/config/systemd/user/dynamicwall.service
 if [[ $method = "--cron" ]]; then
   sed -i "s/scheduler=systemd/scheduler=cron/g" $DIR/bin/dynamic-wall/dynamicwall.config
   sed -i "s/scheduler=systemd/scheduler=cron/g" $DIR/bin/dynamic-wall/default.config
+else
+  sed -i "s/scheduler=cron/scheduler=systemd/g" $DIR/bin/dynamic-wall/dynamicwall.config
+  sed -i "s/scheduler=cron/scheduler=systemd/g" $DIR/bin/dynamic-wall/default.config
 fi
-
 
 # Start the installation
 
