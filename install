@@ -35,8 +35,13 @@ echo -e "\e[00;32m[2/5] Removing previous versions...\e[00m"
 
 # Update username dependent fields
 
-echo -e "\e[00;32m[3/5] Updating user dependent fields...\e[00m"
+echo -e "\e[00;32m[3/5] Updating fields based on system and arguments...\e[00m"
 sed -i "s/USERNAME/$usrnm/g" $DIR/config/systemd/user/dynamicwall.service
+if [[ $method = "--cron" ]]; then
+  sed -i "s/scheduler=systemd/scheduler=cron/g" $DIR/bin/dynamic-wall/dynamicwall.config
+  sed -i "s/scheduler=systemd/scheduler=cron/g" $DIR/bin/dynamic-wall/default.config
+fi
+
 
 # Start the installation
 

@@ -47,15 +47,38 @@ function set_wallpaper() {
 }
 
 function update_refreshrate() {
+	if [[ $scheduler = "systemd" ]]; then
 		sed -i '/OnBootSec='$active_refreshrate'/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
 		sed -i '/OnUnitActiveSec='$active_refreshrate'/!b;cOnUnitActiveSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
-		echo "$refreshrate" > "$oldvar_dir"/.active_refreshrate
 		sudo -u "$usrnm" \
 		DISPLAY=:0 \
 		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 		kdialog --title "Dynamic Wallpaper" --passivepopup "Refresh rate updated, reloading systemd daemons" 5
 		echo "refresh rate updated"
 		systemctl daemon-reload
+	elif [[ $scheduler = "cron" ]]; then
+		if [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][m] ]] || [[ "$refreshrate" == [[:xdigit:]][m] ]]; then
+			refreshrate_c=${refreshrate%?}
+			crontab -u $usrnm -l | grep -v "/home/$usrnm/bin/dynamic-wall/dynamicwall"  | crontab -u $usrnm -
+			crontab -u $usrnm -l | { cat; echo "*/$refreshrate_c * * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | crontab -u $usrnm -
+		elif [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][h] ]] || [[ "$refreshrate" == [[:xdigit:]][h] ]]; then
+			refreshrate_c=${refreshrate%?}
+			crontab -u $usrnm -l | grep -v "/home/$usrnm/bin/dynamic-wall/dynamicwall"  | crontab -u $usrnm -
+			crontab -u $usrnm -l | { cat; echo "* */$refreshrate_c * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | crontab -u $usrnm -
+		fi
+		sudo -u "$usrnm" \
+		DISPLAY=:0 \
+		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+		kdialog --title "Dynamic Wallpaper" --passivepopup "Refresh rate updated, crontab refreshed" 5
+		echo "refresh rate updated"
+	else
+		sudo -u "$usrnm" \
+		DISPLAY=:0 \
+		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+		kdialog --title "Dynamic Wallpaper" --passivepopup "Uknown scheduler set in config file, not updating refreshrate..." 5
+		echo "Uknown scheduler set in config file, not updating..."
+	fi
+	echo "$refreshrate" > "$oldvar_dir"/.active_refreshrate
 }
 
 function update_theme() {
