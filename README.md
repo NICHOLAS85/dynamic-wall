@@ -4,7 +4,7 @@ Started as various edits to the dynamic wallpaper scripts from [Raitaro](https:/
 
 #### Jump to
 -   [Installation](#installation)
-    -   [Cron](#cronjob-instead-of-systemd-timers)
+    -   [Cron](#cronjob-instead-of-systemd-service)
 -   [Usage](#usage)
 -   [Configuration](#configuration)
 -   [Other Notes](#other-notes)
