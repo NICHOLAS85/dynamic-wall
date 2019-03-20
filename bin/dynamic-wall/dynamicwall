@@ -59,12 +59,12 @@ function update_refreshrate() {
 	elif [[ $scheduler = "cron" ]]; then
 		if [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][m] ]] || [[ "$refreshrate" == [[:xdigit:]][m] ]]; then
 			refreshrate_c=${refreshrate%?}
-			crontab -u $usrnm -l | grep -v "/home/$usrnm/bin/dynamic-wall/dynamicwall"  | crontab -u $usrnm -
-			crontab -u $usrnm -l | { cat; echo "*/$refreshrate_c * * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | crontab -u $usrnm -
+			sudo crontab -u $usrnm -l | grep -v "/home/$usrnm/bin/dynamic-wall/dynamicwall"  | sudo crontab -u $usrnm -
+			sudo crontab -u $usrnm -l | { cat; echo "*/$refreshrate_c * * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | sudo crontab -u $usrnm -
 		elif [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][h] ]] || [[ "$refreshrate" == [[:xdigit:]][h] ]]; then
 			refreshrate_c=${refreshrate%?}
-			crontab -u $usrnm -l | grep -v "/home/$usrnm/bin/dynamic-wall/dynamicwall"  | crontab -u $usrnm -
-			crontab -u $usrnm -l | { cat; echo "* */$refreshrate_c * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | crontab -u $usrnm -
+			sudo crontab -u $usrnm -l | grep -v "/home/$usrnm/bin/dynamic-wall/dynamicwall"  | sudo crontab -u $usrnm -
+			sudo crontab -u $usrnm -l | { cat; echo "* */$refreshrate_c * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | sudo crontab -u $usrnm -
 		fi
 		sudo -u "$usrnm" \
 		DISPLAY=:0 \
