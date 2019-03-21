@@ -8,6 +8,15 @@ date=$(date +%H | sed 's/\<0//g')
 # Source Config File
 . /home/"$usrnm"/bin/dynamic-wall/dynamicwall.config || { . /home/"$usrnm"/bin/dynamic-wall/default.config; echo "Can't find user config files, loading defaults...";} || { echo "can't find user or default config files, exiting..."; exit; }
 
+HELP="\
+Usage: dynamicwall [OPTIONS]
+
+optional args:
+  -f, --force            Skip configuration change check and update wallpaper
+  -p, --preview <theme>    Run a preview of 24 hours for a certain theme
+  -u, --update         	 Force check configuration options and push to script
+  -h, --help             show help"
+
 function main_script() {
 	if [[ "$date" -le "4" ]]; then
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.jpg"
@@ -47,7 +56,7 @@ function set_wallpaper() {
 }
 
 function update_refreshrate() {
-	if [[ $scheduler = "systemd" ]]; then
+	if [[ "$scheduler" = "systemd" ]]; then
 		sed -i '/OnBootSec='$active_refreshrate'/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
 		sed -i '/OnUnitActiveSec='$active_refreshrate'/!b;cOnUnitActiveSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
 		sudo -u "$usrnm" \
@@ -123,7 +132,7 @@ function update_theme() {
 }
 
 function update_timeoffset() {
-		echo $timeoffset > $oldvar_dir/.active_timeoffset
+		echo "$timeoffset" > "$oldvar_dir"/.active_timeoffset
 		sudo -u $usrnm \
 		DISPLAY=:0 \
 		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
@@ -163,8 +172,7 @@ function find_defaults() {
 }
 
 # Checks if timeoffset is a number and then if it is range
-# 2> /dev/null
-if ! [ $timeoffset -eq $timeoffset ]; then
+if ! [ $timeoffset -eq $timeoffset 2> /dev/null ]; then
 	echo "Time offset is invalid, loading default.config"
 	sudo -u $usrnm \
 	DISPLAY=:0 \
@@ -200,8 +208,7 @@ if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate"
 fi
 
 # Checks if date is a number and then if its in a valid range
-#2> /dev/null
-if ! [ $date -eq $date ]; then
+if ! [ $date -eq $date 2> /dev/null ]; then
 	echo "Date returning invalid value, loading default.config"
 	sudo -u $usrnm \
 	DISPLAY=:0 \
@@ -220,7 +227,7 @@ fi
 # Check what argument was passed to script
 if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 	if [[ $2 = "" ]]; then
-		printf "no theme selected to preview\nusage: ./home/$usrnm/bin/dynamic-wall/dynamic [--preview] <theme>\n"
+		printf "no theme selected to preview\nusage: dynamicwall [--preview] <theme>\n"
 		exit
 	else
 		find_theme $2
@@ -246,6 +253,7 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		done
 		qdbus $dbusRef close
 		echo "Preview Complete, reverting to normal..."
+    kdialog --title "Dynamic Wallpaper" --passivepopup "Reverting to normal..." 4
 		date=$olddate
 		active_theme=$cur_theme
 		main_script
@@ -265,12 +273,16 @@ elif [[ $1 = "--update" ]] || [[ $1 = "-u" ]]; then
 	update_timeoffset
 	main_script
 	exit
+elif [[ $1 = "--help" ]] || [[ $1 = "-h" ]]; then
+	printf '%s\n' "$HELP"
+	exit
 elif ! [[ $1 = "" ]]; then
-	echo "Unknown argument passed, exiting..."
+	echo "Unknown argument passed"
+	printf '%s\n' "$HELP"
 	exit
 fi
 
-# Compares current values to config file and updates config if they dont match, fallsback to defaults if new values are not valid
+# Compares current values to config file and updates script if they dont match, fallsback to defaults if new values are not valid
 if [[ "$refreshrate" != "$active_refreshrate" ]]; then
 	update_refreshrate
 fi

@@ -58,7 +58,7 @@ crontab -l
 ## Usage
 The systemd service, cronjob, and system-sleep script will automatically change your wallpaper at your set interval if an hour has passed in the day, otherwise it will not do anything. You can run the script manually by typing `dynamicwall` into your terminal.
 
-If you want to manually force the script to update your wallpaper use `dynamicwall --force` or run it with `-f`. This option uses your last saved config and ignores any changes added to your config files since.
+If you want to skip configuration checking use `dynamicwall --force` or run it with `-f`. This option uses your last saved config and ignores any changes added to your config files since.
 
 Use the `--update` or `-u` argument if you want to forcibly save all your settings and run once. The script should automatically detect changes, but this can be used as a backup.
 
