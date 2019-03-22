@@ -102,7 +102,8 @@ else
   crontab -u $usrnm -l | { cat; echo "*/45 * * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | crontab -u $usrnm -
 fi
 
-echo -e "\e[00;32m\n Dynamic-Wall v$DW_VERSION is installed. Enjoy !\e[00m"
-
 echo -e "\e[00;32m\n Updating configuration and running dynamic once\e[00m"
-/bin/bash /home/$usrnm/bin/dynamic-wall/dynamicwall -u
+/bin/bash /home/$usrnm/bin/dynamic-wall/dynamicwall -c
+/bin/bash /home/$usrnm/bin/dynamic-wall/dynamicwall -h
+
+echo -e "\e[00;32m\n Dynamic-Wall v$DW_VERSION is installed. Enjoy !\e[00m"
