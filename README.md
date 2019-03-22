@@ -72,6 +72,7 @@ Available config options:
     -   Three themes are offered by default:<br/>`mojave_dynamic`, `NewOrleans`, and `EarthView`.
 *   `timeoffset`: Number of hours the cycle is shifted by.
 *   `refreshrate`: Rate at which script is called. Only 16 images are cycled so higher numbers ≠ smoother transitions.
+*   `notifications`: Sets whether or not desktop notifications are shown
 *   `theme_dir`: Path to your theme folder, if you decide to store themes elsewhere.
 *   `date`: Freeze wallpaper cycle at specific time of day.
 
@@ -102,7 +103,7 @@ mojave_dynamic theme created by Apple (<https://www.apple.com/macos/mojave/>)
 -   [x]  Create uninstall script
 -   [x]  Find credit for included themes
 -   [x]  Support cron
--   [ ]  Create a silent mode, to hide KDE notifications
+-   [x]  Create a silent mode, to hide KDE notifications
 -   [ ]  Create a Randomize wallpaper option
 -   [ ]  Support other image types
 -   [ ]  Create override configs which are read from a themes folder

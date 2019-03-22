@@ -71,7 +71,6 @@ function install_files(){
 
 install_files "/bin" "$usrnm"
 install_files "/bin/dynamic-wall" "$usrnm"
-#install_files "/bin/dynamic-wall/oldvar" "$usrnm"
 cp -pR $DIR/bin/dynamic-wall/oldvar /home/"$usrnm"/bin/dynamic-wall/.oldvar
 install_files "/bin/dynamic-wall/themes" "$usrnm"
 install_files "/bin/dynamic-wall/themes/EarthView" "$usrnm"

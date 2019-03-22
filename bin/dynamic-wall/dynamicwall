@@ -55,14 +55,24 @@ function set_wallpaper() {
 	'
 }
 
+function notify() {
+  if [[ $notifications = "true" ]] || [[ $notifications = "True" ]] || [[ $notifications = "TRUE" ]]; then
+    if [[ $1 = "root" ]]; then
+      sudo -u "$usrnm" \
+  		DISPLAY=:0 \
+  		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+  		kdialog --title "Dynamic Wallpaper" --passivepopup "$2" 5
+    elif [[ $1 = "manual" ]]; then
+      kdialog --title "Dynamic Wallpaper" --passivepopup "$2" 5
+    fi
+  fi
+}
+
 function update_refreshrate() {
 	if [[ "$scheduler" = "systemd" ]]; then
 		sed -i '/OnBootSec='$active_refreshrate'/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
 		sed -i '/OnUnitActiveSec='$active_refreshrate'/!b;cOnUnitActiveSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
-		sudo -u "$usrnm" \
-		DISPLAY=:0 \
-		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-		kdialog --title "Dynamic Wallpaper" --passivepopup "Refresh rate updated, reloading systemd daemons" 5
+    notify root "Refresh rate updated, reloading systemd daemons"
 		echo "refresh rate updated"
 		systemctl daemon-reload
 	elif [[ $scheduler = "cron" ]]; then
@@ -100,19 +110,13 @@ function update_refreshrate() {
                 refreshrate_c=${refreshrate%?}
                 echo $passwd | sudo sh -c 'crontab -u '$usrnm' -l | grep -v "/home/'$usrnm'/bin/dynamic-wall/dynamicwall"  | crontab -u '$usrnm' - && crontab -u '$usrnm' -l | { cat; echo "* */'$refreshrate_c' * * * /home/'$usrnm'/bin/dynamic-wall/dynamicwall"; } | crontab -u '$usrnm' -'
             fi
-            sudo -u "$usrnm" \
-            DISPLAY=:0 \
-            DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-            kdialog --title "Dynamic Wallpaper" --passivepopup "Refresh rate updated, crontab refreshed" 5
+            notify root "Refresh rate updated, crontab refreshed"
             echo "refresh rate updated"
         else
             echo "skipped"
         fi
 	else
-		sudo -u "$usrnm" \
-		DISPLAY=:0 \
-		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-		kdialog --title "Dynamic Wallpaper" --passivepopup "Uknown scheduler set in config file, not updating refreshrate..." 5
+    notify root "Uknown scheduler set in config file, not updating refreshrate..."
 		echo "Uknown scheduler set in config file, not updating..."
 	fi
 	echo "$refreshrate" > "$oldvar_dir"/.active_refreshrate
@@ -123,20 +127,14 @@ function update_theme() {
 	# Change .jpeg file extension to .jpg before running the script
 	pushd "$theme_dir/$active_theme/" > /dev/null 2>&1;for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd > /dev/null 2>&1
 	sleep .5
-	sudo -u "$usrnm" \
-	DISPLAY=:0 \
-	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-	kdialog --title "Dynamic Wallpaper" --passivepopup "Theme updated to $cur_theme" 4
+  notify root "Theme updated to $cur_theme"
 	echo "theme updated"
 	active_theme=$cur_theme
 }
 
 function update_timeoffset() {
 		echo "$timeoffset" > "$oldvar_dir"/.active_timeoffset
-		sudo -u $usrnm \
-		DISPLAY=:0 \
-		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-		kdialog --title "Dynamic Wallpaper" --passivepopup "Time offset updated to $timeoffset" 3
+    notify root "Time offset updated to $timeoffset"
 		echo "time offset updated"
 }
 
@@ -144,11 +142,8 @@ function find_theme() {
 	if [ "$1" = "config" ]; then
 		if ! ls -1 "$theme_dir"/"$cur_theme"/$cur_theme* > /dev/null 2>&1; then
 			printf "Did not find theme $cur_theme\nYour theme_dir may not be set correctly or your cur_theme may be mispelt, check your dynamicwall.config\nLoading default.config"
-				sudo -u $usrnm \
-				DISPLAY=:0 \
-				DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-				kdialog --title "Dynamic Wallpaper" --passivepopup "Could not find $cur_theme, falling back to default.config" 4
-				find_defaults
+      notify root "Could not find $cur_theme, falling back to default.config"
+			find_defaults
 		fi
 	else
 		if ls -1 "$theme_dir"/$1/$1* > /dev/null 2>&1; then
@@ -156,8 +151,8 @@ function find_theme() {
 			return 1
 		else
 			echo "Could not locate theme \"$1\""
-			kdialog --title "Dynamic Wallpaper" --passivepopup "Could not locate theme \"$1\"" 4
-			return 0
+      notify manual "Could not locate theme \"$1\""
+      return 0
 		fi
 	fi
 }
@@ -174,17 +169,11 @@ function find_defaults() {
 # Checks if timeoffset is a number and then if it is range
 if ! [ $timeoffset -eq $timeoffset 2> /dev/null ]; then
 	echo "Time offset is invalid, loading default.config"
-	sudo -u $usrnm \
-	DISPLAY=:0 \
-	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-	kdialog --title "Dynamic Wallpaper" --passivepopup "Invalid Time Offset($timeoffset), falling back to default.config" 4
+  notify root "Invalid Time Offset($timeoffset), falling back to default.config"
 	find_defaults
 elif ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
 	echo "Time offset is out of range, loading default.config"
-	sudo -u $usrnm \
-	DISPLAY=:0 \
-	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-	kdialog --title "Dynamic Wallpaper" --passivepopup "Time Offset is out of range($timeoffset), falling back to default.config" 4
+  notify root "Time Offset is out of range($timeoffset), falling back to default.config"
 	find_defaults
 elif [[ $(($date + $timeoffset)) -gt 24 ]]; then
 	date=$(($date - 24 + $timeoffset))
@@ -200,27 +189,18 @@ find_theme config
 # Checks if refreshrate is in a valid format
 if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
 	echo "Refresh rate is invalid, loading default.config"
-	sudo -u $usrnm \
-	DISPLAY=:0 \
-	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-	kdialog --title "Dynamic Wallpaper" --passivepopup "Invalid Refresh Rate($refreshrate), falling back to default.config" 3
+  notify root "Invalid Refresh Rate($refreshrate), falling back to default.config"
 	find_defaults
 fi
 
 # Checks if date is a number and then if its in a valid range
 if ! [ $date -eq $date 2> /dev/null ]; then
 	echo "Date returning invalid value, loading default.config"
-	sudo -u $usrnm \
-	DISPLAY=:0 \
-	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-	kdialog --title "Dynamic Wallpaper" --passivepopup "Invalid date($date), falling back to default.config" 4
+  notify root "Invalid date($date), falling back to default.config"
 	find_defaults
 elif ! [[ "$date" -le "24" && "$date" -ge "0" ]]; then
 	echo "Date is out of range, this shouldn't happen... loading default.config"
-	sudo -u $usrnm \
-	DISPLAY=:0 \
-	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-	kdialog --title "Dynamic Wallpaper" --passivepopup "Date is out of range($date), falling back to default.config" 4
+  notify root "Date is out of range($date), falling back to default.config"
 	find_defaults
 fi
 
@@ -234,8 +214,8 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		if [[ $? = 1 ]]; then
 			active_theme=$2
 		else
-			kdialog --title "Dynamic Wallpaper" --passivepopup "Reverting to normal..." 4
-			echo "exiting..."
+      notify manual "Reverting to normal..."
+			echo "Reverting to normal..."
 			exit
 		fi
 		trap "break" INT
@@ -253,7 +233,7 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		done
 		qdbus $dbusRef close
 		echo "Preview Complete, reverting to normal..."
-    kdialog --title "Dynamic Wallpaper" --passivepopup "Reverting to normal..." 4
+    notify manual "Reverting to normal..."
 		date=$olddate
 		active_theme=$cur_theme
 		main_script
