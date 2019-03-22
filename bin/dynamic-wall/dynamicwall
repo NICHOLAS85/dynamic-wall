@@ -13,8 +13,8 @@ Usage: dynamicwall [OPTIONS]
 
 optional args:
   -f, --force            Skip configuration change check and update wallpaper
-  -p, --preview <theme>    Run a preview of 24 hours for a certain theme
-  -u, --update         	 Force check configuration options and push to script
+  -p, --preview <theme>  Run a 24 hour preview for a certain theme
+  -c, --check         	 Force check configuration options and push to script
   -h, --help             show help"
 
 function main_script() {
@@ -69,7 +69,7 @@ function update_refreshrate() {
         #necessary loop to prompt user for password needed for crontab update
         wrongpass=0
         skip=false
-        while true; do 
+        while true; do
             if ! sudo -n true; then
                 if [ $wrongpass = 0 ]; then
                     passwd=$(kdialog --title "Dynamic Wall" --password "Enter password to update crontab")
@@ -266,7 +266,7 @@ elif [[ $1 = "--force" ]] || [[ $1 = "-f" ]]; then
 	echo "Forced script to run, ignoring config changes"
 	main_script
 	exit
-elif [[ $1 = "--update" ]] || [[ $1 = "-u" ]]; then
+elif [[ $1 = "--check" ]] || [[ $1 = "-c" ]]; then
 	echo "Updated config and forced run"
 	update_refreshrate
 	update_theme

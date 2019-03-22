@@ -39,7 +39,7 @@ To check the status of your wake up scripts run:
 journalctl -b -u systemd-suspend.service
 ```
 
-## Cronjob instead of Systemd Service
+### Cronjob instead of Systemd Service
 
 If you would like to install this script and use cron instead of systemd, simply run install with the --cron argument:
 ```sh
