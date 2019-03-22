@@ -19,20 +19,20 @@ optional args:
 
 function main_script() {
 	if [[ "$date" -le "4" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.jpg"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme"16.jpg
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.$ext"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme"16.$ext
 	elif [[ "$date" -le "9" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 4)).jpg"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 4))."jpg
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 4)).$ext"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 4))."$ext
 	elif [[ "$date" -le "16" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 5)).jpg"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 5))."jpg
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 5)).$ext"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 5))."$ext
 	elif [[ "$date" -le "21" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 6)).jpg"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 6))."jpg
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$(($date - 6)).$ext"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$(($date - 6))."$ext
 	else
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.jpg"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme"16.jpg
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.$ext"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme"16.$ext
 	fi
 	echo "$date" > "$oldvar_dir"/.olddate
 }
@@ -61,9 +61,9 @@ function notify() {
       sudo -u "$usrnm" \
   		DISPLAY=:0 \
   		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-  		kdialog --title "Dynamic Wallpaper" --passivepopup "$2" 5
+  		kdialog --title "Dynamic Wallpaper" --passivepopup "$2" 4
     elif [[ $1 = "manual" ]]; then
-      kdialog --title "Dynamic Wallpaper" --passivepopup "$2" 5
+      kdialog --title "Dynamic Wallpaper" --passivepopup "$2" 4
     fi
   fi
 }
@@ -139,22 +139,30 @@ function update_timeoffset() {
 }
 
 function find_theme() {
-	if [ "$1" = "config" ]; then
-		if ! ls -1 "$theme_dir"/"$cur_theme"/$cur_theme* > /dev/null 2>&1; then
-			printf "Did not find theme $cur_theme\nYour theme_dir may not be set correctly or your cur_theme may be mispelt, check your dynamicwall.config\nLoading default.config"
-      notify root "Could not find $cur_theme, falling back to default.config"
-			find_defaults
+		if ls -1 "$theme_dir"/"$1"/$1* > /dev/null 2>&1; then
+      filedir=$(basename $(find $theme_dir -name "$1*" -type f | tail -1))
+      ext=${filedir##*.}
+      case $ext in
+        jpg | jpeg )
+          pushd "$theme_dir/$1/" > /dev/null 2>&1;for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd > /dev/null 2>&1
+          return 1
+          ;;
+        png )
+          return 1
+          ;;
+        * )
+          echo "incompatible image type, exiting..."
+          return 0
+          exit
+          ;;
+      esac
+    elif [[ $2 = "p" ]]; then
+        return 0
+    else
+        printf "Did not find theme $1\nYour theme_dir may not be set correctly or your cur_theme may be mispelt, check your dynamicwall.config\nLoading default.config\n"
+        notify root "Could not find $1, falling back to default.config"
+        find_defaults
 		fi
-	else
-		if ls -1 "$theme_dir"/$1/$1* > /dev/null 2>&1; then
-			pushd "$theme_dir/$1/" > /dev/null 2>&1;for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd > /dev/null 2>&1
-			return 1
-		else
-			echo "Could not locate theme \"$1\""
-      notify manual "Could not locate theme \"$1\""
-      return 0
-		fi
-	fi
 }
 
 function find_defaults() {
@@ -184,7 +192,7 @@ else
 fi
 
 # Checks if users current theme exist
-find_theme config
+find_theme $cur_theme
 
 # Checks if refreshrate is in a valid format
 if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
@@ -210,12 +218,12 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		printf "no theme selected to preview\nusage: dynamicwall [--preview] <theme>\n"
 		exit
 	else
-		find_theme $2
+		find_theme $2 p
 		if [[ $? = 1 ]]; then
 			active_theme=$2
 		else
-      notify manual "Reverting to normal..."
-			echo "Reverting to normal..."
+      notify manual "Couldn't find $2, exiting..."
+			echo "Couldn't find $2, exiting..."
 			exit
 		fi
 		trap "break" INT
@@ -236,6 +244,7 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
     notify manual "Reverting to normal..."
 		date=$olddate
 		active_theme=$cur_theme
+    find_theme $active_theme
 		main_script
 		exit
 	fi
