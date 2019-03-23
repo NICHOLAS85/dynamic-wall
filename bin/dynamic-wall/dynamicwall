@@ -73,10 +73,10 @@ function update_refreshrate() {
 		sed -i '/OnBootSec='$active_refreshrate'/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
 		sed -i '/OnUnitActiveSec='$active_refreshrate'/!b;cOnUnitActiveSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
     notify root "Refresh rate updated, reloading systemd daemons"
-		echo "refresh rate updated"
+		echo "Refresh rate updated, reloading systemd daemons"
 		systemctl daemon-reload
 	elif [[ $scheduler = "cron" ]]; then
-        #necessary loop to prompt user for password needed for crontab update
+        #necessary loop to prompt user for password needed for crontab update until correct or skipped
         wrongpass=0
         skip=false
         while true; do
@@ -84,7 +84,8 @@ function update_refreshrate() {
                 if [ $wrongpass = 0 ]; then
                     passwd=$(kdialog --title "Dynamic Wall" --password "Enter password to update crontab")
                 else
-                    passwd=$(kdialog --title "Dynamic Wall" --password "Try Again") #Changes prompt when an incorrect password is entered
+                    #Changes prompt when an incorrect password is entered
+                    passwd=$(kdialog --title "Dynamic Wall" --password "Try Again")
                 fi
             fi
         if [ $? = 0 ]; then #checks if ok or cancel was selected
@@ -117,7 +118,7 @@ function update_refreshrate() {
         fi
 	else
     notify root "Uknown scheduler set in config file, not updating refreshrate..."
-		echo "Uknown scheduler set in config file, not updating..."
+		echo "Uknown scheduler set in config file, not updating refreshrate..."
 	fi
 	echo "$refreshrate" > "$oldvar_dir"/.active_refreshrate
 }
@@ -128,7 +129,7 @@ function update_theme() {
 	pushd "$theme_dir/$active_theme/" > /dev/null 2>&1;for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd > /dev/null 2>&1
 	sleep .5
   notify root "Theme updated to $cur_theme"
-	echo "theme updated"
+	echo "Theme updated to $cur_theme"
 	active_theme=$cur_theme
 }
 
