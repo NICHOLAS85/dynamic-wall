@@ -27,7 +27,7 @@ To uninstall run remove:
 ```
 You will be prompted for a password which will run the scripts as root.
 
-An additional script will be created in `/lib/systemd/system-sleep/` called dynamicwall.sh. This script simply updates the wallpaper when your computer wakes from suspension. You can delete it if you would like to implement this functionality some other way.
+You will be prompted as to whether or not you would like to install a system-sleep script to trigger dynamicwall on wakeup. This will install a script into `/lib/systemd/system-sleep/` called dynamicwall.sh. This script simply updates your wallpaper when your computer wakes from suspension.
 
 To check the status of the timer and service run:
 ```sh
@@ -46,7 +46,7 @@ If you would like to install this script and use cron instead of systemd, simply
 ./install --cron
 ```
 
-This will avoid installing any of the systemd service and timer files, as well as stop from installing the system-sleep script which is reliant on Systemd.
+This will avoid installing any of the systemd service and timer files. You will still be prompted if you want to install a system-sleep script, you can select n to skip this.
 
 A cronjob will automatically be generated for you. All config options should be adjusted in dynamicwall.config regardless of if you're using cron or systemd.
 
@@ -58,11 +58,23 @@ crontab -l
 ## Usage
 The systemd service, cronjob, and system-sleep script will automatically change your wallpaper at your set interval if an hour has passed in the day, otherwise it will not do anything. You can run the script manually by typing `dynamicwall` into your terminal.
 
-If you want to skip configuration checking use `dynamicwall --force` or run it with `-f`. This option uses your last saved config and ignores any changes added to your config files since.
+```sh
+$ dynamicwall -h
+Usage: dynamicwall [OPTIONS]
 
-Use the `--update` or `-u` argument if you want to forcibly save all your settings and run once. The script should automatically detect changes, but this can be used as a backup.
+optional args:
+  -f, --force            Skip configuration change check and update wallpaper
+  -p, --preview <theme>  Run a 24 hour preview for a certain theme
+  -c, --check            Force check configuration options and push to script
+  -h, --help             show help
 
-If you want to preview 24 hours of a specific theme use the `--preview` or `-p` argument then type the name of the theme you want to preview. ex: `dynamicwall --preview EarthView`
+```
+
+`-f` uses your last saved config and ignores any changes added to your config files since.
+
+`-c` forcibly saves all your settings and run's dynamicwall once. The script should automatically detect changes, but this can be used as a backup.
+
+`-p` allows you to preview a specific theme. ex: `dynamicwall --preview EarthView`
 
 ## Configuration
 All config options can be found in `dynamicwall.config`, adjust settings here. If you mess up your config `default.config` is a backup.
@@ -72,11 +84,12 @@ Available config options:
     -   Three themes are offered by default:<br/>`mojave_dynamic`, `NewOrleans`, and `EarthView`.
 *   `timeoffset`: Number of hours the cycle is shifted by.
 *   `refreshrate`: Rate at which script is called. Only 16 images are cycled so higher numbers ≠ smoother transitions.
-*   `notifications`: Sets whether or not desktop notifications are shown
+*   `notifications`: Sets whether or not desktop notifications are shown.
+    -   Notifications are normally shown when configuration options are changed, notifying the user their new settings are in effect.
 *   `theme_dir`: Path to your theme folder, if you decide to store themes elsewhere.
 *   `date`: Freeze wallpaper cycle at specific time of day.
 
-dynamicwall.config is checked every time the script is run and detects changes automatically, applying these changes immediately if they are valid. Run the script or use the `-u` argument to immediately apply changes as seen in the Usage section above.
+dynamicwall.config is checked every time the script is run and detects changes automatically, applying these changes immediately if they are valid. Run the script or use the `-c` argument to immediately apply changes as seen in the Usage section above.
 
 ## Other Notes
 
@@ -86,7 +99,7 @@ If you've compiled libheif from the source use heif-convert in the examples fold
 
 If you don't feel like installing libheif, Strukturag has hosted an example site which allows you to extract images from .heic files one at a time. [Here's a link](https://strukturag.github.io/libheif/)
 
-Only compatible with images ending in .jpeg or .jpg at the moment.
+**Only compatible with images ending in .jpeg, .jpg, or .png at the moment.**
 
 ## Credits
 EarthView theme created by developer Marcin Czachurski (<https://itnext.io/macos-mojave-dynamic-wallpapers-ii-f8b1e55c82f>)
@@ -100,10 +113,11 @@ mojave_dynamic theme created by Apple (<https://www.apple.com/macos/mojave/>)
 ## TODO
 -   [x]  Create install script
     -   [ ]  Save config options when updating
--   [x]  Create uninstall script
--   [x]  Find credit for included themes
--   [x]  Support cron
--   [x]  Create a silent mode, to hide KDE notifications
+    -   [x]  Optional system-sleep installation
+-   [x]  <s>Create uninstall script</s>
+-   [x]  <s>Find credit for included themes</s>
+-   [x]  <s>Support cron</s>
+-   [x]  <s>Create a silent mode, to hide KDE notifications</s>
 -   [ ]  Create a Randomize wallpaper option
 -   [ ]  Support other image types
 -   [ ]  Create override configs which are read from a themes folder
