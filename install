@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DW_VERSION="2019.3.17"
+DW_VERSION="2019.3.22"
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "This script must be run as root. Enter your password...";
@@ -11,11 +11,12 @@ fi
 usrnm=$(logname)
 
 if ! [ -f /bin/systemctl ] && ! [[ $1 = "--cron" ]]; then
-	echo -e "\e[00;31m Warning: systemd seems to be missing. Dynamic-Wall will not work. Run this setup with the --cron argument if you wish to use cron instead of systemd.\e[00m"
+	echo -e "\e[00;31mWarning: systemd seems to be missing. Dynamic-Wall will not work. Run this setup with the --cron argument if you wish to use cron instead of systemd.\e[00m"
   exit
-fi
-
-if [[ $1 = "--cron" ]]; then
+elif ! [[ $1 = "--cron" ]]; then
+  echo -e "\e[00;31mUnknown argument used, run either ./install or ./install --cron depending on if you want to use systemd or cron to update your wallpaper\e[00m"
+  exit
+else
   method="--cron"
 fi
 
@@ -37,19 +38,20 @@ echo -e "\e[00;32m[2/5] Removing previous versions...\e[00m"
 
 echo -e "\e[00;32m[3/5] Updating fields based on system and arguments...\e[00m"
 sed -i "s/USERNAME/$usrnm/g" $DIR/config/systemd/user/dynamicwall.service
+
 if [[ $method = "--cron" ]]; then
   sed -i "s/scheduler=systemd/scheduler=cron/g" $DIR/bin/dynamic-wall/dynamicwall.config
   sed -i "s/scheduler=systemd/scheduler=cron/g" $DIR/bin/dynamic-wall/default.config
+  sed -i "s/systemctl start dynamicwall\.service/\/bin\/bash \/home\/$usrnm\/bin\/dynamic-wall\/dynamicwall/g" $DIR/lib/systemd/system-sleep/dynamicwall.sh
 else
   sed -i "s/scheduler=cron/scheduler=systemd/g" $DIR/bin/dynamic-wall/dynamicwall.config
   sed -i "s/scheduler=cron/scheduler=systemd/g" $DIR/bin/dynamic-wall/default.config
+  sed -i "s/\/bin\/bash \/home\/$usrnm\/bin\/dynamic-wall\/dynamicwall/systemctl start dynamicwall.service/g" $DIR/lib/systemd/system-sleep/dynamicwall.sh
 fi
 
 # Start the installation
 
-echo -e "\e[00;32m\n[4/5] Copying the software files...\e[00m"
-
-
+echo -e "\e[00;32m\n[4/5] Copying software files...\e[00m"
 function install_files(){
     if [ "$2" = "" ];then
       echo "installing: $1"
@@ -61,6 +63,11 @@ function install_files(){
 
       install -o "$usrnm" -g "$usrnm" -d /home/$2/.$1
       install -o "$usrnm" -g "$usrnm" -D $DIR/$1/* /home/$2/.$1
+    elif [[ $2 = "usr" ]]; then
+      echo "installing: $1"
+
+      install -o "$usrnm" -g "$usrnm" -d usr/$1
+      install -o "$usrnm" -g "$usrnm" -D $DIR$1/* usr/$1
     else
       echo "installing: $1"
 
@@ -82,11 +89,34 @@ if [[ $method = "--cron" ]]; then
 else
   install_files "config/systemd/user" "$usrnm" "hidden"
   install_files "config/systemd/user/dynamicwall.timer.d" "$usrnm" "hidden"
-
-  install_files "/lib/systemd/system-sleep"
 fi
 
-
+while true; do
+  echo "Would you like to install a system-sleep script to trigger wallpaper on wakeup? [y/n/?]"
+  read answer
+  case $answer in
+    y | Y )
+      if  [[ -d /lib/systemd ]]; then
+        install_files "/lib/systemd/system-sleep"
+      elif [[ -d /usr/lib/systemd ]]; then
+        install_files "/lib/systemd/system-sleep" usr
+      else
+        echo -e "\e[00;31m Can't find system-sleep directory, skipping...\e[00m"
+      fi
+      break
+      ;;
+    n | N )
+      echo -e "\e[00;32m\nSkipping system-sleep files...\e[00m"
+      break
+      ;;
+    ? )
+      echo "Dynamic-Wall runs by default every 45 minutes. If the computer is suspended during this time the wallpaper will not update until another 45 minutes pass. This may lead to situations where the wallpaper stays set on a time earlier in the day meanwhile the computer suspends and wakes up later in the evening with the same wallpaper set. Installing a script in system-sleep will trigger the Dynamic-Wall script once on wakeup solving this problem and creating a seamless experience."
+      ;;
+    * )
+      echo -e "\e[00;31m Uknown answer provided.\e[00m"
+      ;;
+  esac
+done
 # Post installation
 
 echo -e "\e[00;32m\n[5/5] Creating the software links...\e[00m"
