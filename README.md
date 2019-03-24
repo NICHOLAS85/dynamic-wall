@@ -67,7 +67,6 @@ optional args:
   -p, --preview <theme>  Run a 24 hour preview for a certain theme
   -c, --check            Force check configuration options and push to script
   -h, --help             show help
-
 ```
 
 `-f` uses your last saved config and ignores any changes added to your config files since.
@@ -97,7 +96,7 @@ If you find some dynamic wallpapers in the .heic format, use the [libheif decode
 
 If you've compiled libheif from the source use heif-convert in the examples folder to convert your .heic into usable .jpeg's. Follow this format `./path/to/heif-convert /path/to/encoded/image.heic /path/to/themes/image/image.jpg`. Make sure the theme folder and image file names match. The images are automatically numbered. If for some reason the images are numbered out of order, just rename them and change their numbers.
 
-If you don't feel like installing libheif, Strukturag has hosted an example site which allows you to extract images from .heic files one at a time. [Here's a link](https://strukturag.github.io/libheif/)
+If you don't feel like installing libheif, Strukturag has hosted an example site which allows you to extract images from .heic files one at a time. [Here's a link.](https://strukturag.github.io/libheif/)
 
 **Only compatible with images ending in .jpeg, .jpg, or .png at the moment.**
 
@@ -107,8 +106,6 @@ EarthView theme created by developer Marcin Czachurski (<https://itnext.io/macos
 NewOrleans theme created by Graphic Designer Yann Gall (<https://yanngall.com/new-orleans-bayou-saint-jean>)
 
 mojave_dynamic theme created by Apple (<https://www.apple.com/macos/mojave/>)
-
-
 
 ## TODO
 -   [x]  Create install script
