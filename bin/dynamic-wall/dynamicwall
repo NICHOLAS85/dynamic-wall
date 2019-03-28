@@ -149,29 +149,47 @@ function find_theme() {
         jpg | jpeg )
           pushd "$theme_dir/$1/" > /dev/null 2>&1;for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd > /dev/null 2>&1
           return 1
+          itworked="TRUE"
           ;;
         png )
           return 1
+          itworked="TRUE"
           ;;
         * )
-          echo "incompatible image type, exiting..."
+          echo "Incompatible image type($ext), exiting..."
           return 0
           exit
           ;;
       esac
     elif [[ $2 = "p" ]]; then
-        return 0
+      return 0
     else
-        printf "Did not find theme $1\nYour theme_dir may not be set correctly or your cur_theme may be mispelt, check your dynamicwall.config\nLoading default.config\n"
-        notify root "Could not find $1, falling back to default.config"
-        find_defaults
+      ((++attempts))
+      printf "Did not find theme $1\nYour theme_dir may not be set correctly or your cur_theme may be mispelt, check your dynamicwall.config\nLoading default.config\n"
+      notify "Could not find $1, falling back to default.config" root
+      if [[ $attempts = 1 ]]; then
+        echo "Attempting to use default theme directory"
+        find_defaults "theme_dir"
+      elif [[ $attempts = 2 ]]; then
+        echo "Attempting to use default theme"
+        find_defaults "cur_theme"
+      else
+        echo "There are some major problems with your configuration, reinstalling is suggested"
+        itworked="FALSE"
+      fi
 		fi
 }
 
 function find_defaults() {
-	. /home/$usrnm/bin/dynamic-wall/default.config
-	find_theme $cur_theme
-	if ! [[ $? = 1 ]]; then
+	if ! [[ -f /home/$usrnm/bin/dynamic-wall/default.config ]]; then
+    echo "Can't find default config file, exiting..."
+    exit
+  fi
+
+  eval "$(cat /home/$usrnm/bin/dynamic-wall/default.config | grep "$1")"
+
+	find_theme $cur_theme &&\
+	if [[ $itworked != "TRUE" ]]; then
 		echo "Can't locate default theme directory, exiting..."
 		exit
 	fi
@@ -200,8 +218,14 @@ find_theme $cur_theme
 # Checks if refreshrate is in a valid format
 if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
 	echo "Refresh rate is invalid, loading default.config"
-  notify root "Invalid Refresh Rate($refreshrate), falling back to default.config"
-	find_defaults
+  notify "Invalid Refresh Rate($refreshrate), falling back to default.config" root
+	find_defaults "refreshrate=[[:digit:]]"
+  #check defaults
+  if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
+  	echo "Refresh rate is invalid, loading default.config"
+    notify "Invalid Refresh Rate($refreshrate), your defaults are messed up" root
+  	exit
+  fi
 fi
 
 # Checks if date is a number and then if its in a valid range
