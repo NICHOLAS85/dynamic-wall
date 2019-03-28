@@ -58,14 +58,14 @@ function set_wallpaper() {
 
 function notify() {
   if [[ $notifications = "true" ]] || [[ $notifications = "True" ]] || [[ $notifications = "TRUE" ]]; then
-    if [[ $1 = "root" ]]; then
+    if [[ $2 = "root" ]]; then
       sudo -u "$usrnm" \
       XDG_RUNTIME_DIR=/run/user/1000\
   		DISPLAY=:0 \
   		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-  		kdialog --title "Dynamic Wallpaper" --passivepopup "$2" 4
-    elif [[ $1 = "manual" ]]; then
-      kdialog --title "Dynamic Wallpaper" --passivepopup "$2" 4
+  		kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
+    elif [[ $2 = "manual" ]]; then
+      kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
     fi
   fi
 }
@@ -74,7 +74,7 @@ function update_refreshrate() {
 	if [[ "$scheduler" = "systemd" ]]; then
 		sed -i '/OnBootSec='$active_refreshrate'/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
 		sed -i '/OnUnitActiveSec='$active_refreshrate'/!b;cOnUnitActiveSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
-    notify root "Refresh rate updated, reloading systemd daemons"
+    notify "Refresh rate updated, reloading systemd daemons" root
 		echo "Refresh rate updated, reloading systemd daemons"
 		systemctl daemon-reload
 	elif [[ $scheduler = "cron" ]]; then
@@ -113,13 +113,13 @@ function update_refreshrate() {
                 refreshrate_c=${refreshrate%?}
                 echo $passwd | sudo sh -c 'crontab -u '$usrnm' -l | grep -v "/home/'$usrnm'/bin/dynamic-wall/dynamicwall"  | crontab -u '$usrnm' - && crontab -u '$usrnm' -l | { cat; echo "* */'$refreshrate_c' * * * /home/'$usrnm'/bin/dynamic-wall/dynamicwall"; } | crontab -u '$usrnm' -'
             fi
-            notify root "Refresh rate updated, crontab refreshed"
+            notify "Refresh rate updated, crontab refreshed" root
             echo "refresh rate updated"
         else
             echo "skipped"
         fi
 	else
-    notify root "Uknown scheduler set in config file, not updating refreshrate..."
+    notify "Uknown scheduler set in config file, not updating refreshrate..." root
 		echo "Uknown scheduler set in config file, not updating refreshrate..."
 	fi
 	echo "$refreshrate" > "$oldvar_dir"/.active_refreshrate
@@ -130,14 +130,14 @@ function update_theme() {
 	# Change .jpeg file extension to .jpg before running the script
 	pushd "$theme_dir/$active_theme/" > /dev/null 2>&1;for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd > /dev/null 2>&1
 	sleep .5
-  notify root "Theme updated to $cur_theme"
+  notify "Theme updated to $cur_theme" root
 	echo "Theme updated to $cur_theme"
 	active_theme=$cur_theme
 }
 
 function update_timeoffset() {
 		echo "$timeoffset" > "$oldvar_dir"/.active_timeoffset
-    notify root "Time offset updated to $timeoffset"
+    notify "Time offset updated to $timeoffset" root
 		echo "time offset updated"
 }
 
@@ -180,12 +180,12 @@ function find_defaults() {
 # Checks if timeoffset is a number and then if it is range
 if ! [ $timeoffset -eq $timeoffset 2> /dev/null ]; then
 	echo "Time offset is invalid, loading default.config"
-  notify root "Invalid Time Offset($timeoffset), falling back to default.config"
-	find_defaults
+  notify "Invalid Time Offset($timeoffset), falling back to default.config" root
+	find_defaults "timeoffset=[[:digit:]]"
 elif ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
 	echo "Time offset is out of range, loading default.config"
-  notify root "Time Offset is out of range($timeoffset), falling back to default.config"
-	find_defaults
+  notify "Time Offset is out of range($timeoffset), falling back to default.config" root
+	find_defaults "timeoffset=[[:digit:]]"
 elif [[ $(($date + $timeoffset)) -gt 24 ]]; then
 	date=$(($date - 24 + $timeoffset))
 elif [[ $(($date + $timeoffset)) -lt 0 ]]; then
@@ -207,12 +207,10 @@ fi
 # Checks if date is a number and then if its in a valid range
 if ! [ $date -eq $date 2> /dev/null ]; then
 	echo "Date returning invalid value, loading default.config"
-  notify root "Invalid date($date), falling back to default.config"
-	find_defaults
+  notify "Invalid date($date), falling back to default.config" root
 elif ! [[ "$date" -le "24" && "$date" -ge "0" ]]; then
 	echo "Date is out of range, this shouldn't happen... loading default.config"
-  notify root "Date is out of range($date), falling back to default.config"
-	find_defaults
+  notify "Date is out of range($date), falling back to default.config" root
 fi
 
 # Check what argument was passed to script
@@ -225,7 +223,7 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		if [[ $? = 1 ]]; then
 			active_theme=$2
 		else
-      notify manual "Couldn't find $2, exiting..."
+      notify "Couldn't find $2, exiting..." manual
 			echo "Couldn't find $2, exiting..."
 			exit
 		fi
@@ -244,7 +242,7 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		done
 		qdbus $dbusRef close
 		echo "Preview Complete, reverting to normal..."
-    notify manual "Reverting to normal..."
+    notify "Reverting to normal..." manual
 		date=$olddate
 		active_theme=$cur_theme
     find_theme $active_theme
