@@ -41,6 +41,7 @@ function set_wallpaper() {
 	full_image_path=$(realpath "$1")
 	#Run process as currently logged in user, export display and DBUS session, and then evaluate wallpaper script
 	sudo -u "$usrnm" \
+  XDG_RUNTIME_DIR=/run/user/1000\
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 	qdbus org.kde.plasmashell /PlasmaShell evaluateScript '
@@ -59,6 +60,7 @@ function notify() {
   if [[ $notifications = "true" ]] || [[ $notifications = "True" ]] || [[ $notifications = "TRUE" ]]; then
     if [[ $1 = "root" ]]; then
       sudo -u "$usrnm" \
+      XDG_RUNTIME_DIR=/run/user/1000\
   		DISPLAY=:0 \
   		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
   		kdialog --title "Dynamic Wallpaper" --passivepopup "$2" 4
