@@ -208,9 +208,11 @@ fi
 if ! [ $date -eq $date 2> /dev/null ]; then
 	echo "Date returning invalid value, loading default.config"
   notify "Invalid date($date), falling back to default.config" root
+	date=$(date +%H | sed 's/\<0//g')
 elif ! [[ "$date" -le "24" && "$date" -ge "0" ]]; then
 	echo "Date is out of range, this shouldn't happen... loading default.config"
   notify "Date is out of range($date), falling back to default.config" root
+	date=$(date +%H | sed 's/\<0//g')
 fi
 
 # Check what argument was passed to script
@@ -290,6 +292,7 @@ echo "Theme currently in use is $cur_theme"
 echo "Current theme directory is $theme_dir"
 echo "Time is currently $date"
 echo "Time offset by $timeoffset"
+echo "Refreshrate is $refreshrate"
 
 # Check if time has changed since last exec, then set wallpaper based on time
 if [[ "$olddate" != "$date" ]]; then
