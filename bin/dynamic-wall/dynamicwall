@@ -21,19 +21,19 @@ optional args:
 function main_script() {
 	if [[ "$date" -le "4" ]]; then
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.$ext"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme"16.$ext
+		set_wallpaper "$theme_dir/$active_theme/$active_theme"16."$ext"
 	elif [[ "$date" -le "9" ]]; then
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 4)).$ext"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 4))."$ext
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 4)).""$ext"
 	elif [[ "$date" -le "16" ]]; then
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 5)).$ext"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 5))."$ext
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 5)).""$ext"
 	elif [[ "$date" -le "21" ]]; then
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 6)).$ext"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 6))."$ext
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 6)).""$ext"
 	else
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.$ext"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme"16.$ext
+		set_wallpaper "$theme_dir/$active_theme/$active_theme"16."$ext"
 	fi
 	echo "$date" > "$oldvar_dir"/.olddate
 }
@@ -84,8 +84,8 @@ function notisend() {
 #Update refreshrate depending on if systemd or cron is in use
 function update_refreshrate() {
 	if [[ "$scheduler" = "systemd" ]]; then
-		sed -i '/OnBootSec='$active_refreshrate'/!b;cOnBootSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
-		sed -i '/OnUnitActiveSec='$active_refreshrate'/!b;cOnUnitActiveSec='$refreshrate /home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
+		sed -i '/OnBootSec='"$active_refreshrate"'/!b;cOnBootSec='"$refreshrate" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
+		sed -i '/OnUnitActiveSec='"$active_refreshrate"'/!b;cOnUnitActiveSec='"$refreshrate" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
     echo "$refreshrate" > "$oldvar_dir"/.active_refreshrate
     notisend "Refresh rate updated, reloading systemd daemons" root
 		systemctl daemon-reload
@@ -107,10 +107,10 @@ function update_refreshrate() {
           echo "correct password"
           if [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][m] ]] || [[ "$refreshrate" == [[:xdigit:]][m] ]]; then
             refreshrate_c=${refreshrate%?}
-            echo $passwd | sudo sh -c 'crontab -u '$usrnm' -l | grep -v "/home/'$usrnm'/bin/dynamic-wall/dynamicwall"  | crontab -u '$usrnm' - && crontab -u '$usrnm' -l | { cat; echo "*/'$refreshrate_c' * * * * /home/'$usrnm'/bin/dynamic-wall/dynamicwall"; } | crontab -u '$usrnm' -'
+            echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v "/home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo "*/'"$refreshrate_c"' * * * * /home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
           elif [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][h] ]] || [[ "$refreshrate" == [[:xdigit:]][h] ]]; then
             refreshrate_c=${refreshrate%?}
-            echo $passwd | sudo sh -c 'crontab -u '$usrnm' -l | grep -v "/home/'$usrnm'/bin/dynamic-wall/dynamicwall"  | crontab -u '$usrnm' - && crontab -u '$usrnm' -l | { cat; echo "* */'$refreshrate_c' * * * /home/'$usrnm'/bin/dynamic-wall/dynamicwall"; } | crontab -u '$usrnm' -'
+            echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v "/home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo "* */'"$refreshrate_c"' * * * /home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
           fi
           echo "$refreshrate" > "$oldvar_dir"/.active_refreshrate
           notisend "Refresh rate updated, crontab refreshed" root
@@ -144,8 +144,8 @@ function update_timeoffset() {
 }
 
 function find_theme() {
-		if ls -1 "$theme_dir"/"$1"/$1* > /dev/null 2>&1; then
-      filedir=$(basename "$(find $theme_dir -name "$1*" -type f | tail -1)")
+		if ls -1 "$theme_dir"/"$1"/"$1"* > /dev/null 2>&1; then
+      filedir=$(basename "$(find "$theme_dir" -name "$1*" -type f | tail -1)")
       ext=${filedir##*.}
       case $ext in
         jpg | jpeg )
@@ -167,13 +167,13 @@ function find_theme() {
       notisend "Could not find $1, falling back to default.config" root
       if [[ $attempts = 1 ]]; then
         echo "Attempting to use default theme directory"
-        find_defaults "theme_dir" $2
+        find_defaults "theme_dir" "$2"
       elif [[ $attempts = 2 ]]; then
         if [[ $p = "set" ]]; then
           return 1
         fi
         echo "Attempting to use default theme"
-        find_defaults "cur_theme" $2
+        find_defaults "cur_theme" "$2"
       else
         echo "There are some major problems with your configuration, reinstalling is suggested"
         return 1
@@ -187,16 +187,16 @@ function find_defaults() {
     exit
   fi
 
-  eval "$(cat /home/$usrnm/bin/dynamic-wall/default.config | grep "$1")"
+  eval "$(grep "$1" < /home/"$usrnm"/bin/dynamic-wall/default.config)"
   if [[ $2 = "p" ]]; then
     echo "p is set"
-    find_theme $previewtheme &&\
+    find_theme "$previewtheme" &&\
   	if [[ $? = 1 ]]; then
   		echo "Can't locate default theme directory, exiting..."
   		exit
   	fi
   else
-    find_theme $cur_theme &&\
+    find_theme "$cur_theme" &&\
   	if [[ $? = 1 ]]; then
   		echo "Can't locate default theme directory, exiting..."
   		exit
@@ -214,16 +214,16 @@ elif ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
 	echo "Time offset is out of range, loading default.config"
   notisend "Time Offset is out of range($timeoffset), falling back to default.config" root
 	find_defaults "timeoffset=[[:digit:]]"
-elif [[ $(($date + $timeoffset)) -gt 24 ]]; then
-	date=$(($date - 24 + $timeoffset))
-elif [[ $(($date + $timeoffset)) -lt 0 ]]; then
-	date=$(($date + 24 + $timeoffset))
+elif [[ $((date + timeoffset)) -gt 24 ]]; then
+	date=$((date - 24 + timeoffset))
+elif [[ $((date + timeoffset)) -lt 0 ]]; then
+	date=$((date + 24 + timeoffset))
 else
-	date=$(($date + $timeoffset))
+	date=$((date + timeoffset))
 fi
 
 # Checks if users current theme exist
-find_theme $cur_theme
+find_theme "$cur_theme"
 
 # Checks if refreshrate is in a valid format
 if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
@@ -257,7 +257,7 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		printf "no theme selected to preview\nusage: dynamicwall [--preview] <theme>\n"
 		exit
 	else
-		find_theme $2 p
+		find_theme "$2" p
 		if [[ $? = 0 ]]; then
 			active_theme=$2
 		else
@@ -283,7 +283,7 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
     notisend "Reverting to normal..." manual
 		date=$olddate
 		active_theme=$cur_theme
-    find_theme $active_theme
+    find_theme "$active_theme"
 		main_script
 		exit
 	fi
