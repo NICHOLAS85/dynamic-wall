@@ -41,7 +41,7 @@ function set_wallpaper() {
 	full_image_path=$(realpath "$1")
 	#Run process as currently logged in user, export display and DBUS session, and then evaluate wallpaper script
 	sudo -u "$usrnm" \
-  XDG_RUNTIME_DIR=/run/user/1000\
+  XDG_RUNTIME_DIR=/run/user/1000 \
 	DISPLAY=:0 \
 	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
 	qdbus org.kde.plasmashell /PlasmaShell evaluateScript '
@@ -57,17 +57,24 @@ function set_wallpaper() {
 }
 
 function notify() {
-  if [[ $notifications = "true" ]] || [[ $notifications = "True" ]] || [[ $notifications = "TRUE" ]]; then
+  case $notifications in
+    t | T | true | True | TRUE )
     if [[ $2 = "root" ]]; then
       sudo -u "$usrnm" \
-      XDG_RUNTIME_DIR=/run/user/1000\
-  		DISPLAY=:0 \
-  		DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-  		kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
+      XDG_RUNTIME_DIR=/run/user/1000 \
+      DISPLAY=:0 \
+      DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+      kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
     elif [[ $2 = "manual" ]]; then
       kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
     fi
-  fi
+      ;;
+    f | F | false | False | FALSE )
+      ;;
+    * )
+      echo "Uknown option for notification settings, disabling notifications..."
+      ;;
+  esac
 }
 
 function update_refreshrate() {
