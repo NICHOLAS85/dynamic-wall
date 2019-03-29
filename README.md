@@ -16,18 +16,22 @@ Started as various edits to the dynamic wallpaper scripts from [Raitaro](https:/
 
 ***Only compatible with distros that use KDE Plasma as their DE***
 
-To install run setup:
+**Prerequisites:**
+*   kdialog
+*   systemd OR cron
+
+To install run:
 ```sh
 ./install
 ```
 
-To uninstall run remove:
+To uninstall run:
 ```sh
 ./remove
 ```
 You will be prompted for a password which will run the scripts as root.
 
-You will be prompted as to whether or not you would like to install a system-sleep script to trigger dynamicwall on wakeup. This will install a script into `/lib/systemd/system-sleep/` called dynamicwall.sh. This script simply updates your wallpaper when your computer wakes from suspension.
+During installation a prompt will appear asking whether or not you would like to install a system-sleep script to trigger dynamicwall on wakeup. This will install a script into `/lib/systemd/system-sleep/` called dynamicwall.sh. This script simply updates your wallpaper when your computer wakes from suspension.
 
 To check the status of the timer and service run:
 ```sh
@@ -63,8 +67,8 @@ $ dynamicwall -h
 Usage: dynamicwall [OPTIONS]
 
 optional args:
-  -f, --force            Skip configuration change check and update wallpaper
-  -p, --preview <theme>  Run a 24 hour preview for a certain theme
+  -f, --force            Skip configuration check and update wallpaper immediately
+  -p, --preview <theme>  Run a 24 hour preview for a certain theme***EXPERIMENTAL***
   -c, --check            Force check configuration options and push to script
   -h, --help             show help
 ```
@@ -73,6 +77,7 @@ optional args:
 
 `-c` forcibly saves all your settings and run's dynamicwall once. The script should automatically detect changes, but this can be used as a backup.
 
+**Warning EXPERIMENTAL, can cause high memory usage and trigger [EARLYOOM](https://github.com/rfjakob/earlyoom) if in use**  
 `-p` allows you to preview a specific theme. ex: `dynamicwall --preview EarthView`
 
 ## Configuration
