@@ -206,7 +206,7 @@ function find_defaults() {
 }
 
 # Checks if timeoffset is a number and then if it is range
-if ! [ $timeoffset -eq $timeoffset ] 2> /dev/null; then
+if ! [ "$timeoffset" -eq "$timeoffset" ] 2> /dev/null; then
   notisend "Invalid Time Offset($timeoffset), falling back to default.config" root
 	find_defaults "timeoffset=[[:digit:]]"
 elif ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
