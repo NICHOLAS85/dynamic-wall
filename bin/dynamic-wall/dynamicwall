@@ -323,11 +323,21 @@ if [[ "$active_theme" != "$cur_theme" ]]; then
 	main_script
 fi
 
-echo "Theme currently in use is $cur_theme"
-echo "Current theme directory is $theme_dir"
-echo "Time is currently $date"
-echo "Time offset by $timeoffset"
-echo "Refreshrate is $refreshrate"
+case $printvariables in
+  TRUE | True | true | T | t )
+    echo "Theme currently in use is $cur_theme"
+    echo "Current theme directory is $theme_dir"
+    echo "Time is currently $date"
+    echo "Time offset by $timeoffset"
+    echo "Refreshrate is $refreshrate"
+    ;;
+  FALSE | False | false | F | f )
+    ;;
+  * )
+    echo "Unknown option \"$printvariables\" for printvariables, assuming false"
+    ;;
+esac
+
 
 # Check if time has changed since last exec, then set wallpaper based on time
 if [[ "$olddate" != "$date" ]]; then
