@@ -44,12 +44,10 @@ echo -e "\e[00;32m[3/5] Updating fields based on system and arguments...\e[00m"
 if [[ $method = "--cron" ]]; then
   sed -i "s/scheduler=systemd/scheduler=cron/g" $DIR/bin/dynamic-wall/dynamicwall.config
   sed -i "s/scheduler=systemd/scheduler=cron/g" $DIR/bin/dynamic-wall/default.config
-  sed -i "s/systemctl start dynamicwall\.service/\/bin\/bash \/home\/$usrnm\/bin\/dynamic-wall\/dynamicwall/g" $DIR/lib/systemd/system-sleep/dynamicwall.sh
   echo "Updated scheduler to cron"
 else
   sed -i "s/scheduler=cron/scheduler=systemd/g" $DIR/bin/dynamic-wall/dynamicwall.config
   sed -i "s/scheduler=cron/scheduler=systemd/g" $DIR/bin/dynamic-wall/default.config
-  sed -i "s/\/bin\/bash \/home\/$usrnm\/bin\/dynamic-wall\/dynamicwall/systemctl start dynamicwall.service/g" $DIR/lib/systemd/system-sleep/dynamicwall.sh
   echo "Updated scheduler to systemd"
   sed -i "s/USERNAME/$usrnm/g" $DIR/config/systemd/user/dynamicwall.service
   echo "Updated dynamicwall.service"
