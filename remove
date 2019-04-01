@@ -13,8 +13,11 @@ cd $DIR || { echo "Error, exiting..."; exit; }
 
 if [ -f /bin/systemctl ]; then
 	echo -e "\n\033[0;33mDisabling dynamicwall systemd daemons...\033[0m"
+  if systemctl is-active --quiet dynamicwall.timer
+  then
   systemctl stop dynamicwall.timer
   systemctl disable dynamicwall.service dynamicwall.timer
+  fi
   echo ""
 fi
 
@@ -24,13 +27,17 @@ if crontab -u $usrnm -l | grep "/home/$usrnm/bin/dynamic-wall/dynamicwall"; then
 fi
 
 echo -e "\033[0;33mRemoving software links...\033[0m"
-rm -f /usr/local/bin/dynamicwall
+if rm /usr/local/bin/dynamicwall 2> /dev/null
+then
 echo "Removed symlink /usr/local/bin/dynamicwall."
+fi
 
 if [ -f /bin/systemctl ]; then
 	echo -e "\n\033[0;33mRemoving dynamicwall.timer.d dropin...\033[0m"
-  rm -f /etc/systemd/system/dynamicwall.timer.d
+  if rm -r /etc/systemd/system/dynamicwall.timer.d 2> /dev/null
+  then
   echo "Removed /etc/systemd/system/dynamicwall.timer.d."
+  fi
   echo ""
 fi
 
@@ -48,7 +55,7 @@ function remove_file(){
 function remove_dir(){
 if [[ "$2" = "ifempty" ]]; then
   if [ -d $1 ]; then
-    if rm -d $1
+    if rm -d $1  2> /dev/null
     then
     echo "removed empty directory: $1"
     fi

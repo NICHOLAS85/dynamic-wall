@@ -57,17 +57,10 @@ fi
 
 echo -e "\e[00;32m\n[4/5] Copying software files...\e[00m"
 function install_files(){
-    if [ "$2" = "" ];then
-      echo "installing: $1"
+  echo "installing: $1"
 
-      install -o "$usrnm" -g "$usrnm" -d $1
-      install -o "$usrnm" -g "$usrnm" -D $DIR$1/* $1
-    elif [ "$2" != "" ]; then
-      echo "installing: $1"
-
-      install -o "$usrnm" -g "$usrnm" -d $2$1
-      install -o "$usrnm" -g "$usrnm" -D $DIR/$1/* $2$1
-    fi
+  install -o "$usrnm" -g "$usrnm" -d $2$1
+  install -o "$usrnm" -g "$usrnm" -D $DIR/$1/* $2$1
 }
 
 install_files "/bin" "/home/$usrnm"
@@ -88,6 +81,7 @@ fi
 
 while true; do
   echo -e "\e[00;32m\nWould you like to install a system-sleep script to trigger dynamicwall on wakeup? [y/n/?]\e[00m"
+  echo -n "Input:"
   read answer
   case $answer in
     y | Y )
