@@ -17,6 +17,11 @@ optional args:
   -c, --check         	 Force check configuration options and push to script
   -h, --help             show help"
 
+if [[ $1 = "--help" ]] || [[ $1 = "-h" ]]; then
+	printf '%s\n' "$HELP"
+	exit
+fi
+
 #Determine image to use based on time
 function main_script() {
 	if [[ "$date" -le "4" ]]; then
@@ -299,9 +304,6 @@ elif [[ $1 = "--check" ]] || [[ $1 = "-c" ]]; then
 	update_theme
 	update_timeoffset
 	main_script
-	exit
-elif [[ $1 = "--help" ]] || [[ $1 = "-h" ]]; then
-	printf '%s\n' "$HELP"
 	exit
 elif ! [[ $1 = "" ]]; then
 	echo "Unknown argument passed"
