@@ -13,9 +13,10 @@ if . "$theme_dir"/"$cur_theme"/themeoverride.config 2> /dev/null
 then
   case $printvariables in
     TRUE | True | true | T | t )
-    echo "Loading $cur_theme variable overrides from themeoverride.config"
+    echo "Loading variable overrides from themeoverride.config for $cur_theme"
     echo "The following variables have been overridden:"
-    cat "$theme_dir"/"$cur_theme"/themeoverride.config | grep =
+    grep -v "#" "$theme_dir"/"$cur_theme"/themeoverride.config
+    echo ""
       ;;
     FALSE | False | false | F | f )
       ;;
