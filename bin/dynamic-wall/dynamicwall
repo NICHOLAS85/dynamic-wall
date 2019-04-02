@@ -44,19 +44,19 @@ fi
 function main_script() {
 	if [[ "$date" -le "4" ]]; then
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.$ext"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme"16."$ext"
+		set_wallpaper "$theme_dir"/"$active_theme"/"$active_theme"16."$ext"
 	elif [[ "$date" -le "9" ]]; then
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 4)).$ext"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 4)).""$ext"
+		set_wallpaper "$theme_dir"/"$active_theme"/"$active_theme"$((date - 4))."$ext"
 	elif [[ "$date" -le "16" ]]; then
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 5)).$ext"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 5)).""$ext"
+		set_wallpaper "$theme_dir"/"$active_theme"/"$active_theme"$((date - 5))."$ext"
 	elif [[ "$date" -le "21" ]]; then
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 6)).$ext"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 6)).""$ext"
+		set_wallpaper "$theme_dir"/"$active_theme"/"$active_theme"$((date - 6))."$ext"
 	else
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.$ext"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme"16."$ext"
+		set_wallpaper "$theme_dir"/"$active_theme"/"$active_theme"16."$ext"
 	fi
 	echo "$date" > "$oldvar_dir"/.olddate
 }
