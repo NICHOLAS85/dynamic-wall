@@ -81,7 +81,7 @@ optional args:
 `-p` allows you to preview a specific theme. ex: `dynamicwall --preview EarthView`
 
 ## Configuration
-All config options can be found in `dynamicwall.config`, adjust settings here. If you mess up your config `default.config` is a backup.
+All config options can be found in `dynamicwall.config`, adjust settings here. If you mess up your config `default.config` is a backup.<br/>In addition to `dynamicwall.config` there is a file named `themeoverride.config` which can be placed into a theme folder. Any variables set in here will override the value set in `dynamicwall.config` allowing for per-theme configuration.
 
 Available config options:
 *   `cur_theme`: Choose the theme which will be used.
@@ -122,4 +122,4 @@ mojave_dynamic theme created by Apple (<https://www.apple.com/macos/mojave/>)
 -   [x]  <s>Create a silent mode, to hide KDE notifications</s>
 -   [ ]  Create a Randomize wallpaper option
 -   [ ]  Support other image types
--   [x]  Create override configs which are read from a themes folder
+-   [x]  <s>Create override configs which are read from a themes folder</s>

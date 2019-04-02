@@ -154,8 +154,6 @@ function update_refreshrate() {
 
 function update_theme() {
 	echo "$cur_theme" > "$oldvar_dir"/.active_theme
-	# Change .jpeg file extension to .jpg before running the script
-	sleep .5
   notisend "Theme updated to $cur_theme" root
 	active_theme=$cur_theme
 }
@@ -171,7 +169,6 @@ function find_theme() {
       ext=${filedir##*.}
       case $ext in
         jpg | jpeg )
-          #pushd "$theme_dir/$1/" > /dev/null 2>&1;for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd > /dev/null 2>&1
           return 0
           ;;
         png )
@@ -185,19 +182,28 @@ function find_theme() {
       esac
     else
       ((++attempts))
-      printf "Did not find theme $1\nYour theme_dir may not be set correctly or your cur_theme may be mispelt, check your dynamicwall.config\nLoading default.config\n"
-      notisend "Could not find $1, falling back to default.config" root
+      echo ""
+      echo "Attempt $attempts"
       if [[ $attempts = 1 ]]; then
+        notisend "Could not find $1, attempting to recover..." root
+        printf "Your theme_dir may not be set correctly or your cur_theme may be mispelt, check your dynamicwall.config\\nAttempting to recover...\\n"
+
         echo "Attempting to use default theme directory"
         find_defaults "theme_dir" "$2"
       elif [[ $attempts = 2 ]]; then
         if [[ $p = "set" ]]; then
           return 1
         fi
-        echo "Attempting to use default theme"
+        echo "Could not find theme in default directory"
+        echo "Attempting to use default theme in users theme directory"
+        eval "$(grep "theme_dir" < /home/"$usrnm"/bin/dynamic-wall/dynamicwall.config)"
         find_defaults "cur_theme" "$2"
+      elif [[ $attempts = 3 ]]; then
+        echo "Could not find default theme in users theme directory"
+        echo "Attempting to use default theme in default theme directory"
+        find_defaults "theme_dir" "$2"
       else
-        echo "There are some major problems with your configuration, reinstalling is suggested"
+        echo "There are some major problems with your configuration, reinstall dynamicwall to fix your configuration files"
         return 1
       fi
 		fi
@@ -274,7 +280,7 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
   p="set"
   previewtheme="$2"
 	if [[ $2 = "" ]]; then
-		printf "no theme selected to preview\nusage: dynamicwall [--preview] <theme>\n"
+		printf "no theme selected to preview\\nusage: dynamicwall [--preview] <theme>\\n"
 		exit
 	else
 		find_theme "$2" p
