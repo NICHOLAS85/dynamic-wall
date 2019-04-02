@@ -122,4 +122,4 @@ mojave_dynamic theme created by Apple (<https://www.apple.com/macos/mojave/>)
 -   [x]  <s>Create a silent mode, to hide KDE notifications</s>
 -   [ ]  Create a Randomize wallpaper option
 -   [ ]  Support other image types
--   [ ]  Create override configs which are read from a themes folder
+-   [x]  Create override configs which are read from a themes folder

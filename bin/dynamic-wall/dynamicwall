@@ -8,6 +8,23 @@ date=$(date +%H | sed 's/\<0//g')
 # Source Config File
 . /home/"$usrnm"/bin/dynamic-wall/dynamicwall.config || { . /home/"$usrnm"/bin/dynamic-wall/default.config; echo "Can't find user config files, loading defaults...";} || { echo "Can't find user or default config files, exiting..."; exit; }
 
+# Source theme specific variable overrides
+if . "$theme_dir"/"$cur_theme"/themeoverride.config 2> /dev/null
+then
+  case $printvariables in
+    TRUE | True | true | T | t )
+    echo "Loading $cur_theme variable overrides from themeoverride.config"
+    echo "The following variables have been overridden:"
+    cat "$theme_dir"/"$cur_theme"/themeoverride.config | grep =
+      ;;
+    FALSE | False | false | F | f )
+      ;;
+    * )
+      echo "Unknown option \"$printvariables\" for printvariables, assuming false"
+      ;;
+  esac
+fi
+
 HELP="\
 Usage: dynamicwall [OPTIONS]
 
