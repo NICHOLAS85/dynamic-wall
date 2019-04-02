@@ -25,21 +25,22 @@ fi
 
 # Set the scripts permisions
 
-echo -e "\e[00;32m[1/5] Setting Permissions...\e[00m"
+echo -e "\e[00;32m[1/6] Setting Permissions...\e[00m"
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "$DIR" || { echo "Error, exiting..."; exit; }
-chmod a+x ./remove
-chmod a+x ./lib/systemd/system-sleep/dynamicwall.sh
-chmod +x ./bin/dynamic-wall/dynamicwall
+chmod -v a+x ./remove
+chmod -v a+x ./lib/systemd/system-sleep/dynamicwall.sh
+chmod -v +x ./bin/dynamic-wall/dynamicwall
+echo ""
 
 # Remove previous versions
 
-echo -e "\e[00;32m[2/5] Removing previous versions...\e[00m"
+echo -e "\e[00;32m[2/6] Removing previous versions...\e[00m"
 ./remove -s
 
 # Update username dependent fields
 
-echo -e "\e[00;32m[3/5] Updating fields based on system and arguments...\e[00m"
+echo -e "\e[00;32m[3/6] Updating fields based on system and arguments...\e[00m"
 
 if [[ $method = "--cron" ]]; then
   sed -i "s/scheduler=systemd/scheduler=cron/g" $DIR/bin/dynamic-wall/dynamicwall.config
@@ -55,7 +56,7 @@ fi
 
 # Start the installation
 
-echo -e "\e[00;32m\n[4/5] Copying software files...\e[00m"
+echo -e "\e[00;32m\n[4/6] Copying software files...\e[00m"
 function install_files(){
   echo "installing: $1 into $2$1"
 
@@ -63,13 +64,13 @@ function install_files(){
   install -o "$usrnm" -g "$usrnm" -D $DIR/$1/* $2$1
 }
 
-install_files "/bin" "/home/$usrnm"
-install_files "/bin/dynamic-wall" "/home/$usrnm"
+install_files "bin" "/home/$usrnm/"
+install_files "bin/dynamic-wall" "/home/$usrnm/"
 cp -pR $DIR/bin/dynamic-wall/oldvar /home/"$usrnm"/bin/dynamic-wall/.oldvar
-install_files "/bin/dynamic-wall/themes" "/home/$usrnm"
-install_files "/bin/dynamic-wall/themes/EarthView" "/home/$usrnm"
-install_files "/bin/dynamic-wall/themes/mojave_dynamic" "/home/$usrnm"
-install_files "/bin/dynamic-wall/themes/NewOrleans" "/home/$usrnm"
+install_files "bin/dynamic-wall/themes" "/home/$usrnm/"
+install_files "bin/dynamic-wall/themes/EarthView" "/home/$usrnm/"
+install_files "bin/dynamic-wall/themes/mojave_dynamic" "/home/$usrnm/"
+install_files "bin/dynamic-wall/themes/NewOrleans" "/home/$usrnm/"
 
 if [[ $method = "--cron" ]]; then
   echo -e "\e[00;32m\nSkipping systemd files due to --cron installation...\e[00m"
@@ -80,15 +81,15 @@ else
 fi
 
 while true; do
-  echo -e "\e[00;32m\nWould you like to install a system-sleep script to trigger dynamicwall on wakeup? [y/n/?]\e[00m"
+  echo -e "\n\033[0;33mWould you like to install a system-sleep script to trigger dynamicwall on wakeup? [y/n/?]\033[0m"
   echo -n "Input:"
   read answer
   case $answer in
     y | Y )
       if  [[ -d /lib/systemd ]]; then
-        install_files "/lib/systemd/system-sleep"
+        install_files "lib/systemd/system-sleep" "/"
       elif [[ -d /usr/lib/systemd ]]; then
-        install_files "/lib/systemd/system-sleep" "usr/"
+        install_files "lib/systemd/system-sleep" "usr/"
       else
         echo -e "\e[00;31mCan't find system-sleep directory, skipping...\e[00m"
       fi
@@ -108,18 +109,18 @@ while true; do
 done
 # Post installation
 
-echo -e "\e[00;32m\n[5/5] Creating software links...\e[00m"
+echo -e "\e[00;32m\n[5/6] Creating software links...\e[00m"
 ln -s -f /home/"$usrnm"/bin/dynamic-wall/dynamicwall /usr/local/bin/dynamicwall
 echo "Created symlink /usr/local/bin/dynamicwall → /home/$usrnm/bin/dynamic-wall/dynamicwall"
 
 if [ -f /bin/systemctl ] && ! [[ $method = "--cron" ]]; then
+  echo -e "\e[00;32m\n[6/6] Enabling and starting systemd service...\e[00m"
   ln -s -f /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/ /etc/systemd/system/
   echo "Created symlink /etc/systemd/system/dynamicwall.timer.d → /home/$usrnm/.config/systemd/user/dynamicwall.timer.d."
   systemctl enable /home/"$usrnm"/.config/systemd/user/dynamicwall.service /home/"$usrnm"/.config/systemd/user/dynamicwall.timer
-  echo -e "\n\033[0;33mEnabling and starting systemd...\033[0m"
   systemctl start dynamicwall.timer
 else
-	echo -e "\n\033[0;33mCreating cronjob...\033[0m"
+	echo -e "\e[00;32m\n[6/6] Creating cronjob...\e[00m"
   crontab -u $usrnm -l | { cat; echo "*/45 * * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | crontab -u $usrnm -
 fi
 
