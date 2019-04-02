@@ -171,7 +171,7 @@ function find_theme() {
       ext=${filedir##*.}
       case $ext in
         jpg | jpeg )
-          pushd "$theme_dir/$1/" > /dev/null 2>&1;for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd > /dev/null 2>&1
+          #pushd "$theme_dir/$1/" > /dev/null 2>&1;for x in *.jpeg; do mv "$x" "${x%.jpeg}.jpg" 2> /dev/null; done;popd > /dev/null 2>&1
           return 0
           ;;
         png )
