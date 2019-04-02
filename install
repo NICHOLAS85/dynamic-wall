@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DW_VERSION="2019.3.22"
+DW_VERSION="2019.4.1"
 
 trap './remove -s;echo "Stopped, Removing any half installed files...";exit' SIGINT
 
@@ -57,7 +57,7 @@ fi
 
 echo -e "\e[00;32m\n[4/5] Copying software files...\e[00m"
 function install_files(){
-  echo "installing: $1"
+  echo "installing: $1 into $2$1"
 
   install -o "$usrnm" -g "$usrnm" -d $2$1
   install -o "$usrnm" -g "$usrnm" -D $DIR/$1/* $2$1
