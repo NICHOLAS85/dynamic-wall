@@ -292,8 +292,8 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		trap "break" INT
 		dbusRef=$(kdialog --progressbar "Previewing" 20)
 		qdbus $dbusRef showCancelButton true
-		for (( date = 3; date < 24; date++ )); do
-			date +"%l:%M %p" -d $date
+		for (( date = 3 + timeoffset; date < 24; date++ )); do
+			date +"%l:%M %p" -d $((date - timeoffset))
 			main_script
 			sleep 1.5
 			inc=$((`qdbus $dbusRef Get "" "value"` + 1))
