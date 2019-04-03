@@ -8,24 +8,6 @@ date=$(date +%H | sed 's/\<0//g')
 # Source Config File
 . /home/"$usrnm"/bin/dynamic-wall/dynamicwall.config || { . /home/"$usrnm"/bin/dynamic-wall/default.config; echo "Can't find user config files, loading defaults...";} || { echo "Can't find user or default config files, exiting..."; exit; }
 
-# Source theme specific variable overrides
-if . "$theme_dir"/"$cur_theme"/themeoverride.config 2> /dev/null
-then
-  case $printvariables in
-    TRUE | True | true | T | t )
-    echo "Loading variable overrides from themeoverride.config for $cur_theme"
-    echo "The following variables have been overridden:"
-    grep -v "#" "$theme_dir"/"$cur_theme"/themeoverride.config
-    echo ""
-      ;;
-    FALSE | False | false | F | f )
-      ;;
-    * )
-      echo "Unknown option \"$printvariables\" for printvariables, assuming false"
-      ;;
-  esac
-fi
-
 HELP="\
 Usage: dynamicwall [OPTIONS]
 
@@ -170,9 +152,15 @@ function find_theme() {
 		ext=${filedir##*.}
 		case $ext in
 			jpg | jpeg )
+				if [[ $2 != d ]]; then
+					load_overrides
+				fi
 				return 0
 				;;
 			png )
+				if [[ $2 != d ]]; then
+					load_overrides
+				fi
 				return 0
 				;;
 			* )
@@ -217,19 +205,41 @@ function find_defaults() {
 	eval "$(grep "$1" < /home/"$usrnm"/bin/dynamic-wall/default.config)"
 	if [[ $2 = "p" ]]; then
 		echo "p is set"
-		find_theme "$previewtheme" &&\
+		find_theme "$previewtheme" "d"
 		if [[ $? = 1 ]]; then
   		echo "Can't locate default theme directory, exiting..."
   		exit
 		fi
 	else
-		find_theme "$cur_theme" &&\
+		find_theme "$cur_theme" "d"
 		if [[ $? = 1 ]]; then
   		echo "Can't locate default theme directory, exiting..."
   		exit
 		fi
 	fi
 }
+
+function load_overrides() {
+	if . "$theme_dir"/"$cur_theme"/override.config 2> /dev/null
+	then
+	  case $printvariables in
+	    TRUE | True | true | T | t )
+	    echo "Loading variable overrides from override.config for $cur_theme"
+	    echo "The following variables have been overridden:"
+	    awk '/=/ && !/#/' "$theme_dir"/"$cur_theme"/override.config
+	    echo ""
+	      ;;
+	    FALSE | False | false | F | f )
+	      ;;
+	    * )
+	      echo "Unknown option \"$printvariables\" for printvariables, assuming false"
+	      ;;
+	  esac
+	fi
+}
+
+# Checks if users current theme exist
+find_theme "$cur_theme"
 
 # Checks if timeoffset is a number and then if it is range
 if ! [ "$timeoffset" -eq "$timeoffset" ] 2> /dev/null; then
@@ -245,9 +255,6 @@ elif [[ $((date + timeoffset)) -lt 0 ]]; then
 else
 	date=$((date + timeoffset))
 fi
-
-# Checks if users current theme exist
-find_theme "$cur_theme"
 
 # Checks if refreshrate is in a valid format
 if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
