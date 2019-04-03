@@ -187,7 +187,7 @@ function find_theme() {
 		echo "Attempt $attempts"
 		if [[ $attempts = 1 ]]; then
 			notisend "Could not find $1, attempting to recover..." root
-			printf "Your theme_dir may not be set correctly or your cur_theme may be mispelt, check your ynamicwall.config\\nAttempting to recover...\\n"
+			printf "Your theme_dir may not be set correctly or your cur_theme may be mispelt, check your dynamicwall.config\\nAttempting to recover...\\n"
 			echo "Attempting to use default theme directory"
 			find_defaults "theme_dir" "$2"
 		elif [[ $attempts = 2 ]]; then

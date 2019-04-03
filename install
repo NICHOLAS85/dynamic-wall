@@ -50,8 +50,6 @@ else
   sed -i "s/scheduler=cron/scheduler=systemd/g" $DIR/bin/dynamic-wall/dynamicwall.config
   sed -i "s/scheduler=cron/scheduler=systemd/g" $DIR/bin/dynamic-wall/default.config
   echo "Updated scheduler to systemd"
-  sed -i "s/USERNAME/$usrnm/g" $DIR/config/systemd/user/dynamicwall.service
-  echo "Updated dynamicwall.service"
 fi
 
 # Start the installation
