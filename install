@@ -43,12 +43,12 @@ echo -e "\e[00;32m[2/6] Removing previous versions...\e[00m"
 echo -e "\e[00;32m[3/6] Updating fields based on system and arguments...\e[00m"
 
 if [[ $method = "--cron" ]]; then
-  sed -i "s/scheduler=systemd/scheduler=cron/g" $DIR/bin/dynamic-wall/dynamicwall.config
-  sed -i "s/scheduler=systemd/scheduler=cron/g" $DIR/bin/dynamic-wall/default.config
+  sed -i "s/scheduler=systemd/scheduler=cron/g" "$DIR"/bin/dynamic-wall/dynamicwall.config
+  sed -i "s/scheduler=systemd/scheduler=cron/g" "$DIR"/bin/dynamic-wall/default.config
   echo "Updated scheduler to cron"
 else
-  sed -i "s/scheduler=cron/scheduler=systemd/g" $DIR/bin/dynamic-wall/dynamicwall.config
-  sed -i "s/scheduler=cron/scheduler=systemd/g" $DIR/bin/dynamic-wall/default.config
+  sed -i "s/scheduler=cron/scheduler=systemd/g" "$DIR"/bin/dynamic-wall/dynamicwall.config
+  sed -i "s/scheduler=cron/scheduler=systemd/g" "$DIR"/bin/dynamic-wall/default.config
   echo "Updated scheduler to systemd"
 fi
 
@@ -59,7 +59,7 @@ function install_files(){
   echo "installing: $1 into $2$1"
 
   install -o "$usrnm" -g "$usrnm" -d $2$1
-  install -o "$usrnm" -g "$usrnm" -D $DIR/$1/* $2$1
+  install -o "$usrnm" -g "$usrnm" -D "$DIR"/$1/* $2$1
 }
 
 install_files "bin" "/home/$usrnm/"
