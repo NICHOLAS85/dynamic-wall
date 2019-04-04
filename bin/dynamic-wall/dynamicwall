@@ -204,7 +204,6 @@ function find_defaults() {
 	fi
 	eval "$(grep "$1" < /home/"$usrnm"/bin/dynamic-wall/default.config)"
 	if [[ $2 = "p" ]]; then
-		echo "p is set"
 		find_theme "$previewtheme" "d"
 		if [[ $? = 1 ]]; then
   		echo "Can't locate default theme directory, exiting..."
@@ -243,10 +242,10 @@ find_theme "$cur_theme"
 
 # Checks if timeoffset is a number and then if it is range
 if ! [ "$timeoffset" -eq "$timeoffset" ] 2> /dev/null; then
-	notisend "Invalid Time Offset($timeoffset), falling back to default.config" root
+	notisend "Invalid Time Offset($timeoffset), loading defaults..." root
 	find_defaults "timeoffset=[[:digit:]]"
 elif ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
-	notisend "Time Offset is out of range($timeoffset), falling back to default.config" root
+	notisend "Time Offset is out of range($timeoffset), loading defaults..." root
 	find_defaults "timeoffset=[[:digit:]]"
 elif [[ $((date + timeoffset)) -gt 24 ]]; then
 	date=$((date - 24 + timeoffset))
@@ -258,25 +257,21 @@ fi
 
 # Checks if refreshrate is in a valid format
 if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
-	echo "Refresh rate is invalid, loading default.config"
-	notisend "Invalid Refresh Rate($refreshrate), falling back to default.config" root
+	notisend "Invalid Refresh Rate($refreshrate), loading defaults..." root
 	find_defaults "refreshrate=[[:digit:]]"
   #check defaults
   if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
-  	echo "Refresh rate is invalid, loading default.config"
-		notisend "Invalid Refresh Rate($refreshrate), your defaults are messed up" root
+	notisend "Invalid Refresh Rate($refreshrate), loading defaults..." root
   	exit
   fi
 fi
 
 # Checks if date is a number and then if its in a valid range
 if ! [ $date -eq $date ] 2> /dev/null; then
-	echo "Date returning invalid value, loading default.config"
-	notisend "Invalid date($date), falling back to default.config" root
+	notisend "Invalid date($date), loading defaults..." root
 	date=$(date +%H | sed 's/\<0//g')
 elif ! [[ "$date" -le "24" && "$date" -ge "0" ]]; then
-	echo "Date is out of range, this shouldn't happen... loading default.config"
-	notisend "Date is out of range($date), falling back to default.config" root
+	notisend "Date is out of range($date), loading defaults..." root
 	date=$(date +%H | sed 's/\<0//g')
 fi
 
@@ -293,7 +288,6 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 			active_theme=$2
 		else
 			notisend "Couldn't find $2, exiting..." manual
-			echo "Couldn't find $2, exiting..."
 			exit
 		fi
 		trap "break" INT
@@ -311,10 +305,9 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 			fi
 		done
 		qdbus $dbusRef close
-		echo "Preview Complete, reverting to normal..."
-		notisend "Reverting to normal..." manual
+		notisend "Preview complete, reverting to normal..." manual
 		date=$olddate
-		active_theme=$cur_theme
+		active_theme="$cur_theme"
 		find_theme "$active_theme"
 		main_script
 		exit
