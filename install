@@ -88,7 +88,7 @@ while true; do
       if  [[ -d /lib/systemd ]]; then
         install_files "lib/systemd/system-sleep" "/"
       elif [[ -d /usr/lib/systemd ]]; then
-        install_files "lib/systemd/system-sleep" "usr/"
+        install_files "lib/systemd/system-sleep" "/usr/"
       else
         echo -e "\e[00;31mCan't find system-sleep directory, skipping...\e[00m"
       fi
