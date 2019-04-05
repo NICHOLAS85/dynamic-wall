@@ -24,9 +24,9 @@ if [ -f /bin/systemctl ]; then
   echo ""
 fi
 
-if crontab -u $usrnm -l | grep "/home/$usrnm/bin/dynamic-wall/dynamicwall"; then
+if crontab -u "$usrnm" -l | grep "/home/$usrnm/bin/dynamic-wall/dynamicwall"; then
   echo -e "\033[0;33mRemoving cronjob...\033[0m"
-  crontab -u $usrnm -l | grep -v "/home/$usrnm/bin/dynamic-wall/dynamicwall"  | crontab -u $usrnm -
+  crontab -u "$usrnm" -l | grep -v "/home/$usrnm/bin/dynamic-wall/dynamicwall"  | crontab -u "$usrnm" -
 fi
 
 echo -e "\033[0;33mRemoving software links...\033[0m"
@@ -90,13 +90,13 @@ remove_dir "$theme_dir/NewOrleans"
 remove_dir "$theme_dir" "ifempty"
 
 if [ "$1" = "-s" ]; then
-    remove_file "/home/$usrnm/bin/dynamic-wall/default.config"
-    remove_file "/home/$usrnm/bin/dynamic-wall/dynamicwall.config"
-    remove_file "/home/$usrnm/bin/dynamic-wall/dynamicwall"
-    remove_dir "/home/$usrnm/bin/dynamic-wall/.oldvar"
+  remove_file "/home/$usrnm/bin/dynamic-wall/default.config"
+  remove_file "/home/$usrnm/bin/dynamic-wall/dynamicwall.config"
+  remove_file "/home/$usrnm/bin/dynamic-wall/dynamicwall"
+  remove_dir "/home/$usrnm/bin/dynamic-wall/.oldvar"
 	remove_dir "/home/$usrnm/bin/dynamic-wall" "ifempty"
 else
-    remove_dir "/home/$usrnm/bin/dynamic-wall"
+  remove_dir "/home/$usrnm/bin/dynamic-wall"
 fi
 
 remove_dir "/home/$usrnm/bin/" "ifempty"
