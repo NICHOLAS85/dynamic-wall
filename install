@@ -1,13 +1,15 @@
 #!/bin/bash
 
-DW_VERSION="2019.4.1"
+DW_VERSION="2019.4.5"
 
 if [ "$(id -u)" -ne 0 ]; then
+  if ! sudo -n true 2> /dev/null; then
   echo "This script must be run as root. Enter your password...";
+  fi
   sudo bash ./$0 $1;
   exit 1;
 fi
-
+echo ""
 trap 'echo "Stopped, Removing any half installed files...";./remove -s;exit' SIGINT
 
 
