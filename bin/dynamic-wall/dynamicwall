@@ -212,6 +212,7 @@ function find_defaults() {
   		echo "Can't locate $cur_theme in default theme directory, exiting..."
   		exit 1
 		fi
+    active_theme=$cur_theme
 	fi
 }
 
