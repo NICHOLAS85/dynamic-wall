@@ -1,5 +1,5 @@
 #!/bin/bash
-# shellcheck source=/dev/null
+# shellcheck source=dynamicwall.config
 
 # Get current user
 usrnm=$(grep -i ':x:1000:' -A 0 /etc/passwd | sed 's/:x:1000:.*//')
@@ -138,7 +138,7 @@ function update_refreshrate() {
 function update_theme() {
 	echo "$cur_theme" > "$oldvar_dir"/.active_theme
 	notisend "Theme updated to $cur_theme" root
-	active_theme=$cur_theme
+	active_theme="$cur_theme"
 }
 
 function update_timeoffset() {

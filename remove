@@ -97,6 +97,7 @@ if [ "$1" = "-s" ]; then
 else
     remove_dir "/home/$usrnm/bin/dynamic-wall"
 fi
+
 remove_dir "/home/$usrnm/bin/" "ifempty"
 
 
