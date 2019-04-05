@@ -6,7 +6,7 @@ usrnm=$(grep -i ':x:1000:' -A 0 /etc/passwd | sed 's/:x:1000:.*//')
 # Get current time
 date=$(date +%H | sed 's/\<0//g')
 # Source Config File
-. /home/"$usrnm"/bin/dynamic-wall/dynamicwall.config || { . /home/"$usrnm"/bin/dynamic-wall/default.config; echo "Can't find user config files, loading defaults...";} || { echo "Can't find user or default config files, exiting..."; exit; }
+. /home/"$usrnm"/bin/dynamic-wall/dynamicwall.config || { . /home/"$usrnm"/bin/dynamic-wall/default.config; echo "Can't find user config files, loading defaults...";} || { echo "Can't find user or default config files, exiting..."; exit 1; }
 
 HELP="\
 Usage: dynamicwall [OPTIONS]
@@ -19,7 +19,7 @@ optional args:
 
 if [[ $1 = "--help" ]] || [[ $1 = "-h" ]]; then
 	printf '%s\n' "$HELP"
-	exit
+	exit 0
 fi
 
 #Determine image to use based on time
@@ -166,7 +166,7 @@ function find_theme() {
 			* )
 				echo "Incompatible image type($ext), exiting..."
 				return 1
-				exit
+				exit 1
 				;;
 		esac
 	else
@@ -200,20 +200,20 @@ function find_theme() {
 function find_defaults() {
 	if ! [[ -f /home/$usrnm/bin/dynamic-wall/default.config ]]; then
 		echo "Can't find default config file, exiting..."
-		exit
+		exit 1
 	fi
 	eval "$(grep "$1" < /home/"$usrnm"/bin/dynamic-wall/default.config)"
 	if [[ $2 = "p" ]]; then
 		find_theme "$previewtheme" "d"
 		if [[ $? = 1 ]]; then
   		echo "Can't locate default theme directory, exiting..."
-  		exit
+  		exit 1
 		fi
 	else
 		find_theme "$cur_theme" "d"
 		if [[ $? = 1 ]]; then
   		echo "Can't locate default theme directory, exiting..."
-  		exit
+  		exit 1
 		fi
 	fi
 }
@@ -261,8 +261,8 @@ if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate"
 	find_defaults "refreshrate=[[:digit:]]"
   #check defaults
   if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
-	notisend "Invalid Refresh Rate($refreshrate), loading defaults..." root
-  	exit
+	notisend "Invalid Refresh Rate($refreshrate), there is a problem with your configuration files" root
+  exit 1
   fi
 fi
 
@@ -281,14 +281,14 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
   previewtheme="$2"
 	if [[ $2 = "" ]]; then
 		printf "no theme selected to preview\\nusage: dynamicwall [--preview] <theme>\\n"
-		exit
+		exit 1
 	else
 		find_theme "$2" p
 		if [[ $? = 0 ]]; then
 			active_theme=$2
 		else
 			notisend "Couldn't find $2, exiting..." manual
-			exit
+			exit 1
 		fi
 		trap "break" INT
 		dbusRef=$(kdialog --progressbar "Previewing" 20)
@@ -310,26 +310,26 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		active_theme="$cur_theme"
 		find_theme "$active_theme"
 		main_script
-		exit
+		exit 0
 	fi
 elif ! [[ $2 = "" ]]; then
 	echo "Incompatible arguments, use one at a time, exiting..."
-	exit
+	exit 1
 elif [[ $1 = "--force" ]] || [[ $1 = "-f" ]]; then
 	echo "Forced script to run, ignoring config changes"
 	main_script
-	exit
+	exit 0
 elif [[ $1 = "--check" ]] || [[ $1 = "-c" ]]; then
 	echo "Updated config and forced run"
 	update_refreshrate
 	update_theme
 	update_timeoffset
 	main_script
-	exit
+	exit 0
 elif ! [[ $1 = "" ]]; then
 	echo "Unknown argument passed"
 	printf '%s\n' "$HELP"
-	exit
+	exit 1
 fi
 
 # Compares current values to config file and updates script if they dont match, fallsback to defaults if new values are not valid
