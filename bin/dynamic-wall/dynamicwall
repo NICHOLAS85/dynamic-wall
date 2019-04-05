@@ -344,6 +344,7 @@ fi
 if [[ "$active_theme" != "$cur_theme" ]]; then
 	update_theme
 	main_script
+  olddate=$date
 fi
 
 case $printvariables in
