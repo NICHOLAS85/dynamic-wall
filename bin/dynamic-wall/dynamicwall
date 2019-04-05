@@ -294,7 +294,7 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 			date +"%l:%M %p" -d $((date - timeoffset))
 			main_script
 			sleep 1.5
-			inc=$((`qdbus $dbusRef Get "" "value"` + 1))
+			inc=$(($(qdbus $dbusRef Get "" "value") + 1))
 			qdbus $dbusRef Set "" "value" $inc;
 			if ! qdbus $dbusRef wasCancelled > /dev/null 2>&1; then
 				qdbus $dbusRef close
