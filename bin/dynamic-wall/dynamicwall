@@ -281,13 +281,12 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		printf "no theme selected to preview\\nusage: dynamicwall [--preview] <theme>\\n"
 		exit 1
 	else
-		find_theme "$2" p
-		if [[ $? = 0 ]]; then
-			active_theme=$2
-		else
-			notisend "Couldn't find $2, exiting..." manual
-			exit 1
-		fi
+		if find_theme "$2" p; then
+      active_theme=$2
+    else
+      notisend "Couldn't find $2, exiting..." manual
+      exit 1
+    fi
 		trap "break" INT
 		dbusRef=$(kdialog --progressbar "Previewing" 20)
 		qdbus $dbusRef showCancelButton true
