@@ -191,7 +191,7 @@ function find_theme() {
 			echo "Attempting to use default theme in default theme directory"
 			find_defaults "theme_dir" "$2"
 		else
-			echo "There are some major problems with your configuration, reinstall dynamicwall to fix your configuration files"
+			echo "There are some major problems with your installation/configuration, reinstall dynamicwall"
 			return 1
 		fi
 	fi
@@ -205,14 +205,11 @@ function find_defaults() {
 	eval "$(grep "$1" < /home/"$usrnm"/bin/dynamic-wall/default.config)"
 	if [[ $2 = "p" ]]; then
 		find_theme "$previewtheme" "d"
-		if [[ $? = 1 ]]; then
-  		echo "Can't locate default theme directory, exiting..."
-  		exit 1
-		fi
+    return $?
 	else
 		find_theme "$cur_theme" "d"
 		if [[ $? = 1 ]]; then
-  		echo "Can't locate default theme directory, exiting..."
+  		echo "Can't locate $cur_theme in default theme directory, exiting..."
   		exit 1
 		fi
 	fi
