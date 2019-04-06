@@ -47,33 +47,48 @@ function main_script() {
 function set_wallpaper() {
 	full_image_path=$(realpath "$1")
 	#Run process as currently logged in user, export display and DBUS session, and then evaluate wallpaper script, needed for automatic updating
-	sudo -u "$usrnm" \
-	XDG_RUNTIME_DIR=/run/user/1000 \
-	DISPLAY=:0 \
-	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-	qdbus org.kde.plasmashell /PlasmaShell evaluateScript '
-	    var allDesktops = desktops();
-	    for (i=0;i<allDesktops.length;i++)
-	    {
-	        d = allDesktops[i];
-	        d.wallpaperPlugin = "org.kde.image";
-	        d.currentConfigGroup = Array("Wallpaper", "org.kde.image", "General");
-	        d.writeConfig("Image", "file://'${full_image_path}'")
-	    }
-	'
+  if [[ "$(id -u)" = 1000 ]]; then
+  	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+  	qdbus org.kde.plasmashell /PlasmaShell evaluateScript '
+  	    var allDesktops = desktops();
+  	    for (i=0;i<allDesktops.length;i++)
+  	    {
+  	        d = allDesktops[i];
+  	        d.wallpaperPlugin = "org.kde.image";
+  	        d.currentConfigGroup = Array("Wallpaper", "org.kde.image", "General");
+  	        d.writeConfig("Image", "file://'${full_image_path}'")
+  	    }
+  	'
+  else
+    sudo -u "$usrnm" \
+  	XDG_RUNTIME_DIR=/run/user/1000 \
+  	DISPLAY=:0 \
+  	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+  	qdbus org.kde.plasmashell /PlasmaShell evaluateScript '
+  	    var allDesktops = desktops();
+  	    for (i=0;i<allDesktops.length;i++)
+  	    {
+  	        d = allDesktops[i];
+  	        d.wallpaperPlugin = "org.kde.image";
+  	        d.currentConfigGroup = Array("Wallpaper", "org.kde.image", "General");
+  	        d.writeConfig("Image", "file://'${full_image_path}'")
+  	    }
+  	'
+  fi
 }
 
 #Check config and show notifications if enabled
 function notisend() {
   case $notifications in
     t | T | true | True | TRUE )
-      if [[ $2 = "root" ]]; then
+      if [[ "$(id -u)" = 1000 ]]; then
+        XDG_RUNTIME_DIR=/run/user/1000 \
+        kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
+      else
         sudo -u "$usrnm" \
         XDG_RUNTIME_DIR=/run/user/1000 \
         DISPLAY=:0 \
         DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-        kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
-      elif [[ $2 = "manual" ]]; then
         kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
       fi
       ;;
@@ -92,7 +107,7 @@ function update_refreshrate() {
 		sed -i '/OnBootSec='"$active_refreshrate"'/!b;cOnBootSec='"$refreshrate" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
 		sed -i '/OnUnitActiveSec='"$active_refreshrate"'/!b;cOnUnitActiveSec='"$refreshrate" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
 		echo "$refreshrate" > "$oldvar_dir"/.active_refreshrate
-		notisend "Refresh rate updated, reloading systemd daemons" root
+		notisend "Refresh rate updated, reloading systemd daemons"
 		systemctl daemon-reload
 	elif [[ "$scheduler" = "cron" ]]; then
 		#Necessary loop to prompt user for password needed for crontab update until correct or skipped
@@ -118,7 +133,7 @@ function update_refreshrate() {
 						echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v "/home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo "* */'"$refreshrate_c"' * * * /home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
 					fi
 					echo "$refreshrate" > "$oldvar_dir"/.active_refreshrate
-					notisend "Refresh rate updated, crontab refreshed" root
+					notisend "Refresh rate updated, crontab refreshed"
 					break
 				else
 					echo "Wrong Password entered"
@@ -131,19 +146,19 @@ function update_refreshrate() {
 			fi
 		done
 	else
-		notisend "Uknown scheduler set in config file, not updating refreshrate..." root
+		notisend "Uknown scheduler set in config file, not updating refreshrate..."
 	fi
 }
 
 function update_theme() {
 	echo "$cur_theme" > "$oldvar_dir"/.active_theme
-	notisend "Theme updated to $cur_theme" root
+	notisend "Theme updated to $cur_theme"
 	active_theme="$cur_theme"
 }
 
 function update_timeoffset() {
 	echo "$timeoffset" > "$oldvar_dir"/.active_timeoffset
-	notisend "Time offset updated to $timeoffset" root
+	notisend "Time offset updated to $timeoffset"
 }
 
 function find_theme() {
@@ -174,7 +189,7 @@ function find_theme() {
 		echo ""
 		echo "Attempt $attempts"
 		if [[ $attempts = 1 ]]; then
-			notisend "Could not find $1, attempting to recover..." root
+			notisend "Could not find $1, attempting to recover..."
 			printf "Your theme_dir may not be set correctly or your cur_theme may be mispelt, check your dynamicwall.config\\nAttempting to recover...\\n"
 			echo "Attempting to use default theme directory"
 			find_defaults "theme_dir" "$2"
@@ -240,10 +255,10 @@ find_theme "$cur_theme"
 
 # Checks if timeoffset is a number and then if it is range
 if ! [ "$timeoffset" -eq "$timeoffset" ] 2> /dev/null; then
-	notisend "Invalid Time Offset($timeoffset), loading defaults..." root
+	notisend "Invalid Time Offset($timeoffset), loading defaults..."
 	find_defaults "timeoffset=[[:digit:]]"
 elif ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
-	notisend "Time Offset is out of range($timeoffset), loading defaults..." root
+	notisend "Time Offset is out of range($timeoffset), loading defaults..."
 	find_defaults "timeoffset=[[:digit:]]"
 elif [[ $((date + timeoffset)) -gt 24 ]]; then
 	date=$((date - 24 + timeoffset))
@@ -255,21 +270,21 @@ fi
 
 # Checks if refreshrate is in a valid format
 if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
-	notisend "Invalid Refresh Rate($refreshrate), loading defaults..." root
+	notisend "Invalid Refresh Rate($refreshrate), loading defaults..."
 	find_defaults "refreshrate=[[:digit:]]"
   #check defaults
   if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
-	notisend "Invalid Refresh Rate($refreshrate), there is a problem with your configuration files" root
+	notisend "Invalid Refresh Rate($refreshrate), there is a problem with your configuration files"
   exit 1
   fi
 fi
 
 # Checks if date is a number and then if its in a valid range
 if ! [ $date -eq $date ] 2> /dev/null; then
-	notisend "Invalid date($date), loading defaults..." root
+	notisend "Invalid date($date), loading defaults..."
 	date=$(date +%H | sed 's/\<0//g')
 elif ! [[ "$date" -le "24" && "$date" -ge "0" ]]; then
-	notisend "Date is out of range($date), loading defaults..." root
+	notisend "Date is out of range($date), loading defaults..."
 	date=$(date +%H | sed 's/\<0//g')
 fi
 
@@ -284,7 +299,7 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		if find_theme "$2" p; then
       active_theme=$2
     else
-      notisend "Couldn't find $2, exiting..." manual
+      notisend "Couldn't find $2, exiting..."
       exit 1
     fi
 		trap "break" INT
@@ -300,8 +315,8 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 				break
 			fi
 		done
-		qdbus $dbusRef close
-		notisend "Preview complete, reverting to normal..." manual
+		qdbus $dbusRef close 2> /dev/null
+		notisend "Preview complete, reverting to normal..."
 		date=$olddate
 		active_theme="$cur_theme"
 		find_theme "$active_theme"
