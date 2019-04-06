@@ -1,5 +1,5 @@
 #!/bin/bash
-# shellcheck source=dynamicwall.config
+# shellcheck source=bin/dynamic-wall/dynamicwall.config
 
 if [ "$(id -u)" -ne 0 ]; then
   if ! sudo -n true 2> /dev/null; then
@@ -14,7 +14,7 @@ fi
 usrnm=$(logname)
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-cd $DIR || { echo "Error, exiting..."; exit; }
+cd "$DIR" || { echo "Error, exiting..."; exit; }
 
 eval "$(grep "theme_dir" 2>/dev/null < /home/"$usrnm"/bin/dynamic-wall/dynamicwall.config)"
 
@@ -60,21 +60,21 @@ function remove_file(){
 }
 
 function remove_dir(){
-if [[ "$2" = "ifempty" ]]; then
   if [ -d $1 ]; then
-    if rm -d $1  2> /dev/null
-    then
-    echo "removed empty directory: $1"
+    if [[ "$2" = "ifempty" ]]; then
+      if rm -d $1  2> /dev/null
+      then
+      echo "removed empty directory: $1"
+      else
+      echo -e "\e[00;31m$1 contains files not included in default installation, skipping...\e[00m"
+      fi
+    else
+      if rm -rf $1
+      then
+      echo "removed directory: $1"
+      fi
     fi
   fi
-else
-  if [ -d $1 ]; then
-    if rm -rf $1
-    then
-    echo "removed directory: $1"
-    fi
-  fi
-fi
 }
 
 remove_file "/lib/systemd/system-sleep/dynamicwall.sh"
@@ -104,8 +104,6 @@ else
 fi
 
 remove_dir "/home/$usrnm/bin/" "ifempty"
-
-
 
 echo ""
 
