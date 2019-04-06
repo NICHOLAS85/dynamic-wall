@@ -12,19 +12,19 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 0;
 fi
 echo ""
-trap 'echo "Stopped, Removing any half installed files...";./remove -s;exit' SIGINT
+trap 'echo "Stopped, Removing any half installed files...";./remove -s;exit 0' SIGINT
 
 
 usrnm=$(logname)
 
 if ! [ -f /bin/systemctl ] && ! [[ $1 = "--cron" ]]; then
 	echo -e "\e[00;31mWarning: systemd seems to be missing. Dynamic-Wall will not work. Run this setup with the --cron argument if you wish to use cron instead of systemd.\e[00m"
-  exit
+  exit 1
 elif [[ $1 = "--cron" ]]; then
   method="--cron"
 elif ! [[ $1 = "" ]]; then
   echo -e "\e[00;31mUnknown argument used, run either ./install or ./install --cron depending on if you want to use systemd or cron to update your wallpaper automatically\e[00m"
-  exit
+  exit 1
 
 fi
 
@@ -32,7 +32,7 @@ fi
 
 echo -e "\e[00;32m[1/6] Setting Permissions...\e[00m"
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-cd "$DIR" || { echo "Error, exiting..."; exit; }
+cd "$DIR" || { echo "Error, exiting..."; exit 1; }
 chmod -v a+x ./remove
 chmod -v a+x ./lib/systemd/system-sleep/dynamicwall.sh
 chmod -v +x ./bin/dynamic-wall/dynamicwall

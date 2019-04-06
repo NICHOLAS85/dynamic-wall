@@ -14,7 +14,7 @@ fi
 usrnm=$(logname)
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-cd "$DIR" || { echo "Error, exiting..."; exit; }
+cd "$DIR" || { echo "Error, exiting..."; exit 1; }
 
 eval "$(grep "theme_dir" 2>/dev/null < /home/"$usrnm"/bin/dynamic-wall/dynamicwall.config)"
 
