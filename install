@@ -9,7 +9,7 @@ if [ "$(id -u)" -ne 0 ]; then
   echo "Running as root...";
   fi
   sudo bash ./$0 $1;
-  exit 1;
+  exit 0;
 fi
 echo ""
 trap 'echo "Stopped, Removing any half installed files...";./remove -s;exit' SIGINT
@@ -124,7 +124,7 @@ if [ -f /bin/systemctl ] && ! [[ $method = "--cron" ]]; then
   systemctl start dynamicwall.timer
 else
 	echo -e "\e[00;32m\n[6/6] Creating cronjob...\e[00m"
-  crontab -u $usrnm -l | { cat; echo "*/45 * * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | crontab -u $usrnm -
+  crontab -u "$usrnm" -l | { cat; echo "*/45 * * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | crontab -u "$usrnm" -
 fi
 
 echo -e "\e[00;32m\nUpdating configuration and running dynamicwall once\e[00m"
