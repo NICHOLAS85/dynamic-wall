@@ -2,7 +2,7 @@
 # shellcheck source=dynamicwall.config
 
 # Get current user
-usrnm=$(grep -i ':x:1000:' -A 0 /etc/passwd | sed 's/:x:1000:.*//')
+usrnm=$(grep -i '1000' -A 0 /etc/passwd | sed 's/:.*//')
 # Get current time
 date=$(date +%H | sed 's/\<0//g')
 # Source Config File
