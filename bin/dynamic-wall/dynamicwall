@@ -162,10 +162,10 @@ function load_overrides() {
 	then
 	  case $printvariables in
 	    TRUE | True | true | T | t )
-	    echo "Loading variable overrides from override.config for $cur_theme"
-	    echo "The following variables have been overridden:"
-	    awk '/=/ && !/#/' "$theme_dir/$cur_theme/override.config"
-	    echo ""
+  	    echo "Loading variable overrides from override.config for $cur_theme"
+  	    echo "The following variables have been overridden:"
+  	    awk '/=/ && !/#/' "$theme_dir/$cur_theme/override.config"
+  	    echo ""
 	      ;;
 	    FALSE | False | false | F | f )
 	      ;;
@@ -209,7 +209,7 @@ function find_theme() {
 			echo "Attempting to use default theme directory"
 			find_defaults "theme_dir" "$2"
 		elif [[ $attempts = 2 ]]; then
-			if [[ $p = "set" ]]; then
+			if [[ $3 = "p" ]]; then
 				return 1
 			fi
 			echo "Could not find theme in default directory"
@@ -227,6 +227,7 @@ function find_theme() {
 	fi
 }
 
+# Loads default value fed into function. If previewing, locate
 function find_defaults() {
 	if ! [[ -f /home/$usrnm/bin/dynamic-wall/default.config ]]; then
 		echo "Can't find default config file, exiting..."
@@ -235,11 +236,10 @@ function find_defaults() {
 	eval "$(grep "$1" < "/home/$usrnm/bin/dynamic-wall/default.config")"
   notisend "loaded $(grep "$1" < "/home/$usrnm/bin/dynamic-wall/default.config")"
 	if [[ $2 = "p" ]]; then
-		find_theme "$previewtheme" "d"
+		find_theme "$previewtheme" "d" "p"
     return $?
-	else
-		find_theme "$cur_theme" "d"
-		if [[ $? = 1 ]]; then
+	elif [[ $cur_theme != "$active_theme" ]]; then
+		if ! find_theme "$cur_theme" "d"; then
   		echo "Can't locate $cur_theme in default theme directory, exiting..."
   		exit 1
 		fi
@@ -256,18 +256,17 @@ for ((n=0;n<2;n++)); do
   	notisend "Invalid Time Offset($timeoffset), loading defaults..."
   	find_defaults "timeoffset=[[:digit:]]"
     valid1=false
-  elif ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
-  	notisend "Time Offset is out of range($timeoffset), loading defaults..."
-  	find_defaults "timeoffset=[[:digit:]]"
-    valid1=false
-  elif [[ $((date + timeoffset)) -gt 24 ]]; then
-  	date=$((date - 24 + timeoffset))
-    valid1=true
-  elif [[ $((date + timeoffset)) -lt 0 ]]; then
-  	date=$((date + 24 + timeoffset))
-    valid1=true
   else
-  	date=$((date + timeoffset))
+    if ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
+    	notisend "Time Offset is out of range($timeoffset), loading defaults..."
+    	find_defaults "timeoffset=[[:digit:]]"
+    elif [[ $((date + timeoffset)) -gt 24 ]]; then
+    	date=$((date - 24 + timeoffset))
+    elif [[ $((date + timeoffset)) -lt 0 ]]; then
+    	date=$((date + 24 + timeoffset))
+    else
+    	date=$((date + timeoffset))
+    fi
     valid1=true
   fi
   if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] || "$refreshrate" == [[:xdigit:]][mh] ]] || [[ "${refreshrate: -1}" = h && "${refreshrate%?}" -ge 24 || "${refreshrate: -1}" = m && "${refreshrate%?}" -ge 60 || "${refreshrate%?}" -le 0 ]]; then\
@@ -296,7 +295,6 @@ fi
 
 # Check what argument was passed to script
 if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
-  p="set"
   previewtheme="$2"
 	if [[ $2 = "" ]]; then
 		printf "no theme selected to preview\\nusage: dynamicwall [--preview] <theme>\\n"
