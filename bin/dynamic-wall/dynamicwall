@@ -122,12 +122,11 @@ function update_refreshrate() {
 				if echo "$passwd" | sudo -Svp ''; then
 					echo "correct password"
 					if [[ "${refreshrate: -1}" = m ]]; then
-						refreshrate_c=${refreshrate%?}
-						echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v "/home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo "*/'"$refreshrate_c"' * * * * /home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
+            prefix=(\"\*/"${refreshrate%?}" \*)
 					elif [[ "${refreshrate: -1}" = h ]]; then
-						refreshrate_c=${refreshrate%?}
-						echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v "/home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo "* */'"$refreshrate_c"' * * * /home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
+            prefix=(\"\* \*/"${refreshrate%?}")
 					fi
+          echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v "/home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo '${prefix[*]}' * * * /home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
 					echo "$refreshrate" > "$oldvar_dir"/active_refreshrate
 					notisend "Refresh rate updated, crontab refreshed"
 					break
