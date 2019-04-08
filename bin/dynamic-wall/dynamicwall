@@ -25,8 +25,8 @@ fi
 #Determine image to use based on time
 function main_script() {
 	if [[ "$date" -le "4" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme\16.$ext"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme\16.$ext"
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.$ext"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme""16.$ext"
 	elif [[ "$date" -le "9" ]]; then
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 4)).$ext"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 4)).$ext"
@@ -37,8 +37,8 @@ function main_script() {
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 6)).$ext"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 6)).$ext"
 	else
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme\16.$ext"
-		set_wallpaper "$theme_dir/$active_theme/$active_theme\16.$ext"
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.$ext"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme""16.$ext"
 	fi
 	echo "$date" > "$oldvar_dir/olddate"
 }
@@ -339,13 +339,14 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		main_script
 		exit 0
 	fi
-elif ! [[ $2 = "" ]]; then
-	echo "Incompatible arguments, use one at a time, exiting..."
-	exit 1
 elif [[ $1 = "--force" ]] || [[ $1 = "-f" ]]; then
+  date=$2
 	main_script
   echo "Forced script to run, ignoring config changes"
 	exit 0
+elif ! [[ $2 = "" ]]; then
+  echo "Incompatible arguments, use one at a time, exiting..."
+  exit 1
 elif [[ $1 = "--check" ]] || [[ $1 = "-c" ]]; then
 	update_refreshrate
 	update_theme
