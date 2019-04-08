@@ -26,7 +26,6 @@ if [[ -f /bin/systemctl ]]; then
   systemctl stop dynamicwall.timer
   systemctl disable dynamicwall.service dynamicwall.timer
   fi
-  echo ""
 fi
 
 if [[ -f /bin/systemctl ]]; then
@@ -48,6 +47,7 @@ if rm /usr/local/bin/dynamicwall 2> /dev/null
 then
 echo "Removed symlink /usr/local/bin/dynamicwall."
 fi
+echo ""
 
 echo -e "\033[0;33mRemoving software files and directories...\033[0m"
 
