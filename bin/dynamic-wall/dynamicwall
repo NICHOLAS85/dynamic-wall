@@ -6,7 +6,7 @@ usrnm=$(grep -i '1000' -A 0 /etc/passwd | sed 's/:.*//')
 # Get current time
 date=$(date +%H | sed 's/\<0//g')
 # Source Config File
-. /home/"$usrnm"/bin/dynamic-wall/dynamicwall.config || { . /home/"$usrnm"/bin/dynamic-wall/default.config; echo "Can't find user config files, loading defaults...";} || { echo "Can't find user or default config files, exiting..."; exit 1; }
+. "/home/$usrnm/bin/dynamic-wall/dynamicwall.config" || { . "/home/$usrnm/bin/dynamic-wall/default.config"; echo "Can't find user config files, loading defaults...";} || { echo "Can't find user or default config files, exiting..."; exit 1; }
 
 HELP="\
 Usage: dynamicwall [OPTIONS]
@@ -225,6 +225,7 @@ function find_defaults() {
 		exit 1
 	fi
 	eval "$(grep "$1" < /home/"$usrnm"/bin/dynamic-wall/default.config)"
+  notisend "loaded $(grep "$1" < /home/"$usrnm"/bin/dynamic-wall/default.config)"
 	if [[ $2 = "p" ]]; then
 		find_theme "$previewtheme" "d"
     return $?
@@ -239,13 +240,13 @@ function find_defaults() {
 }
 
 function load_overrides() {
-	if . "$theme_dir"/"$cur_theme"/override.config 2> /dev/null
+	if . "$theme_dir/$cur_theme/override.config" 2> /dev/null
 	then
 	  case $printvariables in
 	    TRUE | True | true | T | t )
 	    echo "Loading variable overrides from override.config for $cur_theme"
 	    echo "The following variables have been overridden:"
-	    awk '/=/ && !/#/' "$theme_dir"/"$cur_theme"/override.config
+	    awk '/=/ && !/#/' "$theme_dir/$cur_theme/override.config"
 	    echo ""
 	      ;;
 	    FALSE | False | false | F | f )
@@ -280,19 +281,17 @@ for ((n=0;n<2;n++)); do
   	date=$((date + timeoffset))
     valid1=true
   fi
-done
-
-# Checks if refreshrate is in a valid format
-for ((n=0;n<2;n++)); do
+  # Checks if refreshrate is in a valid format
   if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] || "$refreshrate" == [[:xdigit:]][mh] ]] || [[ "${refreshrate: -1}" = h && "${refreshrate%?}" -ge 24 || "${refreshrate: -1}" = m && "${refreshrate%?}" -ge 60 || "${refreshrate%?}" -le 0 ]]; then\
-  	notisend "Invalid Refresh Rate($refreshrate), loading defaults..."
-  	find_defaults "refreshrate=[[:digit:]]"
+    notisend "Invalid Refresh Rate($refreshrate), loading defaults..."
+    find_defaults "refreshrate=[[:digit:]]"
     valid2=false
   else
     valid2=true
   fi
 done
 
+# Exit if defaults return invalid values
 if [[ "$valid1" = "false" ]] || [[ "$valid2" = "false" ]]; then
   notisend "There is something wrong with your default config options, reinstall"
   exit 1
