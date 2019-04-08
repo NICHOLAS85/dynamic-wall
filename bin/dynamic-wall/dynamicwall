@@ -265,40 +265,35 @@ for ((n=0;n<2;n++)); do
   if ! [ "$timeoffset" -eq "$timeoffset" ] 2> /dev/null; then
   	notisend "Invalid Time Offset($timeoffset), loading defaults..."
   	find_defaults "timeoffset=[[:digit:]]"
-    valid=false
+    valid1=false
   elif ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
   	notisend "Time Offset is out of range($timeoffset), loading defaults..."
   	find_defaults "timeoffset=[[:digit:]]"
-    valid=false
+    valid1=false
   elif [[ $((date + timeoffset)) -gt 24 ]]; then
   	date=$((date - 24 + timeoffset))
-    valid=true
+    valid1=true
   elif [[ $((date + timeoffset)) -lt 0 ]]; then
   	date=$((date + 24 + timeoffset))
-    valid=true
+    valid1=true
   else
   	date=$((date + timeoffset))
-    valid=true
+    valid1=true
   fi
 done
-
-if [[ "$valid" = "false" ]]; then
-  notisend "There is something wrong with your default config options, reinstall"
-  exit 1
-fi
 
 # Checks if refreshrate is in a valid format
 for ((n=0;n<2;n++)); do
   if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] || "$refreshrate" == [[:xdigit:]][mh] ]] || [[ "${refreshrate: -1}" = h && "${refreshrate%?}" -ge 24 || "${refreshrate: -1}" = m && "${refreshrate%?}" -ge 60 || "${refreshrate%?}" -le 0 ]]; then\
   	notisend "Invalid Refresh Rate($refreshrate), loading defaults..."
   	find_defaults "refreshrate=[[:digit:]]"
-    valid=false
+    valid2=false
   else
-    valid=true
+    valid2=true
   fi
 done
 
-if [[ "$valid" = "false" ]]; then
+if [[ "$valid1" = "false" ]] || [[ "$valid2" = "false" ]]; then
   notisend "There is something wrong with your default config options, reinstall"
   exit 1
 fi
