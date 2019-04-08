@@ -28,6 +28,15 @@ if [ -f /bin/systemctl ]; then
   echo ""
 fi
 
+if [ -f /bin/systemctl ]; then
+	echo -e "\n\033[0;33mRemoving dynamicwall.timer.d dropin...\033[0m"
+  if rm -r /etc/systemd/system/dynamicwall.timer.d 2> /dev/null
+  then
+  echo "Removed /etc/systemd/system/dynamicwall.timer.d."
+  fi
+  echo ""
+fi
+
 if crontab -u "$usrnm" -l | grep "/home/$usrnm/bin/dynamic-wall/dynamicwall"; then
   echo -e "\033[0;33mRemoving cronjob...\033[0m"
   crontab -u "$usrnm" -l | grep -v "/home/$usrnm/bin/dynamic-wall/dynamicwall"  | crontab -u "$usrnm" -
@@ -37,15 +46,6 @@ echo -e "\033[0;33mRemoving software links...\033[0m"
 if rm /usr/local/bin/dynamicwall 2> /dev/null
 then
 echo "Removed symlink /usr/local/bin/dynamicwall."
-fi
-
-if [ -f /bin/systemctl ]; then
-	echo -e "\n\033[0;33mRemoving dynamicwall.timer.d dropin...\033[0m"
-  if rm -r /etc/systemd/system/dynamicwall.timer.d 2> /dev/null
-  then
-  echo "Removed /etc/systemd/system/dynamicwall.timer.d."
-  fi
-  echo ""
 fi
 
 echo -e "\033[0;33mRemoving software files and directories...\033[0m"

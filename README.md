@@ -31,8 +31,6 @@ To uninstall run:
 ```
 You will be prompted for a password which will run the scripts as root.
 
-During installation a prompt will appear asking whether or not you would like to install a system-sleep script to trigger dynamicwall on wakeup. This will install a script into `/lib/systemd/system-sleep/` called dynamicwall.sh. This script simply updates your wallpaper when your computer wakes from suspension.
-
 To check the status of the timer and service run:
 ```sh
 systemctl status dynamicwall.timer dynamicwall.service
@@ -50,7 +48,9 @@ If you would like to install this script and use cron instead of systemd, simply
 ./install --cron
 ```
 
-This will avoid installing any of the systemd service and timer files. You will still be prompted if you want to install a system-sleep script, you can select n to skip this.
+This will avoid installing any of the systemd service and timer files.
+
+During installation a prompt will appear asking whether or not you would like to install a system-sleep script to trigger dynamicwall on wakeup. This will install a script into `/lib/systemd/system-sleep/` called dynamicwall.sh. This script simply updates your wallpaper when your computer wakes from suspension(Not needed for systemd users), you can select n to skip this.
 
 A cronjob will automatically be generated for you. All config options should be adjusted in dynamicwall.config regardless of if you're using cron or systemd.
 

@@ -261,7 +261,7 @@ function load_overrides() {
 # Checks if users current theme exist
 find_theme "$cur_theme"
 
-# Checks if timeoffset is a number and then if it is range
+# Checks if timeoffset is a number and then if it is range and checks if refreshrate is in a valid format
 for ((n=0;n<2;n++)); do
   if ! [ "$timeoffset" -eq "$timeoffset" ] 2> /dev/null; then
   	notisend "Invalid Time Offset($timeoffset), loading defaults..."
@@ -281,7 +281,6 @@ for ((n=0;n<2;n++)); do
   	date=$((date + timeoffset))
     valid1=true
   fi
-  # Checks if refreshrate is in a valid format
   if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] || "$refreshrate" == [[:xdigit:]][mh] ]] || [[ "${refreshrate: -1}" = h && "${refreshrate%?}" -ge 24 || "${refreshrate: -1}" = m && "${refreshrate%?}" -ge 60 || "${refreshrate%?}" -le 0 ]]; then\
     notisend "Invalid Refresh Rate($refreshrate), loading defaults..."
     find_defaults "refreshrate=[[:digit:]]"
