@@ -69,7 +69,7 @@ function install_files(){
 
 install_files "bin" "/home/$usrnm/"
 install_files "bin/dynamic-wall" "/home/$usrnm/"
-cp -pR $DIR/bin/dynamic-wall/oldvar /home/"$usrnm"/bin/dynamic-wall/.oldvar
+install_files "bin/dynamic-wall/.oldvar" "/home/$usrnm/"
 install_files "bin/dynamic-wall/themes" "/home/$usrnm/"
 install_files "bin/dynamic-wall/themes/EarthView" "/home/$usrnm/"
 install_files "bin/dynamic-wall/themes/mojave_dynamic" "/home/$usrnm/"
