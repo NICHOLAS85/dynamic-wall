@@ -84,7 +84,7 @@ else
   install_files "config/systemd/user/dynamicwall.timer.d" "/home/$usrnm/."
 fi
 
-if [[ $method = "--cron" ]]; then
+if [[ $method = "--cron" ]] && [[ -d /lib/systemdd || -d /usr/lib/systemdd ]]; then
   while true; do
     echo -e "\n\033[0;33mWould you like to install a system-sleep script to trigger dynamicwall on wakeup? [y/n/?]\033[0m"
     echo -n "Input:"
@@ -112,6 +112,13 @@ if [[ $method = "--cron" ]]; then
         ;;
     esac
   done
+else
+  echo -e "\e[00;32m\nSkipping system-sleep files...\e[00m"
+  if ! [[ $method = "--cron" ]]; then
+    echo "Skipped due to systemd installation"
+  else
+    echo "Skipped due to incompatible system"
+  fi
 fi
 # Post installation
 
