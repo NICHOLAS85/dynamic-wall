@@ -67,10 +67,10 @@ $ dynamicwall -h
 Usage: dynamicwall [OPTIONS]
 
 optional args:
-  -f, --force            Skip configuration check and update wallpaper immediately
+  -f, --force <time>     Update wallpaper immediately, optionally to a specific time
   -p, --preview <theme>  Run a 24 hour preview for a certain theme***EXPERIMENTAL***
   -c, --check            Force check configuration options and push to script
-  -h, --help             show help
+  -h, --help             Show help
 ```
 
 `-f` uses your last saved config and ignores any changes added to your config files since.
@@ -115,7 +115,7 @@ mojave_dynamic theme created by Apple (<https://www.apple.com/macos/mojave/>)
 ## TODO
 -   [x]  Create install script
     -   [ ]  Save config options when updating
-    -   [x]  Optional system-sleep installation
+    -   [x]  <s>Optional system-sleep installation</s>
 -   [x]  <s>Create uninstall script</s>
 -   [x]  <s>Find credit for included themes</s>
 -   [x]  <s>Support cron</s>

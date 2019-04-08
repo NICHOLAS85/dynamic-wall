@@ -12,10 +12,10 @@ HELP="\
 Usage: dynamicwall [OPTIONS]
 
 optional args:
-  -f, --force            Skip configuration check and update wallpaper immediately
+  -f, --force            Update wallpaper immediately, optionally to a specific time
   -p, --preview <theme>  Run a 24 hour preview for a certain theme***EXPERIMENTAL***
   -c, --check         	 Force check configuration options and push to script
-  -h, --help             show help"
+  -h, --help             Show help"
 
 if [[ $1 = "--help" ]] || [[ $1 = "-h" ]]; then
 	printf '%s\n' "$HELP"

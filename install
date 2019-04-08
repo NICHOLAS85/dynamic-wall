@@ -137,6 +137,9 @@ else
   crontab -u "$usrnm" -l | { cat; echo "*/45 * * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | crontab -u "$usrnm" -
 fi
 
+cp -p "$DIR/README.md" "/home/$usrnm/bin/dynamic-wall/"
+cp -p "$DIR/remove" "/home/$usrnm/bin/dynamic-wall/"
+
 echo -e "\e[00;32m\nUpdating configuration and running dynamicwall once\e[00m"
 dynamicwall -c
 

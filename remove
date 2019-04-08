@@ -85,6 +85,9 @@ remove_file "/home/$usrnm/.config/systemd/user/dynamicwall.timer"
 remove_file "/home/$usrnm/.config/systemd/user/dynamicwall.service"
 remove_file "/home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf"
 
+remove_file "/home/$usrnm/bin/dynamic-wall/README.md"
+remove_file "/home/$usrnm/bin/dynamic-wall/remove"
+
 remove_dir "/home/$usrnm/.config/systemd/user/dynamicwall.timer.d"
 remove_dir "/home/$usrnm/.config/systemd/user" "ifempty"
 remove_dir "/home/$usrnm/.config/systemd" "ifempty"
