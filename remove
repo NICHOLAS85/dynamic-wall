@@ -1,7 +1,7 @@
 #!/bin/bash
 # shellcheck source=bin/dynamic-wall/dynamicwall.config
 
-if [ "$(id -u)" -ne 0 ]; then
+if [[ "$(id -u)" -ne 0 ]]; then
   if ! sudo -n true 2> /dev/null; then
   echo "This script must be run as root. Enter your password...";
   else
@@ -16,9 +16,9 @@ usrnm=$(logname)
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "$DIR" || { echo "Error, exiting..."; exit 1; }
 
-eval "$(grep "theme_dir" 2>/dev/null < /home/"$usrnm"/bin/dynamic-wall/dynamicwall.config)"
+eval "$(grep "theme_dir" 2>/dev/null < "/home/$usrnm/bin/dynamic-wall/dynamicwall.config")"
 
-if [ -f /bin/systemctl ]; then
+if [[ -f /bin/systemctl ]]; then
 	echo -e "\n\033[0;33mDisabling dynamicwall systemd daemons...\033[0m"
   if systemctl is-active --quiet dynamicwall.timer
   then
@@ -28,7 +28,7 @@ if [ -f /bin/systemctl ]; then
   echo ""
 fi
 
-if [ -f /bin/systemctl ]; then
+if [[ -f /bin/systemctl ]]; then
 	echo -e "\n\033[0;33mRemoving dynamicwall.timer.d dropin...\033[0m"
   if rm -r /etc/systemd/system/dynamicwall.timer.d 2> /dev/null
   then
@@ -51,7 +51,7 @@ fi
 echo -e "\033[0;33mRemoving software files and directories...\033[0m"
 
 function remove_file(){
-  if [ -f $1 ]; then
+  if [[ -f $1 ]]; then
     if rm -f $1
     then
     echo "removed file: $1"
@@ -60,7 +60,7 @@ function remove_file(){
 }
 
 function remove_dir(){
-  if [ -d $1 ]; then
+  if [[ -d $1 ]]; then
     if [[ "$2" = "ifempty" ]]; then
       if rm -d $1  2> /dev/null
       then
@@ -93,7 +93,7 @@ remove_dir "$theme_dir/mojave_dynamic"
 remove_dir "$theme_dir/NewOrleans"
 remove_dir "$theme_dir" "ifempty"
 
-if [ "$1" = "-s" ]; then
+if [[ "$1" = "-s" ]]; then
   remove_file "/home/$usrnm/bin/dynamic-wall/default.config"
   remove_file "/home/$usrnm/bin/dynamic-wall/dynamicwall.config"
   remove_file "/home/$usrnm/bin/dynamic-wall/dynamicwall"
@@ -107,6 +107,6 @@ remove_dir "/home/$usrnm/bin/" "ifempty"
 
 echo ""
 
-if [ "$1" != "-s" ]; then
+if [[ "$1" != "-s" ]]; then
 	echo -e "\e[00;32mDynamic-Wall has been removed.\e[00m"
 fi
