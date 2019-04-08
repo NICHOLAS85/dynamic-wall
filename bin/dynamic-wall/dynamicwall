@@ -25,22 +25,22 @@ fi
 #Determine image to use based on time
 function main_script() {
 	if [[ "$date" -le "4" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.$ext"
-		set_wallpaper "$theme_dir"/"$active_theme"/"$active_theme"16."$ext"
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme\16.$ext"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme\16.$ext"
 	elif [[ "$date" -le "9" ]]; then
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 4)).$ext"
-		set_wallpaper "$theme_dir"/"$active_theme"/"$active_theme"$((date - 4))."$ext"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 4)).$ext"
 	elif [[ "$date" -le "16" ]]; then
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 5)).$ext"
-		set_wallpaper "$theme_dir"/"$active_theme"/"$active_theme"$((date - 5))."$ext"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 5)).$ext"
 	elif [[ "$date" -le "21" ]]; then
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 6)).$ext"
-		set_wallpaper "$theme_dir"/"$active_theme"/"$active_theme"$((date - 6))."$ext"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 6)).$ext"
 	else
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.$ext"
-		set_wallpaper "$theme_dir"/"$active_theme"/"$active_theme"16."$ext"
+		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme\16.$ext"
+		set_wallpaper "$theme_dir/$active_theme/$active_theme\16.$ext"
 	fi
-	echo "$date" > "$oldvar_dir"/.olddate
+	echo "$date" > "$oldvar_dir/.olddate"
 }
 
 #Set wallpaper determined in function above
@@ -104,9 +104,9 @@ function notisend() {
 #Update refreshrate depending on if systemd or cron is in use
 function update_refreshrate() {
 	if [[ "$scheduler" = "systemd" ]]; then
-    if [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][m] ]] || [[ "$refreshrate" == [[:xdigit:]][m] ]]; then
+    if [[ "${refreshrate: -1}" = m ]]; then
       refreshrate_c="\*:0\/${refreshrate%?}"
-    elif [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][h] ]] || [[ "$refreshrate" == [[:xdigit:]][h] ]]; then
+    elif [[ "${refreshrate: -1}" = h ]]; then
       refreshrate_c="00\/${refreshrate%?}:00"
     fi
     sed -i '/OnCalendar=00:\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
@@ -343,15 +343,15 @@ elif ! [[ $2 = "" ]]; then
 	echo "Incompatible arguments, use one at a time, exiting..."
 	exit 1
 elif [[ $1 = "--force" ]] || [[ $1 = "-f" ]]; then
-	echo "Forced script to run, ignoring config changes"
 	main_script
+  echo "Forced script to run, ignoring config changes"
 	exit 0
 elif [[ $1 = "--check" ]] || [[ $1 = "-c" ]]; then
-	echo "Updated config and forced run"
 	update_refreshrate
 	update_theme
 	update_timeoffset
 	main_script
+  echo "Updated config and forced run"
 	exit 0
 elif ! [[ $1 = "" ]]; then
 	echo "Unknown argument passed"
