@@ -40,7 +40,7 @@ function main_script() {
 		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme\16.$ext"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme\16.$ext"
 	fi
-	echo "$date" > "$oldvar_dir/.olddate"
+	echo "$date" > "$oldvar_dir/olddate"
 }
 
 #Set wallpaper determined in function above
@@ -111,7 +111,7 @@ function update_refreshrate() {
     fi
     sed -i '/OnCalendar=00:\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
     sed -i '/OnCalendar=\*:0\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
-		echo "$refreshrate" > "$oldvar_dir"/.active_refreshrate
+		echo "$refreshrate" > "$oldvar_dir"/active_refreshrate
 		notisend "Refresh rate updated, reloading systemd daemons"
 		systemctl daemon-reload
 	elif [[ "$scheduler" = "cron" ]]; then
@@ -137,7 +137,7 @@ function update_refreshrate() {
 						refreshrate_c=${refreshrate%?}
 						echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v "/home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo "* */'"$refreshrate_c"' * * * /home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
 					fi
-					echo "$refreshrate" > "$oldvar_dir"/.active_refreshrate
+					echo "$refreshrate" > "$oldvar_dir"/active_refreshrate
 					notisend "Refresh rate updated, crontab refreshed"
 					break
 				else
@@ -156,13 +156,13 @@ function update_refreshrate() {
 }
 
 function update_theme() {
-	echo "$cur_theme" > "$oldvar_dir"/.active_theme
+	echo "$cur_theme" > "$oldvar_dir"/active_theme
 	notisend "Theme updated to $cur_theme"
 	active_theme="$cur_theme"
 }
 
 function update_timeoffset() {
-	echo "$timeoffset" > "$oldvar_dir"/.active_timeoffset
+	echo "$timeoffset" > "$oldvar_dir"/active_timeoffset
 	notisend "Time offset updated to $timeoffset"
 }
 
