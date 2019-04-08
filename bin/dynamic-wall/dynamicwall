@@ -48,22 +48,14 @@ function set_wallpaper() {
 	full_image_path=$(realpath "$1")
 	#Run process as currently logged in user, export display and DBUS session, and then evaluate wallpaper script, needed for automatic updating
   if [[ "$(id -u)" = 1000 ]]; then
-  	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-  	qdbus org.kde.plasmashell /PlasmaShell evaluateScript '
-  	    var allDesktops = desktops();
-  	    for (i=0;i<allDesktops.length;i++)
-  	    {
-  	        d = allDesktops[i];
-  	        d.wallpaperPlugin = "org.kde.image";
-  	        d.currentConfigGroup = Array("Wallpaper", "org.kde.image", "General");
-  	        d.writeConfig("Image", "file://'${full_image_path}'")
-  	    }
-  	'
+    prefix=(env "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
   else
-    sudo -u "$usrnm" \
-  	XDG_RUNTIME_DIR=/run/user/1000 \
-  	DISPLAY=:0 \
-  	DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+    prefix=(sudo -u "$usrnm" \
+    "XDG_RUNTIME_DIR=/run/user/1000" \
+    "DISPLAY=:0" \
+    "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
+  fi
+  "${prefix[@]}" \
   	qdbus org.kde.plasmashell /PlasmaShell evaluateScript '
   	    var allDesktops = desktops();
   	    for (i=0;i<allDesktops.length;i++)
@@ -74,7 +66,6 @@ function set_wallpaper() {
   	        d.writeConfig("Image", "file://'${full_image_path}'")
   	    }
   	'
-  fi
 }
 
 #Check config and show notifications if enabled
@@ -82,15 +73,15 @@ function notisend() {
   case $notifications in
     t | T | true | True | TRUE )
       if [[ "$(id -u)" = 1000 ]]; then
-        XDG_RUNTIME_DIR=/run/user/1000 \
-        kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
+        prefix=(env "XDG_RUNTIME_DIR=/run/user/1000")
       else
-        sudo -u "$usrnm" \
-        XDG_RUNTIME_DIR=/run/user/1000 \
-        DISPLAY=:0 \
-        DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
-        kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
+        prefix=(sudo -u "$usrnm" \
+        "XDG_RUNTIME_DIR=/run/user/1000" \
+        "DISPLAY=:0" \
+        "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
       fi
+      "${prefix[@]}" \
+      kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
       ;;
     f | F | false | False | FALSE )
       ;;
@@ -166,6 +157,25 @@ function update_timeoffset() {
 	notisend "Time offset updated to $timeoffset"
 }
 
+function load_overrides() {
+	if . "$theme_dir/$cur_theme/override.config" 2> /dev/null
+	then
+	  case $printvariables in
+	    TRUE | True | true | T | t )
+	    echo "Loading variable overrides from override.config for $cur_theme"
+	    echo "The following variables have been overridden:"
+	    awk '/=/ && !/#/' "$theme_dir/$cur_theme/override.config"
+	    echo ""
+	      ;;
+	    FALSE | False | false | F | f )
+	      ;;
+	    * )
+	      echo "Unknown option \"$printvariables\" for printvariables, assuming false"
+	      ;;
+	  esac
+	fi
+}
+
 function find_theme() {
 	if ls -1 "$theme_dir"/"$1"/"$1"* > /dev/null 2>&1; then
 		filedir=$(basename "$(find "$theme_dir" -name "$1*" -type f | tail -1)")
@@ -234,25 +244,6 @@ function find_defaults() {
   		exit 1
 		fi
     active_theme=$cur_theme
-	fi
-}
-
-function load_overrides() {
-	if . "$theme_dir/$cur_theme/override.config" 2> /dev/null
-	then
-	  case $printvariables in
-	    TRUE | True | true | T | t )
-	    echo "Loading variable overrides from override.config for $cur_theme"
-	    echo "The following variables have been overridden:"
-	    awk '/=/ && !/#/' "$theme_dir/$cur_theme/override.config"
-	    echo ""
-	      ;;
-	    FALSE | False | false | F | f )
-	      ;;
-	    * )
-	      echo "Unknown option \"$printvariables\" for printvariables, assuming false"
-	      ;;
-	  esac
 	fi
 }
 
