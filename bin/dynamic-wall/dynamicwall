@@ -104,8 +104,15 @@ function notisend() {
 #Update refreshrate depending on if systemd or cron is in use
 function update_refreshrate() {
 	if [[ "$scheduler" = "systemd" ]]; then
-		sed -i '/OnBootSec='"$active_refreshrate"'/!b;cOnBootSec='"$refreshrate" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
-		sed -i '/OnUnitActiveSec='"$active_refreshrate"'/!b;cOnUnitActiveSec='"$refreshrate" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
+    if [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][m] ]] || [[ "$refreshrate" == [[:xdigit:]][m] ]]; then
+      refreshrate_c="\*:0\/${refreshrate%?}"
+      sed -i '/OnCalendar=00:\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
+      sed -i '/OnCalendar=\*:0\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
+    elif [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][h] ]] || [[ "$refreshrate" == [[:xdigit:]][h] ]]; then
+      refreshrate_c="00\/${refreshrate%?}:00"
+      sed -i '/OnCalendar=00\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
+      sed -i '/OnCalendar=\*:0\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
+    fi
 		echo "$refreshrate" > "$oldvar_dir"/.active_refreshrate
 		notisend "Refresh rate updated, reloading systemd daemons"
 		systemctl daemon-reload
@@ -254,29 +261,46 @@ function load_overrides() {
 find_theme "$cur_theme"
 
 # Checks if timeoffset is a number and then if it is range
-if ! [ "$timeoffset" -eq "$timeoffset" ] 2> /dev/null; then
-	notisend "Invalid Time Offset($timeoffset), loading defaults..."
-	find_defaults "timeoffset=[[:digit:]]"
-elif ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
-	notisend "Time Offset is out of range($timeoffset), loading defaults..."
-	find_defaults "timeoffset=[[:digit:]]"
-elif [[ $((date + timeoffset)) -gt 24 ]]; then
-	date=$((date - 24 + timeoffset))
-elif [[ $((date + timeoffset)) -lt 0 ]]; then
-	date=$((date + 24 + timeoffset))
-else
-	date=$((date + timeoffset))
+for ((n=0;n<2;n++)); do
+  if ! [ "$timeoffset" -eq "$timeoffset" ] 2> /dev/null; then
+  	notisend "Invalid Time Offset($timeoffset), loading defaults..."
+  	find_defaults "timeoffset=[[:digit:]]"
+    valid=false
+  elif ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
+  	notisend "Time Offset is out of range($timeoffset), loading defaults..."
+  	find_defaults "timeoffset=[[:digit:]]"
+    valid=false
+  elif [[ $((date + timeoffset)) -gt 24 ]]; then
+  	date=$((date - 24 + timeoffset))
+    valid=true
+  elif [[ $((date + timeoffset)) -lt 0 ]]; then
+  	date=$((date + 24 + timeoffset))
+    valid=true
+  else
+  	date=$((date + timeoffset))
+    valid=true
+  fi
+done
+
+if [[ "$valid" = "false" ]]; then
+  notisend "There is something wrong with your default config options, reinstall"
+  exit 1
 fi
 
 # Checks if refreshrate is in a valid format
-if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
-	notisend "Invalid Refresh Rate($refreshrate), loading defaults..."
-	find_defaults "refreshrate=[[:digit:]]"
-  #check defaults
-  if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] ]] && ! [[ "$refreshrate" == [[:xdigit:]][mh] ]]; then
-	notisend "Invalid Refresh Rate($refreshrate), there is a problem with your configuration files"
-  exit 1
+for ((n=0;n<2;n++)); do
+  if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] || "$refreshrate" == [[:xdigit:]][mh] ]] || [[ "${refreshrate: -1}" = h && "${refreshrate%?}" -ge 24 || "${refreshrate: -1}" = m && "${refreshrate%?}" -ge 60 || "${refreshrate%?}" -le 0 ]]; then\
+  	notisend "Invalid Refresh Rate($refreshrate), loading defaults..."
+  	find_defaults "refreshrate=[[:digit:]]"
+    valid=false
+  else
+    valid=true
   fi
+done
+
+if [[ "$valid" = "false" ]]; then
+  notisend "There is something wrong with your default config options, reinstall"
+  exit 1
 fi
 
 # Checks if date is a number and then if its in a valid range
@@ -305,14 +329,15 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		trap "break" INT
 		dbusRef=$(kdialog --progressbar "Previewing" 20)
 		qdbus $dbusRef showCancelButton true
+    qdbus $dbusRef Set "" "value" 0
 		for (( date = 3 + timeoffset; date < 24 + timeoffset; date++ )); do
-			date +"%l:%M %p" -d $((date - timeoffset))
-			main_script
-			sleep 1.5
-			inc=$(($(qdbus $dbusRef Get "" "value") + 1))
+			date +"%l:%M %p" -d $((date - timeoffset));
+			main_script;
+			sleep 1.5;
+			inc=$(($(qdbus $dbusRef Get "" "value") + 1));
 			qdbus $dbusRef Set "" "value" $inc;
 			if ! qdbus $dbusRef wasCancelled > /dev/null 2>&1; then
-				break
+				break;
 			fi
 		done
 		qdbus $dbusRef close 2> /dev/null

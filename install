@@ -83,33 +83,35 @@ else
   install_files "config/systemd/user/dynamicwall.timer.d" "/home/$usrnm/."
 fi
 
-while true; do
-  echo -e "\n\033[0;33mWould you like to install a system-sleep script to trigger dynamicwall on wakeup? [y/n/?]\033[0m"
-  echo -n "Input:"
-  read answer
-  case $answer in
-    y | Y )
-      if  [[ -d /lib/systemd ]]; then
-        install_files "lib/systemd/system-sleep" "/"
-      elif [[ -d /usr/lib/systemd ]]; then
-        install_files "lib/systemd/system-sleep" "/usr/"
-      else
-        echo -e "\e[00;31mCan't find system-sleep directory, skipping...\e[00m"
-      fi
-      break
-      ;;
-    n | N )
-      echo -e "\e[00;32m\nSkipping system-sleep files...\e[00m"
-      break
-      ;;
-    \? )
-      echo "Dynamic-Wall runs by default every 45 minutes. If the computer is suspended during this time the wallpaper will not update until another 45 minutes pass. This may lead to situations where the wallpaper stays set on a time earlier in the day meanwhile the computer suspends and wakes up later in the evening with the same wallpaper set. Installing a script in /systemd/system-sleep will trigger the Dynamic-Wall script once on wakeup solving this problem and creating a seamless experience."
-      ;;
-    * )
-      echo -e "\e[00;31mUknown answer provided.\e[00m"
-      ;;
-  esac
-done
+if [[ $method = "--cron" ]]; then
+  while true; do
+    echo -e "\n\033[0;33mWould you like to install a system-sleep script to trigger dynamicwall on wakeup? [y/n/?]\033[0m"
+    echo -n "Input:"
+    read answer
+    case $answer in
+      y | Y )
+        if  [[ -d /lib/systemd ]]; then
+          install_files "lib/systemd/system-sleep" "/"
+        elif [[ -d /usr/lib/systemd ]]; then
+          install_files "lib/systemd/system-sleep" "/usr/"
+        else
+          echo -e "\e[00;31mCan't find system-sleep directory, skipping...\e[00m"
+        fi
+        break
+        ;;
+      n | N )
+        echo -e "\e[00;32m\nSkipping system-sleep files...\e[00m"
+        break
+        ;;
+      \? )
+        echo "Dynamic-Wall runs by default every 45 minutes. If the computer is suspended during this time the wallpaper will not update until another 45 minutes pass. This may lead to situations where the wallpaper stays set on a time earlier in the day meanwhile the computer suspends and wakes up later in the evening with the same wallpaper set. Installing a script in /systemd/system-sleep will trigger the Dynamic-Wall script once on wakeup solving this problem and creating a seamless experience."
+        ;;
+      * )
+        echo -e "\e[00;31mUknown answer provided.\e[00m"
+        ;;
+    esac
+  done
+fi
 # Post installation
 
 echo -e "\e[00;32m\n[5/6] Creating software links...\e[00m"

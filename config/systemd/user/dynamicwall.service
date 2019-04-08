@@ -4,3 +4,6 @@ Description=dynamic-wall
 [Service]
 Type=oneshot
 ExecStart=dynamicwall
+
+[Install]
+WantedBy=multi-user.target
