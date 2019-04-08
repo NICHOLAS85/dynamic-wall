@@ -106,13 +106,11 @@ function update_refreshrate() {
 	if [[ "$scheduler" = "systemd" ]]; then
     if [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][m] ]] || [[ "$refreshrate" == [[:xdigit:]][m] ]]; then
       refreshrate_c="\*:0\/${refreshrate%?}"
-      sed -i '/OnCalendar=00:\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
-      sed -i '/OnCalendar=\*:0\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
     elif [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][h] ]] || [[ "$refreshrate" == [[:xdigit:]][h] ]]; then
       refreshrate_c="00\/${refreshrate%?}:00"
-      sed -i '/OnCalendar=00\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
-      sed -i '/OnCalendar=\*:0\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
     fi
+    sed -i '/OnCalendar=00:\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
+    sed -i '/OnCalendar=\*:0\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
 		echo "$refreshrate" > "$oldvar_dir"/.active_refreshrate
 		notisend "Refresh rate updated, reloading systemd daemons"
 		systemctl daemon-reload
