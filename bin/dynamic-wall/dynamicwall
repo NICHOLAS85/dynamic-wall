@@ -3,6 +3,7 @@
 
 # Get current user
 usrnm=$(grep -i '1000' -A 0 /etc/passwd | sed 's/:.*//')
+id="$(id -u)"
 # Get current time
 date=$(date +%H | sed 's/\<0//g')
 # Source Config File
@@ -47,7 +48,7 @@ function main_script() {
 function set_wallpaper() {
 	full_image_path=$(realpath "$1")
 	#Run process as currently logged in user, export display and DBUS session, and then evaluate wallpaper script, needed for automatic updating
-  if [[ "$(id -u)" = 1000 ]]; then
+  if [[ $id = 1000 ]]; then
     prefix=(env "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
   else
     prefix=(sudo -u "$usrnm" \
@@ -87,7 +88,7 @@ function trueorfalse() {
 #Check config and show notifications if enabled
 function notisend() {
   if trueorfalse $notifications; then
-    if [[ "$(id -u)" = 1000 ]]; then
+    if [[ $id = 1000 ]]; then
       prefix=(env "XDG_RUNTIME_DIR=/run/user/1000")
     else
       prefix=(sudo -u "$usrnm" \
@@ -236,16 +237,18 @@ function find_defaults() {
 	fi
 	eval "$(grep "$1" < "/home/$usrnm/bin/dynamic-wall/default.config")"
   notisend "loaded $(grep "$1" < "/home/$usrnm/bin/dynamic-wall/default.config")"
-	if [[ $2 = "p" ]]; then
-		find_theme "$previewtheme" d p
-    return $?
-	elif [[ "$cur_theme" != "$active_theme" ]]; then
-		if ! find_theme "$cur_theme" d; then
-  		echo "Can't locate $cur_theme in default theme directory, exiting..."
-  		exit 1
-		fi
-    active_theme="$cur_theme"
-	fi
+  if [[ $1 = "theme_dir" ]] || [[ $1 = "cur_theme" ]]; then
+  	if [[ $2 = "p" ]]; then
+  		find_theme "$previewtheme" d p
+      return $?
+  	elif [[ "$cur_theme" != "$active_theme" ]]; then
+  		if ! find_theme "$cur_theme" d; then
+    		echo "Can't locate $cur_theme in default theme directory, exiting..."
+    		exit 1
+  		fi
+      active_theme="$cur_theme"
+  	fi
+  fi
 }
 
 # Checks if users current theme exist
@@ -333,7 +336,7 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		exit 0
 	fi
 elif [[ $1 = "--force" ]] || [[ $1 = "-f" ]]; then
-  if ! [[ $2 -eq $2 ]] 2> /dev/null || [[ $2 -gt 24 || $2 -lt 0 ]]; then
+  if ! [ $2 -eq $2 ] 2> /dev/null || [[ $2 -gt 24 || $2 -lt 0 ]]; then
     echo "\"$2\" is not a valid time"
     exit 1
   elif [[ $2 != "" ]]; then
