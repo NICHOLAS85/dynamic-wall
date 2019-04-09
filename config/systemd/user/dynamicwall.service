@@ -1,5 +1,5 @@
 [Unit]
-Description=dynamic-wall
+Description=dynamic-wall unit
 After=graphical-session.target
 
 [Service]

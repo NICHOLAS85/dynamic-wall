@@ -333,7 +333,16 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		exit 0
 	fi
 elif [[ $1 = "--force" ]] || [[ $1 = "-f" ]]; then
-  date=$2
+  if ! [[ $2 -eq $2 ]] 2> /dev/null || [[ $2 -gt 24 || $2 -lt 0 ]]; then
+    echo "\"$2\" is not a valid time"
+    exit 1
+  elif [[ $2 != "" ]]; then
+    date=$(($2 + timeoffset))
+  fi
+  date +"%l:%M %p" -d $((date - timeoffset)) 2> /dev/null || date +"%l:%M %p"
+  if [[ $timeoffset != 0 ]]; then
+    echo "offset by $timeoffset"
+  fi
 	main_script
   echo "Forced script to run, ignoring config changes"
 	exit 0
