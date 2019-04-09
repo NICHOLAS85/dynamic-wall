@@ -68,27 +68,36 @@ function set_wallpaper() {
   	'
 }
 
-#Check config and show notifications if enabled
-function notisend() {
-  case $notifications in
-    t | T | true | True | TRUE )
-      if [[ "$(id -u)" = 1000 ]]; then
-        prefix=(env "XDG_RUNTIME_DIR=/run/user/1000")
-      else
-        prefix=(sudo -u "$usrnm" \
-        "XDG_RUNTIME_DIR=/run/user/1000" \
-        "DISPLAY=:0" \
-        "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
-      fi
-      "${prefix[@]}" \
-      kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
+#check true or false config options
+function trueorfalse() {
+  case $1 in
+    TRUE | True | true | T | t )
+      return 0
       ;;
-    f | F | false | False | FALSE )
+    FALSE | False | false | F | f )
+      return 1
       ;;
     * )
-      echo "Uknown option for notification settings, disabling notifications..."
+      echo "Unknown option \"$1\", assuming false. Check your config file...."
+      return 1
       ;;
   esac
+}
+
+#Check config and show notifications if enabled
+function notisend() {
+  if trueorfalse $notifications; then
+    if [[ "$(id -u)" = 1000 ]]; then
+      prefix=(env "XDG_RUNTIME_DIR=/run/user/1000")
+    else
+      prefix=(sudo -u "$usrnm" \
+      "XDG_RUNTIME_DIR=/run/user/1000" \
+      "DISPLAY=:0" \
+      "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
+    fi
+    "${prefix[@]}" \
+    kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
+  fi
   echo "$1"
 }
 
@@ -100,9 +109,9 @@ function update_refreshrate() {
     elif [[ "${refreshrate: -1}" = h ]]; then
       refreshrate_c="00\/${refreshrate%?}:00"
     fi
-    sed -i '/OnCalendar=00:\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
-    sed -i '/OnCalendar=\*:0\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/2-timer.conf
-		echo "$refreshrate" > "$oldvar_dir"/active_refreshrate
+    sed -i '/OnCalendar=00:\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" "/home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf"
+    sed -i '/OnCalendar=\*:0\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" "/home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf"
+		echo "$refreshrate" > "$oldvar_dir/active_refreshrate"
 		notisend "Refresh rate updated, reloading systemd daemons"
 		systemctl daemon-reload
 	elif [[ "$scheduler" = "cron" ]]; then
@@ -127,7 +136,7 @@ function update_refreshrate() {
             prefix=(\"\* \*/"${refreshrate%?}")
 					fi
           echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v "/home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo '${prefix[*]}' * * * /home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
-					echo "$refreshrate" > "$oldvar_dir"/active_refreshrate
+					echo "$refreshrate" > "$oldvar_dir/active_refreshrate"
 					notisend "Refresh rate updated, crontab refreshed"
 					break
 				else
@@ -146,37 +155,30 @@ function update_refreshrate() {
 }
 
 function update_theme() {
-	echo "$cur_theme" > "$oldvar_dir"/active_theme
+	echo "$cur_theme" > "$oldvar_dir/active_theme"
 	notisend "Theme updated to $cur_theme"
 	active_theme="$cur_theme"
 }
 
 function update_timeoffset() {
-	echo "$timeoffset" > "$oldvar_dir"/active_timeoffset
+	echo "$timeoffset" > "$oldvar_dir/active_timeoffset"
 	notisend "Time offset updated to $timeoffset"
 }
 
 function load_overrides() {
 	if . "$theme_dir/$cur_theme/override.config" 2> /dev/null
 	then
-	  case $printvariables in
-	    TRUE | True | true | T | t )
-  	    echo "Loading variable overrides from override.config for $cur_theme"
-  	    echo "The following variables have been overridden:"
-  	    awk '/=/ && !/#/' "$theme_dir/$cur_theme/override.config"
-  	    echo ""
-	      ;;
-	    FALSE | False | false | F | f )
-	      ;;
-	    * )
-	      echo "Unknown option \"$printvariables\" for printvariables, assuming false"
-	      ;;
-	  esac
+    if trueorfalse $printvariables; then
+      echo "Loading variable overrides from override.config for $cur_theme"
+      echo "The following variables have been overridden:"
+      awk '/=/ && !/#/' "$theme_dir/$cur_theme/override.config"
+      echo ""
+    fi
 	fi
 }
 
 function find_theme() {
-	if ls -1 "$theme_dir"/"$1"/"$1"* > /dev/null 2>&1; then
+	if ls -1 "$theme_dir/$1/$1"* > /dev/null 2>&1; then
 		filedir=$(basename "$(find "$theme_dir" -name "$1*" -type f | tail -1)")
 		ext=${filedir##*.}
 		case $ext in
@@ -235,14 +237,14 @@ function find_defaults() {
 	eval "$(grep "$1" < "/home/$usrnm/bin/dynamic-wall/default.config")"
   notisend "loaded $(grep "$1" < "/home/$usrnm/bin/dynamic-wall/default.config")"
 	if [[ $2 = "p" ]]; then
-		find_theme "$previewtheme" "d" "p"
+		find_theme "$previewtheme" d p
     return $?
-	elif [[ $cur_theme != "$active_theme" ]]; then
-		if ! find_theme "$cur_theme" "d"; then
+	elif [[ "$cur_theme" != "$active_theme" ]]; then
+		if ! find_theme "$cur_theme" d; then
   		echo "Can't locate $cur_theme in default theme directory, exiting..."
   		exit 1
 		fi
-    active_theme=$cur_theme
+    active_theme="$cur_theme"
 	fi
 }
 
@@ -259,14 +261,17 @@ for ((n=0;n<2;n++)); do
     if ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
     	notisend "Time Offset is out of range($timeoffset), loading defaults..."
     	find_defaults "timeoffset=[[:digit:]]"
+      valid1=false
     elif [[ $((date + timeoffset)) -gt 24 ]]; then
     	date=$((date - 24 + timeoffset))
+      valid1=true
     elif [[ $((date + timeoffset)) -lt 0 ]]; then
     	date=$((date + 24 + timeoffset))
+      valid1=true
     else
     	date=$((date + timeoffset))
+      valid1=true
     fi
-    valid1=true
   fi
   if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] || "$refreshrate" == [[:xdigit:]][mh] ]] || [[ "${refreshrate: -1}" = h && "${refreshrate%?}" -ge 24 || "${refreshrate: -1}" = m && "${refreshrate%?}" -ge 60 || "${refreshrate%?}" -le 0 ]]; then\
     notisend "Invalid Refresh Rate($refreshrate), loading defaults..."
@@ -300,7 +305,7 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
 		exit 1
 	else
 		if find_theme "$2" p; then
-      active_theme=$2
+      active_theme="$2"
     else
       notisend "Couldn't find $2, exiting..."
       exit 1
@@ -363,21 +368,13 @@ if [[ "$active_theme" != "$cur_theme" ]]; then
   olddate=$date
 fi
 
-case $printvariables in
-  TRUE | True | true | T | t )
-    echo "Theme currently in use is $cur_theme"
-    echo "Current theme directory is $theme_dir"
-    echo "Time is currently $date"
-    echo "Time offset by $timeoffset"
-    echo "Refreshrate is $refreshrate"
-    ;;
-  FALSE | False | false | F | f )
-    ;;
-  * )
-    echo "Unknown option \"$printvariables\" for printvariables, assuming false"
-    ;;
-esac
-
+if trueorfalse $printvariables; then
+  echo "Theme currently in use is $cur_theme"
+  echo "Current theme directory is $theme_dir"
+  echo "Time is currently $date"
+  echo "Time offset by $timeoffset"
+  echo "Refreshrate is $refreshrate"
+fi
 
 # Check if time has changed since last exec, then set wallpaper based on time
 if [[ "$olddate" != "$date" ]]; then
