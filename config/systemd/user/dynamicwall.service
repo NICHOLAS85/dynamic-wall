@@ -1,6 +1,5 @@
 [Unit]
 Description=dynamic-wall unit
-After=graphical.target
 
 [Service]
 Type=oneshot
