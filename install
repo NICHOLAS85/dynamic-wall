@@ -27,6 +27,7 @@ elif [[ $1 = "--cron" ]]; then
 fi
 
 if [[ $1 = "--update" ]]; then
+  git reset --hard
   git pull --rebase --stat origin master
 elif ! [[ $1 = "" ]]; then
   echo -e "\e[00;31mUnknown argument used, run either ./install or ./install --cron depending on if you want to use systemd or cron to update your wallpaper automatically\e[00m"
