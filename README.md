@@ -25,6 +25,11 @@ To install run:
 ./install
 ```
 
+To update an existing installation run :
+```sh
+./install --update
+```
+
 To uninstall run:
 ```sh
 ./remove
@@ -48,7 +53,7 @@ If you would like to install this script and use cron instead of systemd, simply
 ./install --cron
 ```
 
-This will avoid installing any of the systemd service and timer files.
+This will avoid installing any of the systemd service and timer files. `--update` is still functional if used after `--cron`.
 
 During installation a prompt will appear asking whether or not you would like to install a system-sleep script to trigger dynamicwall on wakeup. This will install a script into `/lib/systemd/system-sleep/` called dynamicwall.sh. This script simply updates your wallpaper when your computer wakes from suspension. You can select n to skip this. (Not needed for those who installed without --cron argument)
 
