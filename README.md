@@ -78,7 +78,7 @@ optional args:
   -h, --help             Show help
 ```
 
-`-f` uses your last saved config and ignores any changes added to your config files since.
+`-f` uses your last saved config and ignores any changes added to your config files since. You can optionally set a time to force update the wallpaper to. You timeoffset value is considered when using this command.
 
 `-c` forcibly saves all your settings and run's dynamicwall once. The script should automatically detect changes, but this can be used as a backup.
 
