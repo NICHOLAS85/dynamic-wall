@@ -2,8 +2,10 @@
 Description=dynamic-wall timer
 
 [Timer]
-OnBootSec=45m
-OnUnitActiveSec=45m
+OnBootSec=10
+OnCalendar=*:0/45
+Persistent=true
+Unit=dynamicwall.service
 
 [Install]
 WantedBy=multi-user.target timers.target

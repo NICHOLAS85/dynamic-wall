@@ -1,7 +1,10 @@
 [Unit]
-Description=dynamic-wall
+Description=dynamic-wall unit
+After=graphical-session.target
 
 [Service]
 Type=oneshot
-User=USERNAME
-ExecStart=/bin/bash /home/USERNAME/bin/dynamic-wall/dynamicwall
+ExecStart=dynamicwall
+
+[Install]
+WantedBy=multi-user.target

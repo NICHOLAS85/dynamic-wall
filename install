@@ -1,145 +1,147 @@
 #!/bin/bash
 
-DW_VERSION="2019.3.22"
+DW_VERSION="2019.4.5"
 
-trap "./remove -s; exit" SIGINT
-
-if [ "$(id -u)" -ne 0 ]; then
+if [[ "$(id -u)" -ne 0 ]]; then
+  if ! sudo -n true 2> /dev/null; then
   echo "This script must be run as root. Enter your password...";
+  else
+  echo "Proceeding to run script as root...";
+  read -p "Press enter to continue";
+  fi
   sudo bash ./$0 $1;
-  exit 1;
+  exit 0;
 fi
+echo ""
+trap 'echo "Stopped, Removing any half installed files...";./remove -s;exit 0' SIGINT
+
 
 usrnm=$(logname)
 
-if ! [ -f /bin/systemctl ] && ! [[ $1 = "--cron" ]]; then
+if ! [[ -f /bin/systemctl ]] && ! [[ $1 = "--cron" ]]; then
 	echo -e "\e[00;31mWarning: systemd seems to be missing. Dynamic-Wall will not work. Run this setup with the --cron argument if you wish to use cron instead of systemd.\e[00m"
-  exit
+  exit 1
 elif [[ $1 = "--cron" ]]; then
   method="--cron"
 elif ! [[ $1 = "" ]]; then
-  echo -e "\e[00;31mUnknown argument used, run either ./install or ./install --cron depending on if you want to use systemd or cron to update your wallpaper\e[00m"
-  exit
+  echo -e "\e[00;31mUnknown argument used, run either ./install or ./install --cron depending on if you want to use systemd or cron to update your wallpaper automatically\e[00m"
+  exit 1
 
 fi
 
 # Set the scripts permisions
 
-echo -e "\e[00;32m[1/5] Setting Permissions...\e[00m"
+echo -e "\e[00;32m[1/6] Setting Permissions...\e[00m"
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-cd $DIR || { echo "Error, exiting..."; exit; }
-chmod a+x ./remove
-chmod a+x ./lib/systemd/system-sleep/dynamicwall.sh
-chmod +x ./bin/dynamic-wall/dynamicwall
+cd "$DIR" || { echo "Error, exiting..."; exit 1; }
+chmod -v a+x ./remove
+chmod -v a+x ./lib/systemd/system-sleep/dynamicwall.sh
+chmod -v +x ./bin/dynamic-wall/dynamicwall
+echo ""
 
 # Remove previous versions
 
-echo -e "\e[00;32m[2/5] Removing previous versions...\e[00m"
+echo -e "\e[00;32m[2/6] Removing previous versions...\e[00m"
 ./remove -s
 
 # Update username dependent fields
 
-echo -e "\e[00;32m[3/5] Updating fields based on system and arguments...\e[00m"
-sed -i "s/USERNAME/$usrnm/g" $DIR/config/systemd/user/dynamicwall.service
-echo "Updated dynamicwall.service"
+echo -e "\e[00;32m[3/6] Updating fields based on system and arguments...\e[00m"
 
 if [[ $method = "--cron" ]]; then
-  sed -i "s/scheduler=systemd/scheduler=cron/g" $DIR/bin/dynamic-wall/dynamicwall.config
-  sed -i "s/scheduler=systemd/scheduler=cron/g" $DIR/bin/dynamic-wall/default.config
-  sed -i "s/systemctl start dynamicwall\.service/\/bin\/bash \/home\/$usrnm\/bin\/dynamic-wall\/dynamicwall/g" $DIR/lib/systemd/system-sleep/dynamicwall.sh
-  echo "updated scheduler to cron"
+  sed -i "s/scheduler=systemd/scheduler=cron/g" "$DIR"/bin/dynamic-wall/dynamicwall.config
+  sed -i "s/scheduler=systemd/scheduler=cron/g" "$DIR"/bin/dynamic-wall/default.config
+  echo "Updated scheduler to cron"
 else
-  sed -i "s/scheduler=cron/scheduler=systemd/g" $DIR/bin/dynamic-wall/dynamicwall.config
-  sed -i "s/scheduler=cron/scheduler=systemd/g" $DIR/bin/dynamic-wall/default.config
-  sed -i "s/\/bin\/bash \/home\/$usrnm\/bin\/dynamic-wall\/dynamicwall/systemctl start dynamicwall.service/g" $DIR/lib/systemd/system-sleep/dynamicwall.sh
-  echo "updated scheduler to systemd"
+  sed -i "s/scheduler=cron/scheduler=systemd/g" "$DIR"/bin/dynamic-wall/dynamicwall.config
+  sed -i "s/scheduler=cron/scheduler=systemd/g" "$DIR"/bin/dynamic-wall/default.config
+  echo "Updated scheduler to systemd"
 fi
 
 # Start the installation
 
-echo -e "\e[00;32m\n[4/5] Copying software files...\e[00m"
+echo -e "\e[00;32m\n[4/6] Copying software files...\e[00m"
 function install_files(){
-    if [ "$2" = "" ];then
-      echo "installing: $1"
+  echo "installing: $1 into $2$1"
 
-      install -o "$usrnm" -g "$usrnm" -d $1
-      install -o "$usrnm" -g "$usrnm" -D $DIR$1/* $1
-    elif [ "$3" = "hidden" ]; then
-      echo "installing: $1"
-
-      install -o "$usrnm" -g "$usrnm" -d /home/$2/.$1
-      install -o "$usrnm" -g "$usrnm" -D $DIR/$1/* /home/$2/.$1
-    elif [[ $2 = "usr" ]]; then
-      echo "installing: $1"
-
-      install -o "$usrnm" -g "$usrnm" -d usr/$1
-      install -o "$usrnm" -g "$usrnm" -D $DIR$1/* usr/$1
-    else
-      echo "installing: $1"
-
-      install -o "$usrnm" -g "$usrnm" -d /home/$2/$1
-      install -o "$usrnm" -g "$usrnm" -D $DIR$1/* /home/$2/$1
-    fi
+  install -o "$usrnm" -g "$usrnm" -d $2$1
+  install -o "$usrnm" -g "$usrnm" -D "$DIR"/$1/* $2$1
 }
 
-install_files "/bin" "$usrnm"
-install_files "/bin/dynamic-wall" "$usrnm"
-cp -pR $DIR/bin/dynamic-wall/oldvar /home/"$usrnm"/bin/dynamic-wall/.oldvar
-install_files "/bin/dynamic-wall/themes" "$usrnm"
-install_files "/bin/dynamic-wall/themes/EarthView" "$usrnm"
-install_files "/bin/dynamic-wall/themes/mojave_dynamic" "$usrnm"
-install_files "/bin/dynamic-wall/themes/NewOrleans" "$usrnm"
+install_files "bin" "/home/$usrnm/"
+install_files "bin/dynamic-wall" "/home/$usrnm/"
+install_files "bin/dynamic-wall/.oldvar" "/home/$usrnm/"
+install_files "bin/dynamic-wall/themes" "/home/$usrnm/"
+install_files "bin/dynamic-wall/themes/EarthView" "/home/$usrnm/"
+install_files "bin/dynamic-wall/themes/mojave_dynamic" "/home/$usrnm/"
+install_files "bin/dynamic-wall/themes/NewOrleans" "/home/$usrnm/"
 
 if [[ $method = "--cron" ]]; then
   echo -e "\e[00;32m\nSkipping systemd files due to --cron installation...\e[00m"
 else
-  install_files "config/systemd/user" "$usrnm" "hidden"
-  install_files "config/systemd/user/dynamicwall.timer.d" "$usrnm" "hidden"
+  echo -e "\e[00;32m\nInstalling systemd units...\e[00m"
+  install_files "config/systemd/user" "/home/$usrnm/."
+  install_files "config/systemd/user/dynamicwall.timer.d" "/home/$usrnm/."
 fi
 
-while true; do
-  echo -e "\e[00;32m\nWould you like to install a system-sleep script to trigger dynamicwall on wakeup? [y/n/?]\e[00m"
-  read answer
-  case $answer in
-    y | Y )
-      if  [[ -d /lib/systemd ]]; then
-        install_files "/lib/systemd/system-sleep"
-      elif [[ -d /usr/lib/systemd ]]; then
-        install_files "/lib/systemd/system-sleep" usr
-      else
-        echo -e "\e[00;31m Can't find system-sleep directory, skipping...\e[00m"
-      fi
-      break
-      ;;
-    n | N )
-      echo -e "\e[00;32m\nSkipping system-sleep files...\e[00m"
-      break
-      ;;
-    ? )
-      echo "Dynamic-Wall runs by default every 45 minutes. If the computer is suspended during this time the wallpaper will not update until another 45 minutes pass. This may lead to situations where the wallpaper stays set on a time earlier in the day meanwhile the computer suspends and wakes up later in the evening with the same wallpaper set. Installing a script in /systemd/system-sleep will trigger the Dynamic-Wall script once on wakeup solving this problem and creating a seamless experience."
-      ;;
-    * )
-      echo -e "\e[00;31m Uknown answer provided.\e[00m"
-      ;;
-  esac
-done
+if [[ $method = "--cron" ]] && [[ -d /lib/systemdd || -d /usr/lib/systemdd ]]; then
+  while true; do
+    echo -e "\n\033[0;33mWould you like to install a system-sleep script to trigger dynamicwall on wakeup? [y/n/?]\033[0m"
+    echo -n "Input:"
+    read answer
+    case $answer in
+      y | Y )
+        if  [[ -d /lib/systemd ]]; then
+          install_files "lib/systemd/system-sleep" "/"
+        elif [[ -d /usr/lib/systemd ]]; then
+          install_files "lib/systemd/system-sleep" "/usr/"
+        else
+          echo -e "\e[00;31mCan't find system-sleep directory, skipping...\e[00m"
+        fi
+        break
+        ;;
+      n | N )
+        echo -e "\e[00;32m\nSkipping system-sleep files...\e[00m"
+        break
+        ;;
+      \? )
+        echo "Dynamic-Wall runs by default every 45 minutes. If the computer is suspended during this time the wallpaper will not update until another 45 minutes pass. This may lead to situations where the wallpaper stays set on a time earlier in the day meanwhile the computer suspends and wakes up later in the evening with the same wallpaper set. Installing a script in /systemd/system-sleep will trigger the Dynamic-Wall script once on wakeup solving this problem and creating a seamless experience."
+        ;;
+      * )
+        echo -e "\e[00;31mUknown answer provided.\e[00m"
+        ;;
+    esac
+  done
+else
+  echo -e "\e[00;32m\nSkipping system-sleep files...\e[00m"
+  if ! [[ $method = "--cron" ]]; then
+    echo "Skipped due to systemd installation"
+  else
+    echo "Skipped due to incompatible system"
+  fi
+fi
 # Post installation
 
-echo -e "\e[00;32m\n[5/5] Creating the software links...\e[00m"
-ln -s -f /home/"$usrnm"/bin/dynamic-wall/dynamicwall /usr/local/bin/dynamicwall
+echo -e "\e[00;32m\n[5/6] Creating software links...\e[00m"
+ln -s -f "/home/$usrnm/bin/dynamic-wall/dynamicwall" /usr/local/bin/dynamicwall
+echo "Created symlink /usr/local/bin/dynamicwall → /home/$usrnm/bin/dynamic-wall/dynamicwall"
 
-if [ -f /bin/systemctl ] && ! [[ $method = "--cron" ]]; then
-	echo -e "\n\033[0;33mEnabling and starting systemd...\033[0m"
-    ln -s -f /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/ /etc/systemd/system/
-    systemctl enable /home/"$usrnm"/.config/systemd/user/dynamicwall.service /home/"$usrnm"/.config/systemd/user/dynamicwall.timer
-    systemctl start dynamicwall.timer
+if [[ -f /bin/systemctl ]] && ! [[ $method = "--cron" ]]; then
+  echo -e "\e[00;32m\n[6/6] Enabling and starting systemd service...\e[00m"
+  ln -s -f /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/ /etc/systemd/system/
+  echo "Created symlink /etc/systemd/system/dynamicwall.timer.d → /home/$usrnm/.config/systemd/user/dynamicwall.timer.d."
+  systemctl enable /home/"$usrnm"/.config/systemd/user/dynamicwall.service /home/"$usrnm"/.config/systemd/user/dynamicwall.timer
+  systemctl start dynamicwall.timer
 else
-	echo -e "\n\033[0;33mCreating cronjob...\033[0m"
-  crontab -u $usrnm -l | { cat; echo "*/45 * * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | crontab -u $usrnm -
+	echo -e "\e[00;32m\n[6/6] Creating cronjob...\e[00m"
+  crontab -u "$usrnm" -l | { cat; echo "*/45 * * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | crontab -u "$usrnm" -
 fi
 
-echo -e "\e[00;32m\nUpdating configuration and running dynamic once\e[00m"
-/bin/bash /home/$usrnm/bin/dynamic-wall/dynamicwall -c
+cp -p "$DIR/README.md" "/home/$usrnm/bin/dynamic-wall/"
+cp -p "$DIR/remove" "/home/$usrnm/bin/dynamic-wall/"
+
+echo -e "\e[00;32m\nUpdating configuration and running dynamicwall once\e[00m"
+dynamicwall -c
 
 echo -e "\e[00;32m\nDynamic-Wall v$DW_VERSION is installed. Enjoy!\e[00m"
-echo -e "\n\033[0;33m$(/bin/bash /home/$usrnm/bin/dynamic-wall/dynamicwall -h)\033[0m"
+echo -e "\n\033[0;33m$(dynamicwall -h)\033[0m"
