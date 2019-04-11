@@ -25,7 +25,7 @@ elif [[ $1 = "--cron" ]]; then
   method="--cron"
   shift
 fi
-
+#
 if [[ $1 = "--update" ]]; then
   git reset --hard
   git pull --rebase --stat origin master
