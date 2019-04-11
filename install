@@ -40,6 +40,7 @@ echo -e "\e[00;32m[1/6] Setting Permissions...\e[00m"
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "$DIR" || { echo "Error, exiting..."; exit 1; }
 chmod -v a+x ./remove
+chmod -v +x ./update
 chmod -v a+x ./lib/systemd/system-sleep/dynamicwall.sh
 chmod -v +x ./bin/dynamic-wall/dynamicwall
 echo ""
