@@ -29,7 +29,6 @@ fi
 if [[ $1 = "--update" ]]; then
   git reset --hard
   git pull --rebase --stat origin master
-  shift
   sudo bash ./install $0;
   exit 0;
 elif ! [[ $1 = "" ]]; then
