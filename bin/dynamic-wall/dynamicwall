@@ -21,6 +21,9 @@ optional args:
 if [[ $1 = "--help" ]] || [[ $1 = "-h" ]]; then
 	printf '%s\n' "$HELP"
 	exit 0
+elif [[ $1 = "--status" ]]; then
+  systemctl status dynamicwall dynamicwall.timer
+  exit 0
 fi
 
 #Determine image to use based on time
