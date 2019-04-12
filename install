@@ -13,8 +13,8 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 0;
 fi
 echo ""
-trap 'echo "Stopped, Removing any half installed files...";./remove -s;exit 0' SIGINT
 
+trap 'echo "Stopped, Removing any half installed files...";./remove -s;exit 0' SIGINT
 
 usrnm=$(logname)
 
@@ -29,7 +29,8 @@ fi
 if [[ $1 = "--update" ]]; then
   git reset --hard
   git pull --rebase --stat origin master
-  sudo bash ./install $method;
+  echo ""
+  sudo bash ./$0 $method;
   exit 0;
 elif ! [[ $1 = "" ]]; then
   echo -e "\e[00;31mUnknown argument used, run either ./install or ./install --cron depending on if you want to use systemd or cron to update your wallpaper automatically\e[00m"
@@ -57,12 +58,12 @@ echo -e "\e[00;32m[2/6] Removing previous versions...\e[00m"
 echo -e "\e[00;32m[3/6] Updating fields based on system and arguments...\e[00m"
 
 if [[ $method = "--cron" ]]; then
-  sed -i "s/scheduler=systemd/scheduler=cron/g" "$DIR"/bin/dynamic-wall/dynamicwall.config
-  sed -i "s/scheduler=systemd/scheduler=cron/g" "$DIR"/bin/dynamic-wall/default.config
+  sed -i "s/scheduler=systemd/scheduler=cron/g" "$DIR/bin/dynamic-wall/dynamicwall.config"
+  sed -i "s/scheduler=systemd/scheduler=cron/g" "$DIR/bin/dynamic-wall/default.config"
   echo "Updated scheduler to cron"
 else
-  sed -i "s/scheduler=cron/scheduler=systemd/g" "$DIR"/bin/dynamic-wall/dynamicwall.config
-  sed -i "s/scheduler=cron/scheduler=systemd/g" "$DIR"/bin/dynamic-wall/default.config
+  sed -i "s/scheduler=cron/scheduler=systemd/g" "$DIR/bin/dynamic-wall/dynamicwall.config"
+  sed -i "s/scheduler=cron/scheduler=systemd/g" "$DIR/bin/dynamic-wall/default.config"
   echo "Updated scheduler to systemd"
 fi
 
@@ -94,8 +95,8 @@ fi
 
 if [[ $method = "--cron" ]] && [[ -d /lib/systemdd || -d /usr/lib/systemdd ]]; then
   while true; do
-    echo -e "\n\033[0;33mWould you like to install a system-sleep script to trigger dynamicwall on wakeup? [y/n/?]\033[0m"
-    echo -n "Input:"
+    echo -e "\n\033[0;33mWould you like to install a system-sleep script to trigger dynamicwall on wakeup?\033[0m"
+    echo -n "[y/n/?]:"
     read answer
     case $answer in
       y | Y )
@@ -113,7 +114,7 @@ if [[ $method = "--cron" ]] && [[ -d /lib/systemdd || -d /usr/lib/systemdd ]]; t
         break
         ;;
       \? )
-        echo "Dynamic-Wall runs by default every 45 minutes. If the computer is suspended during this time the wallpaper will not update until another 45 minutes pass. This may lead to situations where the wallpaper stays set on a time earlier in the day meanwhile the computer suspends and wakes up later in the evening with the same wallpaper set. Installing a script in /systemd/system-sleep will trigger the Dynamic-Wall script once on wakeup solving this problem and creating a seamless experience."
+        echo "Dynamic-Wall runs by default every 45 minutes. If the computer is suspended or shut down the cron task can't update the wallpaper until the computer is awake and 45 minutes pass. This may lead to situations where the wallpaper stays set on a time earlier in the day meanwhile the computer suspends and wakes up later in the evening with the same wallpaper set. Installing a script in /systemd/system-sleep will trigger the Dynamic-Wall script once on wakeup solving this problem and creating a seamless experience."
         ;;
       * )
         echo -e "\e[00;31mUknown answer provided.\e[00m"

@@ -38,12 +38,7 @@ You will be prompted for a password which will run the scripts as root.
 
 To check the status of the timer and service run:
 ```sh
-systemctl status dynamicwall.timer dynamicwall.service
-```
-
-To check the status of your wake up scripts run:
-```sh
-journalctl -b -u systemd-suspend.service
+dynamicwall --status
 ```
 
 ### Cronjob instead of Systemd Service
@@ -64,6 +59,11 @@ You can view the cronjob generated for you by running:
 crontab -l
 ```
 
+To check the status of your wake up scripts run:
+```sh
+journalctl -b -u systemd-suspend.service
+```
+
 ## Usage
 The systemd service, cronjob, and system-sleep script will automatically change your wallpaper at your set interval if an hour has passed in the day, otherwise it will not do anything. You can run the script manually by typing `dynamicwall` into your terminal.
 
@@ -75,6 +75,7 @@ optional args:
   -f, --force <time>     Update wallpaper immediately, optionally to a specific time
   -p, --preview <theme>  Run a 24 hour preview for a certain theme***EXPERIMENTAL***
   -c, --check            Force check configuration options and push to script
+      --status           Display systemd service status
   -h, --help             Show help
 ```
 
@@ -86,7 +87,7 @@ optional args:
 `-p` allows you to preview a specific theme. ex: `dynamicwall --preview EarthView`
 
 ## Configuration
-All config options can be found in `dynamicwall.config`, adjust settings here. If you mess up your config `default.config` is a backup.<br/>In addition to `dynamicwall.config` there is a file named `themeoverride.config` which can be placed into a theme folder. Any variables set in here will override the value set in `dynamicwall.config` allowing for per-theme configuration.
+All config options can be found in `dynamicwall.config`, adjust settings here. If you mess up your config `default.config` is a backup.<br/>In addition to `dynamicwall.config` there is a file named `themeoverride.config` which can be placed into a theme folder. Any variables set in here will override it's corresponding value in `dynamicwall.config` when that theme is loaded, allowing for per-theme configuration.
 
 Available config options:
 *   `cur_theme`: Choose the theme which will be used.
