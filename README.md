@@ -75,6 +75,11 @@ To check the status of your wake up scripts run:
 journalctl -b -u systemd-suspend.service
 ```
 
+Or simple run the following to view both
+```sh
+dynamicwall --status
+```
+
 ## Usage
 
 The systemd service, cronjob, and system-sleep script will automatically change your wallpaper at your set interval if an hour has passed in the day, otherwise it will not do anything. You can run the script manually by typing `dynamicwall` into your terminal.

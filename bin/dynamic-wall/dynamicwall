@@ -23,7 +23,14 @@ if [[ $1 = "--help" ]] || [[ $1 = "-h" ]]; then
 	printf '%s\n' "$HELP"
 	exit 0
 elif [[ $1 = "--status" ]]; then
-  systemctl status dynamicwall.timer dynamicwall.service
+  if [[ $scheduler = systemd ]]; then
+    systemctl status dynamicwall.timer dynamicwall.service
+  elif [[ $scheduler = cron ]]; then
+    [[ -f /lib/systemd/system-sleep/dynamicwall.sh || -f /usr/lib/systemd/system-sleep/dynamicwall.sh ]] && journalctl -b -u systemd-suspend.service
+    crontab -l
+  else
+    exit 1
+  fi
   exit 0
 fi
 
