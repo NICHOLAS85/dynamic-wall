@@ -7,7 +7,12 @@ id="$(id -u)"
 # Get current time
 date=$(date +%H | sed 's/\<0//g')
 # Source Config File
-. "/home/$usrnm/bin/dynamic-wall/dynamicwall.config" || { . "/home/$usrnm/bin/dynamic-wall/default.config"; echo "Can't find user config files, loading defaults...";} || { echo "Can't find user or default config files, exiting..."; exit 1; }
+. "/home/$usrnm/bin/dynamic-wall/dynamicwall.config" || { . "/home/$usrnm/bin/dynamic-wall/default.config"; notisend "Can't find user config files, loading defaults...";} || { notisend "Can't find user or default config files, exiting..."; exit 1; }
+# Get cached values
+olddate=$(cat $oldvar_dir/olddate)
+active_theme=$(cat $oldvar_dir/active_theme)
+active_timeoffset=$(cat $oldvar_dir/active_timeoffset)
+active_refreshrate=$(cat $oldvar_dir/active_refreshrate)
 
 HELP="\
 Usage: dynamicwall [OPTIONS]
@@ -37,19 +42,14 @@ fi
 #Determine image to use based on time
 function main_script() {
 	if [[ "$date" -le "4" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.$ext"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme""16.$ext"
 	elif [[ "$date" -le "9" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 4)).$ext"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 4)).$ext"
 	elif [[ "$date" -le "16" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 5)).$ext"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 5)).$ext"
 	elif [[ "$date" -le "21" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 6)).$ext"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 6)).$ext"
 	else
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.$ext"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme""16.$ext"
 	fi
 	echo "$date" > "$oldvar_dir/olddate"
@@ -57,7 +57,8 @@ function main_script() {
 
 #Set wallpaper determined in function above
 function set_wallpaper() {
-	full_image_path=$(realpath "$1")
+  echo "exec set_wallpaper $1"
+  full_image_path=$(realpath "$1")
 	#Run process as currently logged in user, export display and DBUS session, and then evaluate wallpaper script, needed for automatic updating
   if [[ $id = 1000 ]]; then
     prefix=(env "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
@@ -68,16 +69,16 @@ function set_wallpaper() {
     "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
   fi
   "${prefix[@]}" \
-  	qdbus org.kde.plasmashell /PlasmaShell evaluateScript '
-  	    var allDesktops = desktops();
-  	    for (i=0;i<allDesktops.length;i++)
-  	    {
-  	        d = allDesktops[i];
-  	        d.wallpaperPlugin = "org.kde.image";
-  	        d.currentConfigGroup = Array("Wallpaper", "org.kde.image", "General");
-  	        d.writeConfig("Image", "file://'${full_image_path}'")
-  	    }
-  	'
+	qdbus org.kde.plasmashell /PlasmaShell evaluateScript '
+	    var allDesktops = desktops();
+	    for (i=0;i<allDesktops.length;i++)
+	    {
+	        d = allDesktops[i];
+	        d.wallpaperPlugin = "org.kde.image";
+	        d.currentConfigGroup = Array("Wallpaper", "org.kde.image", "General");
+	        d.writeConfig("Image", "file://'${full_image_path}'")
+	    }
+	'
 }
 
 #check true or false config options
@@ -194,13 +195,7 @@ function find_theme() {
 		filedir=$(basename "$(find "$theme_dir" -name "$1*" -type f | tail -1)")
 		ext=${filedir##*.}
 		case $ext in
-			jpg | jpeg )
-				if [[ $2 != d ]]; then
-					load_overrides
-				fi
-				return 0
-				;;
-			png )
+			jpg | jpeg | png )
 				if [[ $2 != d ]]; then
 					load_overrides
 				fi
@@ -234,7 +229,7 @@ function find_theme() {
 			echo "Attempting to use default theme in default theme directory"
 			find_defaults "theme_dir" "$2"
 		else
-			echo "There are some major problems with your installation/configuration, reinstall dynamicwall"
+			notisend "There are some major problems with your installation/configuration, reinstall dynamicwall"
 			return 1
 		fi
 	fi
@@ -243,7 +238,7 @@ function find_theme() {
 # Loads default value fed into function. If previewing, locate
 function find_defaults() {
 	if ! [[ -f /home/$usrnm/bin/dynamic-wall/default.config ]]; then
-		echo "Can't find default config file, exiting..."
+		notisend "Can't find default config file, exiting..."
 		exit 1
 	fi
 	eval "$(grep "$1" < "/home/$usrnm/bin/dynamic-wall/default.config")"
@@ -360,7 +355,7 @@ elif [[ $1 = "--force" ]] || [[ $1 = "-f" ]]; then
 	main_script
   echo "Forced script to run, ignoring config changes"
 	exit 0
-elif ! [[ $2 = "" ]]; then
+elif ! [[ $2 = "" || $3 = "" ]]; then
   echo "Incompatible arguments, use one at a time, exiting..."
   exit 1
 elif [[ $1 = "--check" ]] || [[ $1 = "-c" ]]; then

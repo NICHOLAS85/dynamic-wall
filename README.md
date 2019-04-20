@@ -76,6 +76,7 @@ journalctl -b -u systemd-suspend.service
 ```
 
 Or simple run the following to view both
+
 ```sh
 dynamicwall --status
 ```
