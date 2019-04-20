@@ -319,21 +319,14 @@ if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
       notisend "Couldn't find $2, exiting..."
       exit 1
     fi
-		trap "break" INT
-		dbusRef=$(kdialog --progressbar "Previewing" 20)
-		qdbus $dbusRef showCancelButton true
-    qdbus $dbusRef Set "" "value" 0
-		for (( date = 3 + timeoffset; date < 24 + timeoffset; date++ )); do
-			date +"%l:%M %p" -d $((date - timeoffset));
-			main_script;
-			sleep 1.5;
-			inc=$(($(qdbus $dbusRef Get "" "value") + 1));
-			qdbus $dbusRef Set "" "value" $inc;
-			if ! qdbus $dbusRef wasCancelled > /dev/null 2>&1; then
-				break;
-			fi
-		done
-		qdbus $dbusRef close 2> /dev/null
+		trap 'echo ""; break' INT
+    date=$((3 + timeoffset))
+    while [[ $date -lt $((24 + timeoffset)) ]]; do
+      date +"%l:%M %p" -d $((date - timeoffset))
+      main_script
+      ((++date))
+			sleep 1.5
+    done
 		notisend "Preview complete, reverting to normal..."
 		date=$olddate
 		active_theme="$cur_theme"
