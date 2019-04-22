@@ -18,26 +18,36 @@ HELP="\
 Usage: dynamicwall [OPTIONS]
 
 optional args:
-  -f, --force            Update wallpaper immediately, optionally to a specific time
+  -f, --force [time]     Update wallpaper immediately, optionally to a specific time
   -p, --preview <theme>  Run a 24 hour preview for a certain theme***EXPERIMENTAL***
   -c, --check         	 Force check configuration options and push to script
-      --status           Display systemd service status
+  -s, --status           Display systemd service status
   -h, --help             Show help"
 
-if [[ $1 = "--help" ]] || [[ $1 = "-h" ]]; then
-	printf '%s\n' "$HELP"
-	exit 0
-elif [[ $1 = "--status" ]]; then
-  if [[ $scheduler = systemd ]]; then
-    systemctl status dynamicwall.timer dynamicwall.service
-  elif [[ $scheduler = cron ]]; then
-    [[ -f /lib/systemd/system-sleep/dynamicwall.sh || -f /usr/lib/systemd/system-sleep/dynamicwall.sh ]] && journalctl -b -u systemd-suspend.service
-    crontab -l
-  else
-    exit 1
-  fi
-  exit 0
-fi
+case $1 in
+  --help | -h)
+    if [[ $2 != "" ]]; then
+      echo "ignoring extra args..."
+    fi
+    printf '%s\n' "$HELP"
+    exit 0
+    ;;
+  --status | -s)
+    if [[ $2 != "" ]]; then
+      echo "ignoring extra args..."
+    fi
+    if [[ $scheduler = systemd ]]; then
+      systemctl status dynamicwall.timer dynamicwall.service
+    elif [[ $scheduler = cron ]]; then
+      [[ -f /lib/systemd/system-sleep/dynamicwall.sh || -f /usr/lib/systemd/system-sleep/dynamicwall.sh ]] && journalctl -b -u systemd-suspend.service
+      crontab -l
+    else
+      echo "Cant determine scheduler in use, reinstall"
+      exit 1
+    fi
+    exit 0
+    ;;
+esac
 
 #Determine image to use based on time
 function main_script() {
@@ -307,62 +317,74 @@ elif ! [[ "$date" -le "24" && "$date" -ge "0" ]]; then
 fi
 
 # Check what argument was passed to script
-if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
-  previewtheme="$2"
-	if [[ $2 = "" ]]; then
-		printf "no theme selected to preview\\nusage: dynamicwall [--preview] <theme>\\n"
-		exit 1
-	else
-		if find_theme "$2" p; then
-      active_theme="$2"
-    else
-      notisend "Couldn't find $2, exiting..."
-      exit 1
+case $1 in
+  --preview | -p )
+    if [[ $3 != "" ]]; then
+      echo "Ignoring extra args..."
     fi
-		trap 'echo ""; break' INT
-    date=$((3 + timeoffset))
-    while [[ $date -lt $((24 + timeoffset)) ]]; do
-      date +"%l:%M %p" -d $((date - timeoffset))
+    previewtheme="$2"
+    if [[ $2 = "" ]]; then
+      printf "no theme selected to preview\\nusage: dynamicwall [--preview] <theme>\\n"
+      exit 1
+    else
+      if find_theme "$2" p; then
+        active_theme="$2"
+      else
+        notisend "Couldn't find $2, exiting..."
+        exit 1
+      fi
+      trap 'echo ""; break' INT
+      date=$((3 + timeoffset))
+      while [[ $date -lt $((24 + timeoffset)) ]]; do
+        date +"%l:%M %p" -d $((date - timeoffset))
+        main_script
+        ((++date))
+        sleep 1.5
+      done
+      notisend "Preview complete, reverting to normal..."
+      date=$olddate
+      active_theme="$cur_theme"
+      find_theme "$active_theme"
       main_script
-      ((++date))
-			sleep 1.5
-    done
-		notisend "Preview complete, reverting to normal..."
-		date=$olddate
-		active_theme="$cur_theme"
-		find_theme "$active_theme"
-		main_script
-		exit 0
-	fi
-elif [[ $1 = "--force" ]] || [[ $1 = "-f" ]]; then
-  if ! [ $2 -eq $2 ] 2> /dev/null || [[ $2 -gt 24 || $2 -lt 0 ]]; then
-    echo "\"$2\" is not a valid time"
-    exit 1
-  elif [[ $2 != "" ]]; then
-    date=$(($2 + timeoffset))
-  fi
-  date +"%l:%M %p" -d $((date - timeoffset)) 2> /dev/null || date +"%l:%M %p"
-  if [[ $timeoffset != 0 ]]; then
-    echo "offset by $timeoffset"
-  fi
-	main_script
-  echo "Forced script to run, ignoring config changes"
-	exit 0
-elif ! [[ $2 = "" || $3 = "" ]]; then
-  echo "Incompatible arguments, use one at a time, exiting..."
-  exit 1
-elif [[ $1 = "--check" ]] || [[ $1 = "-c" ]]; then
-	update_refreshrate
-	update_theme
-	update_timeoffset
-	main_script
-  echo "Updated config and forced run"
-	exit 0
-elif ! [[ $1 = "" ]]; then
-	echo "Unknown argument passed"
-	printf '%s\n' "$HELP"
-	exit 1
-fi
+      exit 0
+    fi
+    ;;
+    --force | -f )
+      if [[ $3 != "" ]]; then
+        echo "Ignoring extra args..."
+      fi
+      if ! [ $2 -eq $2 ] 2> /dev/null || [[ $2 -gt 24 || $2 -lt 0 ]]; then
+        echo "\"$2\" is not a valid time"
+        exit 1
+      elif [[ $2 != "" ]]; then
+        date=$(($2 + timeoffset))
+      fi
+      date +"%l:%M %p" -d $((date - timeoffset)) 2> /dev/null || date +"%l:%M %p"
+      if [[ $timeoffset != 0 ]]; then
+        echo "offset by $timeoffset"
+      fi
+      main_script
+      echo "Forced script to run, ignoring config changes"
+      exit 0
+    ;;
+    --check | -c )
+      if [[ $2 != "" ]]; then
+        echo "Incompatible arguments, use one at a time, exiting..."
+        exit 1
+      fi
+      update_refreshrate
+      update_theme
+      update_timeoffset
+      main_script
+      echo "Updated config and forced run"
+      exit 0
+    ;;
+    * )
+      echo "Unknown argument passed"
+      printf '%s\n' "$HELP"
+      exit 1
+    ;;
+esac
 
 # Compares current values to config file and updates script if they dont match, fallsback to defaults if new values are not valid
 if [[ "$refreshrate" != "$active_refreshrate" ]]; then

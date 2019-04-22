@@ -90,10 +90,10 @@ $ dynamicwall -h
 Usage: dynamicwall [OPTIONS]
 
 optional args:
-  -f, --force <time>     Update wallpaper immediately, optionally to a specific time
+  -f, --force [time]     Update wallpaper immediately, optionally to a specific time
   -p, --preview <theme>  Run a 24 hour preview for a certain theme***EXPERIMENTAL***
   -c, --check            Force check configuration options and push to script
-      --status           Display systemd service status
+  -s, --status           Display systemd service status
   -h, --help             Show help
 ```
 
