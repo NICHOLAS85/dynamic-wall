@@ -379,13 +379,13 @@ case $1 in
       echo "Updated config and forced run"
       exit 0
     ;;
-    * )
-      echo "Unknown argument passed"
-      printf '%s\n' "$HELP"
-      exit 1
-    ;;
 esac
 
+if [[ $2 != "" ]]; then
+  echo "Unknown argument passed"
+  printf '%s\n' "$HELP"
+  exit 1
+fi
 # Compares current values to config file and updates script if they dont match, fallsback to defaults if new values are not valid
 if [[ "$refreshrate" != "$active_refreshrate" ]]; then
 	update_refreshrate
