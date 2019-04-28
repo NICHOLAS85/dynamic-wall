@@ -142,16 +142,18 @@ if [[ -f /bin/systemctl ]] && ! [[ $method = "--cron" ]]; then
   echo "Created symlink /etc/systemd/system/dynamicwall.timer.d → /home/$usrnm/.config/systemd/user/dynamicwall.timer.d."
   systemctl enable /home/"$usrnm"/.config/systemd/user/dynamicwall.service /home/"$usrnm"/.config/systemd/user/dynamicwall.timer
   systemctl start dynamicwall.timer
-else
+elif [[ $method = "--cron" ]]; then
 	echo -e "\e[00;32m\n[6/6] Creating cronjob...\e[00m"
   crontab -u "$usrnm" -l | { cat; echo "*/45 * * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | crontab -u "$usrnm" -
+else
+  echo -e "\e[00;31mCan't find systemctl directory, skipping...\e[00m"
 fi
 
 cp -p "$DIR/README.md" "/home/$usrnm/bin/dynamic-wall/"
 cp -p "$DIR/remove" "/home/$usrnm/bin/dynamic-wall/"
 
 echo -e "\e[00;32m\nUpdating configuration and running dynamicwall once\e[00m"
-dynamicwall -c
+dynamicwall
 
 echo -e "\e[00;32m\nDynamic-Wall v$DW_VERSION is installed. Enjoy!\e[00m"
 echo -e "\n\033[0;33m$(dynamicwall -h)\033[0m"
