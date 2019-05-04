@@ -13,6 +13,7 @@ olddate=$(cat $oldvar_dir/olddate)
 active_theme=$(cat $oldvar_dir/active_theme)
 active_timeoffset=$(cat $oldvar_dir/active_timeoffset)
 active_refreshrate=$(cat $oldvar_dir/active_refreshrate)
+oldvar_dir="/home/$usrnm/bin/dynamic-wall/.oldvar"
 
 HELP="\
 Usage: dynamicwall [OPTIONS]
