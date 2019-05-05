@@ -9,11 +9,11 @@ date=$(date +%H | sed 's/\<0//g')
 # Source Config File
 . "/home/$usrnm/bin/dynamic-wall/dynamicwall.config" || { . "/home/$usrnm/bin/dynamic-wall/default.config"; notisend "Can't find user config files, loading defaults...";} || { notisend "Can't find user or default config files, exiting..."; exit 1; }
 # Get cached values
+oldvar_dir="/home/$usrnm/bin/dynamic-wall/.oldvar"
 olddate=$(cat $oldvar_dir/olddate)
 active_theme=$(cat $oldvar_dir/active_theme)
 active_timeoffset=$(cat $oldvar_dir/active_timeoffset)
 active_refreshrate=$(cat $oldvar_dir/active_refreshrate)
-oldvar_dir="/home/$usrnm/bin/dynamic-wall/.oldvar"
 
 HELP="\
 Usage: dynamicwall [OPTIONS]
