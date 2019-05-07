@@ -28,8 +28,8 @@ fi
 #
 if [[ $1 = "--update" ]]; then
   git reset --hard
-  git clean -f
-  git pull --rebase --stat origin master
+  git clean -fdx
+  git pull
   echo ""
   sudo bash ./$0 $method;
   exit 0;
