@@ -2,18 +2,6 @@
 
 DW_VERSION="2019.4.5"
 
-if [[ "$(id -u)" -ne 0 ]]; then
-  if ! sudo -n true 2> /dev/null; then
-    echo "This script must be run as root. Enter your password...";
-  else
-    echo "Proceeding to run script as root...";
-    read -p "Press enter to continue";
-  fi
-  sudo bash ./$0 $1 $2;
-  exit 0;
-fi
-echo ""
-
 trap 'echo "Stopped, Removing any half installed files...";./remove -s;exit 0' SIGINT
 
 usrnm=$(logname)
@@ -31,7 +19,7 @@ if [[ $1 = "--update" ]]; then
   git clean -fdx
   git pull
   echo ""
-  sudo bash ./$0 $method;
+  bash ./$0 $method;
   exit 0;
 elif ! [[ $1 = "" ]]; then
   echo -e "\e[00;31mUnknown argument used, run either ./install or ./install --cron depending on if you want to use systemd or cron to update your wallpaper automatically\e[00m"
@@ -94,7 +82,7 @@ else
   install_files "config/systemd/user/dynamicwall.timer.d" "/home/$usrnm/."
 fi
 
-if [[ $method = "--cron" ]] && [[ -d /lib/systemdd || -d /usr/lib/systemdd ]]; then
+if [[ $method = "--cron" ]] && [[ -d /lib/systemd || -d /usr/lib/systemd ]]; then
   while true; do
     echo -e "\n\033[0;33mWould you like to install a system-sleep script to trigger dynamicwall on wakeup?\033[0m"
     echo -n "[y/n/?]:"
@@ -133,15 +121,14 @@ fi
 # Post installation
 
 echo -e "\e[00;32m\n[5/6] Creating software links...\e[00m"
-ln -s -f "/home/$usrnm/bin/dynamic-wall/dynamicwall" /usr/local/bin/dynamicwall
+echo "Enter password to add dynamicwall to you PATH"
+sudo ln -s -f "/home/$usrnm/bin/dynamic-wall/dynamicwall" /usr/local/bin/dynamicwall
 echo "Created symlink /usr/local/bin/dynamicwall → /home/$usrnm/bin/dynamic-wall/dynamicwall"
 
 if [[ -f /bin/systemctl ]] && ! [[ $method = "--cron" ]]; then
   echo -e "\e[00;32m\n[6/6] Enabling and starting systemd service...\e[00m"
-  ln -s -f /home/"$usrnm"/.config/systemd/user/dynamicwall.timer.d/ /etc/systemd/system/
-  echo "Created symlink /etc/systemd/system/dynamicwall.timer.d → /home/$usrnm/.config/systemd/user/dynamicwall.timer.d."
-  systemctl enable /home/"$usrnm"/.config/systemd/user/dynamicwall.service /home/"$usrnm"/.config/systemd/user/dynamicwall.timer
-  systemctl start dynamicwall.timer
+  systemctl --user enable dynamicwall.service dynamicwall.timer
+  systemctl --user start dynamicwall.timer
 elif [[ $method = "--cron" ]]; then
 	echo -e "\e[00;32m\n[6/6] Creating cronjob...\e[00m"
   crontab -u "$usrnm" -l | { cat; echo "*/45 * * * * /home/$usrnm/bin/dynamic-wall/dynamicwall"; } | crontab -u "$usrnm" -
