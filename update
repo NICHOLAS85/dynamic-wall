@@ -1,9 +1,9 @@
 #!/bin/bash
 
 if grep -q -s "scheduler=systemd" ~/bin/dynamic-wall/dynamicwall.config; then
-  sudo bash ./install --update
+  bash ./install --update
 elif grep -q -s "scheduler=cron" ~/bin/dynamic-wall/dynamicwall.config; then
-  sudo bash ./install --cron --update
+  bash ./install --cron --update
 else
   echo "No dynamic-wall installation found, run ./install to install dynamicwall or ./install --update to pull the latest version from github and install"
 fi

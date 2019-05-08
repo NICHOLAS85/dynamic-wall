@@ -38,7 +38,7 @@ case $1 in
       echo "ignoring extra args..."
     fi
     if [[ $scheduler = systemd ]]; then
-      systemctl status dynamicwall.timer dynamicwall.service
+      systemctl --user status dynamicwall.timer dynamicwall.service
     elif [[ $scheduler = cron ]]; then
       [[ -f /lib/systemd/system-sleep/dynamicwall.sh || -f /usr/lib/systemd/system-sleep/dynamicwall.sh ]] && journalctl -b -u systemd-suspend.service
       crontab -l
@@ -136,7 +136,7 @@ function update_refreshrate() {
     sed -i '/OnCalendar=\*:0\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" "/home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf"
 		echo "$refreshrate" > "$oldvar_dir/active_refreshrate"
 		notisend "Refresh rate updated, reloading systemd daemons"
-		systemctl daemon-reload
+		systemctl --user daemon-reload
 	elif [[ "$scheduler" = "cron" ]]; then
 		#Necessary loop to prompt user for password needed for crontab update until correct or skipped
 		wrongpass=false
