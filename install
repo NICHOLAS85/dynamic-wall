@@ -122,8 +122,7 @@ fi
 
 echo -e "\e[00;32m\n[5/6] Creating software links...\e[00m"
 echo "Enter password to add dynamicwall to you PATH"
-sudo ln -s -f "/home/$usrnm/bin/dynamic-wall/dynamicwall" /usr/local/bin/dynamicwall
-echo "Created symlink /usr/local/bin/dynamicwall → /home/$usrnm/bin/dynamic-wall/dynamicwall"
+sudo ln -s -f "/home/$usrnm/bin/dynamic-wall/dynamicwall" /usr/local/bin/dynamicwall && echo "Created symlink /usr/local/bin/dynamicwall → /home/$usrnm/bin/dynamic-wall/dynamicwall"
 
 if [[ -f /bin/systemctl ]] && ! [[ $method = "--cron" ]]; then
   echo -e "\e[00;32m\n[6/6] Enabling and starting systemd service...\e[00m"
