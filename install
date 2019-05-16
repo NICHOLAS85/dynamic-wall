@@ -63,12 +63,16 @@ function install_files(){
   echo "installing: $1 into $2$1"
 	{
 	  install -o "$usrnm" -g "$usrnm" -d $2$1 && echo "installing: $1 into $1$2"
-	  install -o "$usrnm" -g "$usrnm" -D "$DIR"/$1/* $2$1 && echo "installing: $1 into $1$2"
+		if [[ $3 = "executable" ]]; then
+			install -o "$usrnm" -g "$usrnm" -D "$DIR"/$1/* $2$1 && echo "installing: $1 into $1$2"
+		else
+			install -m 644 -o "$usrnm" -g "$usrnm" -D "$DIR"/$1/* $2$1 && echo "installing: $1 into $1$2"
+		fi
 	} &> /dev/null
 }
 
 install_files "bin" "/home/$usrnm/"
-install_files "bin/dynamic-wall" "/home/$usrnm/"
+install_files "bin/dynamic-wall" "/home/$usrnm/" executable
 install_files "bin/dynamic-wall/.oldvar" "/home/$usrnm/"
 install_files "bin/dynamic-wall/themes" "/home/$usrnm/"
 install_files "bin/dynamic-wall/themes/EarthView" "/home/$usrnm/"
@@ -91,9 +95,9 @@ if [[ $method = "--cron" ]] && [[ -d /lib/systemd || -d /usr/lib/systemd ]]; the
     case $answer in
       y | Y )
         if  [[ -d /lib/systemd ]]; then
-          install_files "lib/systemd/system-sleep" "/"
+          install_files "lib/systemd/system-sleep" "/" executable
         elif [[ -d /usr/lib/systemd ]]; then
-          install_files "lib/systemd/system-sleep" "/usr/"
+          install_files "lib/systemd/system-sleep" "/usr/" executable
         else
           echo -e "\e[00;31mCan't find system-sleep directory, skipping...\e[00m"
         fi
