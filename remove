@@ -89,4 +89,6 @@ echo ""
 
 if [[ "$1" != "-s" ]]; then
 	echo -e "\e[00;32mDynamic-Wall has been removed.\e[00m"
+else
+	echo -e "\e[00;32mBeginning installation...\e[00m"
 fi

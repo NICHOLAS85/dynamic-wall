@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DW_VERSION="2019.4.5"
+DW_VERSION="2019.5.16"
 
 trap 'echo "Stopped, Removing any half installed files...";./remove -s;exit 0' SIGINT
 
@@ -13,7 +13,7 @@ elif [[ $1 = "--cron" ]]; then
   method="--cron"
   shift
 fi
-#
+
 if [[ $1 = "--update" ]]; then
   git reset --hard
   git clean -fdx
@@ -61,9 +61,10 @@ fi
 echo -e "\e[00;32m\n[4/6] Copying software files...\e[00m"
 function install_files(){
   echo "installing: $1 into $2$1"
-
-  install -o "$usrnm" -g "$usrnm" -d $2$1
-  install -o "$usrnm" -g "$usrnm" -D "$DIR"/$1/* $2$1
+	{
+	  install -o "$usrnm" -g "$usrnm" -d $2$1 && echo "installing: $1 into $1$2"
+	  install -o "$usrnm" -g "$usrnm" -D "$DIR"/$1/* $2$1 && echo "installing: $1 into $1$2"
+	} &> /dev/null
 }
 
 install_files "bin" "/home/$usrnm/"
@@ -118,6 +119,7 @@ else
     echo "Skipped due to incompatible system"
   fi
 fi
+
 # Post installation
 
 echo -e "\e[00;32m\n[5/6] Creating software links...\e[00m"
