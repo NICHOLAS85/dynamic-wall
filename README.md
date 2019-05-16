@@ -93,7 +93,8 @@ optional args:
   -f, --force [time]     Update wallpaper immediately, optionally to a specific time
   -p, --preview <theme>  Run a 24 hour preview for a certain theme***EXPERIMENTAL***
   -c, --check            Force check configuration options and push to script
-  -s, --status           Display systemd service status
+  -s, --status           Display systemd service status/crontab and system-sleep script log
+  -l, --list             List available themes to choose from
   -h, --help             Show help
 ```
 
