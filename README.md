@@ -1,6 +1,6 @@
 # Dynamic Wall
 
-Started as various edits to the dynamic wallpaper scripts from [Raitaro](https://gitlab.com/RaitaroH/dynamic-wall) which was based on [/u/Electronicbrain work](https://www.reddit.com/r/unixporn/comments/a7mga5/plasma_a_clone_of_macos_mojaves_dynamic_wallpaper/). These edits evolved into a complex script that integrates into a KDE system with systemd timers instead of using while do loops. An additional script was also created to change the wallpaper when the computer wakes from suspension. Many new features have been added and can be seen below.
+Started as various edits to the dynamic wallpaper scripts from [Raitaro](https://gitlab.com/RaitaroH/dynamic-wall) which was based on [/u/Electronicbrain work](https://www.reddit.com/r/unixporn/comments/a7mga5/plasma_a_clone_of_macos_mojaves_dynamic_wallpaper/). These edits evolved into a complex script that integrates into a KDE system with systemd timers instead of using while do loops. Additionally cron compatibility was added, as an alternative to systemd. Many new features have been added and can be seen below.
 
 #### Jump to
 
@@ -76,6 +76,7 @@ journalctl -b -u systemd-suspend.service
 ```
 
 Or simple run the following to view both
+
 ```sh
 dynamicwall --status
 ```
@@ -89,10 +90,10 @@ $ dynamicwall -h
 Usage: dynamicwall [OPTIONS]
 
 optional args:
-  -f, --force <time>     Update wallpaper immediately, optionally to a specific time
+  -f, --force [time]     Update wallpaper immediately, optionally to a specific time
   -p, --preview <theme>  Run a 24 hour preview for a certain theme***EXPERIMENTAL***
   -c, --check            Force check configuration options and push to script
-      --status           Display systemd service status
+  -s, --status           Display systemd service status
   -h, --help             Show help
 ```
 
@@ -105,7 +106,7 @@ optional args:
 
 ## Configuration
 
-All config options can be found in `dynamicwall.config`, adjust settings here. If you mess up your config `default.config` is a backup.<br/>In addition to `dynamicwall.config` there is a file named `themeoverride.config` which can be placed into a theme folder. Any variables set in here will override it's corresponding value in `dynamicwall.config` when that theme is loaded, allowing for per-theme configuration.
+All config options can be found in `dynamicwall.config`, adjust settings here. If you mess up your config `default.config` is a backup.<br/>In addition to `dynamicwall.config` there is a file named `override.config` which can be placed into a theme folder. Any variables set in here will override it's corresponding value in `dynamicwall.config` when that theme is loaded, allowing for per-theme configuration.
 
 Available config options:
 

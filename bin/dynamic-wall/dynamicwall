@@ -7,49 +7,60 @@ id="$(id -u)"
 # Get current time
 date=$(date +%H | sed 's/\<0//g')
 # Source Config File
-. "/home/$usrnm/bin/dynamic-wall/dynamicwall.config" || { . "/home/$usrnm/bin/dynamic-wall/default.config"; echo "Can't find user config files, loading defaults...";} || { echo "Can't find user or default config files, exiting..."; exit 1; }
+. "/home/$usrnm/bin/dynamic-wall/dynamicwall.config" || { . "/home/$usrnm/bin/dynamic-wall/default.config"; notisend "Can't find user config files, loading defaults...";} || { notisend "Can't find user or default config files, exiting..."; exit 1; }
+# Get cached values
+oldvar_dir="/home/$usrnm/bin/dynamic-wall/.oldvar"
+olddate=$(cat $oldvar_dir/olddate)
+active_theme=$(cat $oldvar_dir/active_theme)
+active_timeoffset=$(cat $oldvar_dir/active_timeoffset)
+active_refreshrate=$(cat $oldvar_dir/active_refreshrate)
 
 HELP="\
 Usage: dynamicwall [OPTIONS]
 
 optional args:
-  -f, --force            Update wallpaper immediately, optionally to a specific time
+  -f, --force [time]     Update wallpaper immediately, optionally to a specific time
   -p, --preview <theme>  Run a 24 hour preview for a certain theme***EXPERIMENTAL***
   -c, --check         	 Force check configuration options and push to script
-      --status           Display systemd service status
+  -s, --status           Display systemd service status
   -h, --help             Show help"
 
-if [[ $1 = "--help" ]] || [[ $1 = "-h" ]]; then
-	printf '%s\n' "$HELP"
-	exit 0
-elif [[ $1 = "--status" ]]; then
-  if [[ $scheduler = systemd ]]; then
-    systemctl status dynamicwall.timer dynamicwall.service
-  elif [[ $scheduler = cron ]]; then
-    [[ -f /lib/systemd/system-sleep/dynamicwall.sh || -f /usr/lib/systemd/system-sleep/dynamicwall.sh ]] && journalctl -b -u systemd-suspend.service
-    crontab -l
-  else
-    exit 1
-  fi
-  exit 0
-fi
+case $1 in
+  --help | -h)
+    if [[ $2 != "" ]]; then
+      echo "ignoring extra args..."
+    fi
+    printf '%s\n' "$HELP"
+    exit 0
+    ;;
+  --status | -s)
+    if [[ $2 != "" ]]; then
+      echo "ignoring extra args..."
+    fi
+    if [[ $scheduler = systemd ]]; then
+      systemctl --user status dynamicwall.timer dynamicwall.service
+    elif [[ $scheduler = cron ]]; then
+      [[ -f /lib/systemd/system-sleep/dynamicwall.sh || -f /usr/lib/systemd/system-sleep/dynamicwall.sh ]] && journalctl -b -u systemd-suspend.service
+      crontab -l
+    else
+      echo "Cant determine scheduler in use, reinstall"
+      exit 1
+    fi
+    exit 0
+    ;;
+esac
 
 #Determine image to use based on time
 function main_script() {
 	if [[ "$date" -le "4" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.$ext"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme""16.$ext"
 	elif [[ "$date" -le "9" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 4)).$ext"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 4)).$ext"
 	elif [[ "$date" -le "16" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 5)).$ext"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 5)).$ext"
 	elif [[ "$date" -le "21" ]]; then
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme$((date - 6)).$ext"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme$((date - 6)).$ext"
 	else
-		echo "exec set_wallpaper $theme_dir/$active_theme/$active_theme""16.$ext"
 		set_wallpaper "$theme_dir/$active_theme/$active_theme""16.$ext"
 	fi
 	echo "$date" > "$oldvar_dir/olddate"
@@ -57,8 +68,17 @@ function main_script() {
 
 #Set wallpaper determined in function above
 function set_wallpaper() {
-	full_image_path=$(realpath "$1")
+  echo "exec set_wallpaper $1"
+  full_image_path=$(realpath "$1")
 	#Run process as currently logged in user, export display and DBUS session, and then evaluate wallpaper script, needed for automatic updating
+  setwallscript="var allDesktops = desktops();
+	    for (i=0;i<allDesktops.length;i++)
+	    {
+	        d = allDesktops[i];
+	        d.wallpaperPlugin = 'org.kde.image';
+	        d.currentConfigGroup = Array('Wallpaper', 'org.kde.image', 'General');
+	        d.writeConfig('Image', 'file://${full_image_path}')
+	    }"
   if [[ $id = 1000 ]]; then
     prefix=(env "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
   else
@@ -68,16 +88,7 @@ function set_wallpaper() {
     "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
   fi
   "${prefix[@]}" \
-  	qdbus org.kde.plasmashell /PlasmaShell evaluateScript '
-  	    var allDesktops = desktops();
-  	    for (i=0;i<allDesktops.length;i++)
-  	    {
-  	        d = allDesktops[i];
-  	        d.wallpaperPlugin = "org.kde.image";
-  	        d.currentConfigGroup = Array("Wallpaper", "org.kde.image", "General");
-  	        d.writeConfig("Image", "file://'${full_image_path}'")
-  	    }
-  	'
+	qdbus org.kde.plasmashell /PlasmaShell evaluateScript "${setwallscript}"
 }
 
 #check true or false config options
@@ -125,17 +136,17 @@ function update_refreshrate() {
     sed -i '/OnCalendar=\*:0\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" "/home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf"
 		echo "$refreshrate" > "$oldvar_dir/active_refreshrate"
 		notisend "Refresh rate updated, reloading systemd daemons"
-		systemctl daemon-reload
+		systemctl --user daemon-reload
 	elif [[ "$scheduler" = "cron" ]]; then
 		#Necessary loop to prompt user for password needed for crontab update until correct or skipped
-		wrongpass=0
+		wrongpass=false
 		while true; do
 			if ! sudo -n true; then
-				if [[ "$wrongpass" = 0 ]]; then
-					passwd=$(kdialog --title "Dynamic Wall" --password "Enter password to update crontab")
+				if $wrongpass; then
+          #Changes prompt when an incorrect password is entered
+          passwd=$(kdialog --title "Dynamic Wall" --password "Try Again")
 				else
-					#Changes prompt when an incorrect password is entered
-					passwd=$(kdialog --title "Dynamic Wall" --password "Try Again")
+          passwd=$(kdialog --title "Dynamic Wall" --password "Enter password to update crontab")
 				fi
 			fi
 			if [[ "$?" = 0 ]]; then #Checks if ok or cancel was selected
@@ -153,7 +164,7 @@ function update_refreshrate() {
 					break
 				else
 					echo "Wrong Password entered"
-					wrongpass=1
+					wrongpass=true
 				fi
 			else
 				echo "Selected: Cancel"
@@ -194,13 +205,7 @@ function find_theme() {
 		filedir=$(basename "$(find "$theme_dir" -name "$1*" -type f | tail -1)")
 		ext=${filedir##*.}
 		case $ext in
-			jpg | jpeg )
-				if [[ $2 != d ]]; then
-					load_overrides
-				fi
-				return 0
-				;;
-			png )
+			jpg | jpeg | png )
 				if [[ $2 != d ]]; then
 					load_overrides
 				fi
@@ -208,7 +213,6 @@ function find_theme() {
 				;;
 			* )
 				echo "Incompatible image type($ext), exiting..."
-				return 1
 				exit 1
 				;;
 		esac
@@ -218,7 +222,7 @@ function find_theme() {
 		echo "Attempt $attempts"
 		if [[ $attempts = 1 ]]; then
 			notisend "Could not find $1, attempting to recover..."
-			printf "Your theme_dir may not be set correctly or your cur_theme may be mispelt, check your dynamicwall.config\\nAttempting to recover...\\n"
+			printf "Your theme_dir may not be set correctly or your cur_theme may be mispelt, check your dynamicwall.config"
 			echo "Attempting to use default theme directory"
 			find_defaults "theme_dir" "$2"
 		elif [[ $attempts = 2 ]]; then
@@ -234,7 +238,7 @@ function find_theme() {
 			echo "Attempting to use default theme in default theme directory"
 			find_defaults "theme_dir" "$2"
 		else
-			echo "There are some major problems with your installation/configuration, reinstall dynamicwall"
+			notisend "There are some major problems with your installation/configuration, reinstall dynamicwall"
 			return 1
 		fi
 	fi
@@ -243,7 +247,7 @@ function find_theme() {
 # Loads default value fed into function. If previewing, locate
 function find_defaults() {
 	if ! [[ -f /home/$usrnm/bin/dynamic-wall/default.config ]]; then
-		echo "Can't find default config file, exiting..."
+		notisend "Can't find default config file, exiting..."
 		exit 1
 	fi
 	eval "$(grep "$1" < "/home/$usrnm/bin/dynamic-wall/default.config")"
@@ -266,16 +270,16 @@ function find_defaults() {
 find_theme "$cur_theme"
 
 # Checks if timeoffset is a number and then if it is range and checks if refreshrate is in a valid format
+valid1=false
+valid2=false
 for ((n=0;n<2;n++)); do
   if ! [ "$timeoffset" -eq "$timeoffset" ] 2> /dev/null; then
   	notisend "Invalid Time Offset($timeoffset), loading defaults..."
   	find_defaults "timeoffset=[[:digit:]]"
-    valid1=false
   else
     if ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
     	notisend "Time Offset is out of range($timeoffset), loading defaults..."
     	find_defaults "timeoffset=[[:digit:]]"
-      valid1=false
     elif [[ $((date + timeoffset)) -gt 24 ]]; then
     	date=$((date - 24 + timeoffset))
       valid1=true
@@ -290,14 +294,13 @@ for ((n=0;n<2;n++)); do
   if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] || "$refreshrate" == [[:xdigit:]][mh] ]] || [[ "${refreshrate: -1}" = h && "${refreshrate%?}" -ge 24 || "${refreshrate: -1}" = m && "${refreshrate%?}" -ge 60 || "${refreshrate%?}" -le 0 ]]; then\
     notisend "Invalid Refresh Rate($refreshrate), loading defaults..."
     find_defaults "refreshrate=[[:digit:]]"
-    valid2=false
   else
     valid2=true
   fi
 done
 
 # Exit if defaults return invalid values
-if [[ "$valid1" = "false" ]] || [[ "$valid2" = "false" ]]; then
+if ! $valid1 || ! $valid2 ; then
   notisend "There is something wrong with your default config options, reinstall"
   exit 1
 fi
@@ -312,70 +315,74 @@ elif ! [[ "$date" -le "24" && "$date" -ge "0" ]]; then
 fi
 
 # Check what argument was passed to script
-if [[ $1 = "--preview" ]] || [[ $1 = "-p" ]]; then
-  previewtheme="$2"
-	if [[ $2 = "" ]]; then
-		printf "no theme selected to preview\\nusage: dynamicwall [--preview] <theme>\\n"
-		exit 1
-	else
-		if find_theme "$2" p; then
-      active_theme="$2"
-    else
-      notisend "Couldn't find $2, exiting..."
-      exit 1
+case $1 in
+  --preview | -p )
+    if [[ $3 != "" ]]; then
+      echo "Ignoring extra args..."
     fi
-		trap "break" INT
-		dbusRef=$(kdialog --progressbar "Previewing" 20)
-		qdbus $dbusRef showCancelButton true
-    qdbus $dbusRef Set "" "value" 0
-		for (( date = 3 + timeoffset; date < 24 + timeoffset; date++ )); do
-			date +"%l:%M %p" -d $((date - timeoffset));
-			main_script;
-			sleep 1.5;
-			inc=$(($(qdbus $dbusRef Get "" "value") + 1));
-			qdbus $dbusRef Set "" "value" $inc;
-			if ! qdbus $dbusRef wasCancelled > /dev/null 2>&1; then
-				break;
-			fi
-		done
-		qdbus $dbusRef close 2> /dev/null
-		notisend "Preview complete, reverting to normal..."
-		date=$olddate
-		active_theme="$cur_theme"
-		find_theme "$active_theme"
-		main_script
-		exit 0
-	fi
-elif [[ $1 = "--force" ]] || [[ $1 = "-f" ]]; then
-  if ! [ $2 -eq $2 ] 2> /dev/null || [[ $2 -gt 24 || $2 -lt 0 ]]; then
-    echo "\"$2\" is not a valid time"
-    exit 1
-  elif [[ $2 != "" ]]; then
-    date=$(($2 + timeoffset))
-  fi
-  date +"%l:%M %p" -d $((date - timeoffset)) 2> /dev/null || date +"%l:%M %p"
-  if [[ $timeoffset != 0 ]]; then
-    echo "offset by $timeoffset"
-  fi
-	main_script
-  echo "Forced script to run, ignoring config changes"
-	exit 0
-elif ! [[ $2 = "" ]]; then
-  echo "Incompatible arguments, use one at a time, exiting..."
-  exit 1
-elif [[ $1 = "--check" ]] || [[ $1 = "-c" ]]; then
-	update_refreshrate
-	update_theme
-	update_timeoffset
-	main_script
-  echo "Updated config and forced run"
-	exit 0
-elif ! [[ $1 = "" ]]; then
-	echo "Unknown argument passed"
-	printf '%s\n' "$HELP"
-	exit 1
-fi
+    previewtheme="$2"
+    if [[ $2 = "" ]]; then
+      printf "no theme selected to preview\\nusage: dynamicwall [--preview] <theme>\\n"
+      exit 1
+    else
+      if ! find_theme "$2" p; then
+        notisend "Couldn't find $2, exiting..."
+        exit 1
+      fi
+      active_theme="$2"
+      trap 'echo ""; break' INT
+      date=$((3 + timeoffset))
+      while [[ $date -lt $((24 + timeoffset)) ]]; do
+        date +"%l:%M %p" -d $((date - timeoffset))
+        main_script
+        ((++date))
+        sleep 1.5
+      done
+      notisend "Preview complete, reverting to normal..."
+      date=$olddate
+      active_theme="$cur_theme"
+      find_theme "$active_theme"
+      main_script
+      exit 0
+    fi
+    ;;
+    --force | -f )
+      if [[ $3 != "" ]]; then
+        echo "Ignoring extra args..."
+      fi
+      if ! [ $2 -eq $2 ] 2> /dev/null || [[ $2 -gt 24 || $2 -lt 0 ]]; then
+        echo "\"$2\" is not a valid time"
+        exit 1
+      elif [[ $2 != "" ]]; then
+        date=$(($2 + timeoffset))
+      fi
+      date +"%l:%M %p" -d $((date - timeoffset)) 2> /dev/null || date +"%l:%M %p"
+      if [[ $timeoffset != 0 ]]; then
+        echo "offset by $timeoffset"
+      fi
+      main_script
+      echo "Forced script to run, ignoring config changes"
+      exit 0
+    ;;
+    --check | -c )
+      if [[ $2 != "" ]]; then
+        echo "Incompatible arguments, use one at a time, exiting..."
+        exit 1
+      fi
+      update_refreshrate
+      update_theme
+      update_timeoffset
+      main_script
+      echo "Updated config and forced run"
+      exit 0
+    ;;
+esac
 
+if [[ $2 != "" ]]; then
+  echo "Unknown argument passed"
+  printf '%s\n' "$HELP"
+  exit 1
+fi
 # Compares current values to config file and updates script if they dont match, fallsback to defaults if new values are not valid
 if [[ "$refreshrate" != "$active_refreshrate" ]]; then
 	update_refreshrate
