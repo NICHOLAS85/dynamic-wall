@@ -41,7 +41,7 @@ To uninstall run:
 ./remove
 ```
 
-You will be prompted for a password which will run the scripts as root.
+You will be prompted for a password which will add/remove dynamicwall from your $PATH.
 
 To check the status of the timer and service run:
 
@@ -75,7 +75,7 @@ To check the status of your wake up scripts run:
 journalctl -b -u systemd-suspend.service
 ```
 
-Or simple run the following to view both
+Or simply run the following to view both
 
 ```sh
 dynamicwall --status
@@ -105,9 +105,11 @@ optional args:
 **Warning EXPERIMENTAL, can cause high memory usage and trigger [EARLYOOM](https://github.com/rfjakob/earlyoom) if in use**  
 `-p` allows you to preview a specific theme. ex: `dynamicwall --preview EarthView`
 
+`-c` list all folders in your theme directory regardless of if they're in a valid format.
+
 ## Configuration
 
-All config options can be found in `dynamicwall.config`, adjust settings here. If you mess up your config `default.config` is a backup.<br/>In addition to `dynamicwall.config` there is a file named `override.config` which can be placed into a theme folder. Any variables set in here will override it's corresponding value in `dynamicwall.config` when that theme is loaded, allowing for per-theme configuration.
+All config options can be found in `~/bin/dynamic-wall/dynamicwall.config`, adjust settings here. If you mess up your config `default.config` is a backup.<br/>In addition to `dynamicwall.config` there is a file named `override.config` which can be placed into a theme folder. Any variables set in here will override it's corresponding value in `dynamicwall.config` when that theme is loaded, allowing for per-theme configuration.
 
 Available config options:
 
@@ -120,7 +122,7 @@ Available config options:
 -   `theme_dir`: Path to your theme folder, if you decide to store themes elsewhere.
 -   `date`: Freeze wallpaper cycle at specific time of day.
 
-dynamicwall.config is checked every time the script is run and detects changes automatically, applying these changes immediately if they are valid. Run the script or use the `-c` argument to immediately apply changes as seen in the Usage section above.
+dynamicwall.config is checked every time the script is run and detects changes automatically, applying these changes immediately if they are valid. Run `dynamicwall` or use the `-c` argument to immediately apply changes as seen in the Usage section above.
 
 ## Other Notes
 
