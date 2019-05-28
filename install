@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DW_VERSION="2019.4.5"
+DW_VERSION="2019.5.16"
 
 trap 'echo "Stopped, Removing any half installed files...";./remove -s;exit 0' SIGINT
 
@@ -13,7 +13,7 @@ elif [[ $1 = "--cron" ]]; then
   method="--cron"
   shift
 fi
-#
+
 if [[ $1 = "--update" ]]; then
   git reset --hard
   git clean -fdx
@@ -61,13 +61,18 @@ fi
 echo -e "\e[00;32m\n[4/6] Copying software files...\e[00m"
 function install_files(){
   echo "installing: $1 into $2$1"
-
-  install -o "$usrnm" -g "$usrnm" -d $2$1
-  install -o "$usrnm" -g "$usrnm" -D "$DIR"/$1/* $2$1
+	{
+	  install -o "$usrnm" -g "$usrnm" -d $2$1 && echo "installing: $1 into $1$2"
+		if [[ $3 = "executable" ]]; then
+			install -o "$usrnm" -g "$usrnm" -D "$DIR"/$1/* $2$1 && echo "installing: $1 into $1$2"
+		else
+			install -m 644 -o "$usrnm" -g "$usrnm" -D "$DIR"/$1/* $2$1 && echo "installing: $1 into $1$2"
+		fi
+	} &> /dev/null
 }
 
 install_files "bin" "/home/$usrnm/"
-install_files "bin/dynamic-wall" "/home/$usrnm/"
+install_files "bin/dynamic-wall" "/home/$usrnm/" executable
 install_files "bin/dynamic-wall/.oldvar" "/home/$usrnm/"
 install_files "bin/dynamic-wall/themes" "/home/$usrnm/"
 install_files "bin/dynamic-wall/themes/EarthView" "/home/$usrnm/"
@@ -90,9 +95,9 @@ if [[ $method = "--cron" ]] && [[ -d /lib/systemd || -d /usr/lib/systemd ]]; the
     case $answer in
       y | Y )
         if  [[ -d /lib/systemd ]]; then
-          install_files "lib/systemd/system-sleep" "/"
+          install_files "lib/systemd/system-sleep" "/" executable
         elif [[ -d /usr/lib/systemd ]]; then
-          install_files "lib/systemd/system-sleep" "/usr/"
+          install_files "lib/systemd/system-sleep" "/usr/" executable
         else
           echo -e "\e[00;31mCan't find system-sleep directory, skipping...\e[00m"
         fi
@@ -118,12 +123,12 @@ else
     echo "Skipped due to incompatible system"
   fi
 fi
+
 # Post installation
 
 echo -e "\e[00;32m\n[5/6] Creating software links...\e[00m"
 echo "Enter password to add dynamicwall to you PATH"
-sudo ln -s -f "/home/$usrnm/bin/dynamic-wall/dynamicwall" /usr/local/bin/dynamicwall
-echo "Created symlink /usr/local/bin/dynamicwall → /home/$usrnm/bin/dynamic-wall/dynamicwall"
+sudo ln -s -f "/home/$usrnm/bin/dynamic-wall/dynamicwall" /usr/local/bin/dynamicwall && echo "Created symlink /usr/local/bin/dynamicwall → /home/$usrnm/bin/dynamic-wall/dynamicwall"
 
 if [[ -f /bin/systemctl ]] && ! [[ $method = "--cron" ]]; then
   echo -e "\e[00;32m\n[6/6] Enabling and starting systemd service...\e[00m"
