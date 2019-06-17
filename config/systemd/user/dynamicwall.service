@@ -2,8 +2,10 @@
 Description=dynamic-wall unit
 
 [Service]
-Type=oneshot
+Type=simple
 ExecStart=dynamicwall
+RestartSec=3
+Restart=on-failure
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
