@@ -45,7 +45,7 @@ case $1 in
   ;;
   --list | -l)
     echo "Available themes:"
-    ls --color=tty $theme_dir
+    ls $theme_dir
     exit 0
   ;;
 esac && if [[ -n $2 ]]; then echo "ignoring extra args..."; fi
