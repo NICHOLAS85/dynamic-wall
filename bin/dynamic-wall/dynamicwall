@@ -7,13 +7,10 @@ id="$(id -u)"
 # Get current time
 date=$(date +%H | sed 's/\<0//g')
 # Source Config File
-. "/home/$usrnm/bin/dynamic-wall/dynamicwall.config" || { . "/home/$usrnm/bin/dynamic-wall/default.config"; notisend "Can't find user config files, loading defaults...";} || { notisend "Can't find user or default config files, exiting..."; exit 1; }
+source "/home/$usrnm/bin/dynamic-wall/dynamicwall.config" || { source "/home/$usrnm/bin/dynamic-wall/default.config"; notisend "Can't find user config files, loading defaults...";} || { notisend "Can't find user or default config files, exiting..."; exit 1; }
 # Get cached values
 oldvar_dir="/home/$usrnm/bin/dynamic-wall/.oldvar"
-olddate=$(cat $oldvar_dir/olddate)
-active_theme=$(cat $oldvar_dir/active_theme)
-active_timeoffset=$(cat $oldvar_dir/active_timeoffset)
-active_refreshrate=$(cat $oldvar_dir/active_refreshrate)
+eval "$(cat $oldvar_dir/*)"
 
 HELP="\
 Usage: dynamicwall [OPTIONS]
@@ -67,7 +64,7 @@ function main_script() {
     lockscreen="${file[1]}$((date - 6)).$ext"
 	fi
   set_wallpaper
-	echo "$date" > "$oldvar_dir/olddate"
+	echo "olddate=$date" > "$oldvar_dir/olddate"
 }
 
 #Set wallpaper determined in function above
@@ -139,7 +136,7 @@ function update_refreshrate() {
     fi
     sed -i '/OnCalendar=00:\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" "/home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf"
     sed -i '/OnCalendar=\*:0\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" "/home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf"
-		echo "$refreshrate" > "$oldvar_dir/active_refreshrate"
+		echo "active_refreshrate=$refreshrate" > "$oldvar_dir/active_refreshrate"
 		notisend "Refresh rate updated, reloading systemd daemons"
 		systemctl --user daemon-reload
 	elif [[ "$scheduler" = "cron" ]]; then
@@ -164,7 +161,7 @@ function update_refreshrate() {
             prefix=(\"\* \*/"${refreshrate%?}")
 					fi
           echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v "/home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo '${prefix[*]}' * * * /home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
-					echo "$refreshrate" > "$oldvar_dir/active_refreshrate"
+					echo "active_refreshrate=$refreshrate" > "$oldvar_dir/active_refreshrate"
 					notisend "Refresh rate updated, crontab refreshed"
 					break
 				else
@@ -183,13 +180,13 @@ function update_refreshrate() {
 }
 
 function update_theme() {
-	echo "$cur_theme" > "$oldvar_dir/active_theme"
+	echo "active_theme=$cur_theme" > "$oldvar_dir/active_theme"
 	notisend "Theme updated to $cur_theme"
 	active_theme="$cur_theme"
 }
 
 function update_timeoffset() {
-	echo "$timeoffset" > "$oldvar_dir/active_timeoffset"
+	echo "active_timeoffset=$timeoffset" > "$oldvar_dir/active_timeoffset"
 	notisend "Time offset updated to $timeoffset"
 }
 
@@ -200,13 +197,13 @@ function load_overrides() {
       echo "Loading variable overrides from override.config for $cur_theme"
       echo "The following variables have been overridden:"
       awk '/=/ && !/#/' "$theme_dir/$cur_theme/override.config"
-      echo ""
+      echo
     fi
 	fi
 }
 
 function find_theme() {
-	if ls -1 "$theme_dir/$1/$1"* > /dev/null 2>&1; then
+	if find "$theme_dir/$1/$1"* > /dev/null 2>&1; then
 		filedir=$(basename "$(find "$theme_dir" -name "$1*" -type f | tail -1)")
 		ext=${filedir##*.}
 		case $ext in
@@ -223,8 +220,7 @@ function find_theme() {
 		esac
 	else
 		((++attempts))
-		echo ""
-		echo "Attempt $attempts"
+		echo "\nAttempt $attempts"
 		if [[ $attempts = 1 ]]; then
 			notisend "Could not find $1, attempting to recover..."
 			printf "Your theme_dir may not be set correctly or your cur_theme may be mispelt, check your dynamicwall.config"
@@ -272,37 +268,57 @@ function find_defaults() {
 }
 
 # Checks if users current theme exist
-find_theme "$cur_theme"
-
+[[ "$active_theme" != "$cur_theme" ]] && find_theme "$cur_theme" || {
+  filedir=$(basename "$(find "$theme_dir" -name "$cur_theme*" -type f | tail -1)")
+  ext=${filedir##*.}
+  case $ext in
+    jpg | jpeg | png )
+      if [[ $2 != d ]]; then
+        load_overrides
+      fi
+      ;;
+    * )
+      echo "Incompatible image type($ext), exiting..."
+      exit 1
+      ;;
+  esac
+}
 # Checks if timeoffset is a number and then if it is range and checks if refreshrate is in a valid format
-valid1=false
-valid2=false
-for ((n=0;n<2;n++)); do
-  if ! [ "$timeoffset" -eq "$timeoffset" ] 2> /dev/null; then
-  	notisend "Invalid Time Offset($timeoffset), loading defaults..."
-  	find_defaults "timeoffset=[[:digit:]]"
-  else
-    if ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
-    	notisend "Time Offset is out of range($timeoffset), loading defaults..."
+[[ "$active_timeoffset" != "$timeoffset" ]] && {
+  valid1=false
+  for ((n=0;n<2;n++)); do
+    if ! [ "$timeoffset" -eq "$timeoffset" ] 2> /dev/null; then
+    	notisend "Invalid Time Offset($timeoffset), loading defaults..."
     	find_defaults "timeoffset=[[:digit:]]"
-    elif [[ $((date + timeoffset)) -gt 24 ]]; then
-    	date=$((date - 24 + timeoffset))
-      valid1=true
-    elif [[ $((date + timeoffset)) -lt 0 ]]; then
-    	date=$((date + 24 + timeoffset))
-      valid1=true
     else
-    	date=$((date + timeoffset))
-      valid1=true
+      if ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
+      	notisend "Time Offset is out of range($timeoffset), loading defaults..."
+      	find_defaults "timeoffset=[[:digit:]]"
+      elif [[ $((date + timeoffset)) -gt 24 ]]; then
+      	date=$((date - 24 + timeoffset))
+        valid1=true
+      elif [[ $((date + timeoffset)) -lt 0 ]]; then
+      	date=$((date + 24 + timeoffset))
+        valid1=true
+      else
+      	date=$((date + timeoffset))
+        valid1=true
+      fi
     fi
-  fi
-  if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] || "$refreshrate" == [[:xdigit:]][mh] ]] || [[ "${refreshrate: -1}" = h && "${refreshrate%?}" -ge 24 || "${refreshrate: -1}" = m && "${refreshrate%?}" -ge 60 || "${refreshrate%?}" -le 0 ]]; then\
-    notisend "Invalid Refresh Rate($refreshrate), loading defaults..."
-    find_defaults "refreshrate=[[:digit:]]"
-  else
-    valid2=true
-  fi
-done
+  done
+}
+
+[[ $active_refreshrate != "$refreshrate" ]] && {
+  valid2=false
+  for ((n=0;n<2;n++)); do
+    if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] || "$refreshrate" == [[:xdigit:]][mh] ]] || [[ "${refreshrate: -1}" = h && "${refreshrate%?}" -ge 24 || "${refreshrate: -1}" = m && "${refreshrate%?}" -ge 60 || "${refreshrate%?}" -le 0 ]]; then\
+      notisend "Invalid Refresh Rate($refreshrate), loading defaults..."
+      find_defaults "refreshrate=[[:digit:]]"
+    else
+      valid2=true
+    fi
+  done
+}
 
 # Exit if defaults return invalid values
 if ! $valid1 || ! $valid2 ; then
@@ -332,7 +348,7 @@ case $1 in
         exit 1
       fi
       active_theme="$2"
-      trap 'echo ""; break' INT
+      trap 'echo; break' INT
       date=$((3 + timeoffset))
       while [[ $date -lt $((24 + timeoffset)) ]]; do
         date +"%l:%M %p" -d $((date - timeoffset))
