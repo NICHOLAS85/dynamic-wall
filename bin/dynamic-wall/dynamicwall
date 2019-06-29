@@ -5,9 +5,12 @@
 usrnm=$(grep -i '1000' -A 0 /etc/passwd | sed 's/:.*//')
 id="$(id -u)"
 # Get current time
-date=$(date +%H | sed 's/\<0//g')
+declare -A date
+date[real]=$(date +%H | sed 's/\<0//g')
 # Source Config File
 source "/home/$usrnm/bin/dynamic-wall/dynamicwall.config" || { source "/home/$usrnm/bin/dynamic-wall/default.config"; notisend "Can't find user config files, loading defaults...";} || { notisend "Can't find user or default config files, exiting..."; exit 1; }
+date[desktop]=${date[real]}
+date[lockscreen]=${date[real]}
 # Get cached values
 oldvar_dir="/home/$usrnm/bin/dynamic-wall/.oldvar"
 source <(cat $oldvar_dir/*)
@@ -50,21 +53,27 @@ esac && if [[ -n $2 ]]; then echo "ignoring extra args..."; fi
 #Determine image to use based on time
 function main_script() {
   file=("$theme_dir/$active_theme/$active_theme" "$theme_dir/$lock_theme/$lock_theme")
-	if [[ "$date" -le "4" || "$date" -gt "21" ]]; then
+	if [[ "${date[desktop]}" -le "4" || "${date[desktop]}" -gt "21" ]]; then
     desktop="${file[0]}16.${ext[$cur_theme]}"
+	elif [[ "${date[desktop]}" -le "9" ]]; then
+    desktop="${file[0]}$((date[desktop] - 4)).${ext[$cur_theme]}"
+	elif [[ "${date[desktop]}" -le "16" ]]; then
+    desktop="${file[0]}$((date[desktop] - 5)).${ext[$cur_theme]}"
+	elif [[ "${date[desktop]}" -le "21" ]]; then
+    desktop="${file[0]}$((date[desktop] - 6)).${ext[$cur_theme]}"
+	fi
+  [[ -z $previewtheme ]] && if [[ "${date[lockscreen]}" -le "4" || "${date[lockscreen]}" -gt "21" ]]; then
     lockscreen="${file[1]}16.${ext[$lock_theme]}"
-	elif [[ "$date" -le "9" ]]; then
-    desktop="${file[0]}$((date - 4)).${ext[$cur_theme]}"
-    lockscreen="${file[1]}$((date - 4)).${ext[$lock_theme]}"
-	elif [[ "$date" -le "16" ]]; then
-    desktop="${file[0]}$((date - 5)).${ext[$cur_theme]}"
-    lockscreen="${file[1]}$((date - 5)).${ext[$lock_theme]}"
-	elif [[ "$date" -le "21" ]]; then
-    desktop="${file[0]}$((date - 6)).${ext[$cur_theme]}"
-    lockscreen="${file[1]}$((date - 6)).${ext[$lock_theme]}"
+	elif [[ "${date[lockscreen]}" -le "9" ]]; then
+    lockscreen="${file[1]}$((date[lockscreen] - 4)).${ext[$lock_theme]}"
+	elif [[ "${date[lockscreen]}" -le "16" ]]; then
+    lockscreen="${file[1]}$((date[lockscreen] - 5)).${ext[$lock_theme]}"
+	elif [[ "${date[lockscreen]}" -le "21" ]]; then
+    lockscreen="${file[1]}$((date[lockscreen] - 6)).${ext[$lock_theme]}"
 	fi
   set_wallpaper
-	echo "olddate=$date" > "$oldvar_dir/olddate"
+	echo "olddate=${date[desktop]}" > "$oldvar_dir/olddate"
+  echo "olddate_lock=${date[lockscreen]}" > "$oldvar_dir/olddate_lock"
 }
 
 #Set wallpaper determined in function above
@@ -90,7 +99,10 @@ function set_wallpaper() {
   fi
   "${prefix[@]}" \
 	qdbus org.kde.plasmashell /PlasmaShell evaluateScript "${setwallscript}" || { notisend "Error setting wallpaper, exiting..." ; exit 1; }
-  [[ -z $previewtheme ]] && kwriteconfig5 --file kscreenlockerrc --group Greeter --group Wallpaper --group org.kde.image --group General --key Image "file://${full_image_path[1]}"
+  if [[ -z $previewtheme ]]; then
+    echo "exec kwriteconfig5 $lockscreen"
+    kwriteconfig5 --file kscreenlockerrc --group Greeter --group Wallpaper --group org.kde.image --group General --key Image "file://${full_image_path[1]}"
+  fi
 }
 
 #check true or false config options
@@ -181,13 +193,16 @@ function update_refreshrate() {
 
 function update_theme() {
 	echo "active_theme=$cur_theme" > "$oldvar_dir/active_theme"
-	notisend "Theme updated to $cur_theme"
+  echo "active_theme_lock=$lock_theme" > "$oldvar_dir/active_theme_lock"
+	notisend "Desktop theme updated to $cur_theme, Lockscreen theme updated to $lock_theme"
 	active_theme="$cur_theme"
+  active_theme_lock="$lock_theme"
 }
 
 function update_timeoffset() {
 	echo "active_timeoffset=$timeoffset" > "$oldvar_dir/active_timeoffset"
-	notisend "Time offset updated to $timeoffset"
+  echo "active_timeoffset_lock=$lock_timeoffset" > "$oldvar_dir/active_timeoffset_lock"
+	notisend "Desktop time offset updated to $timeoffset, Lockscreen time offset updated to $lock_timeoffset"
 }
 
 function load_overrides() {
@@ -273,7 +288,7 @@ declare -A ext
 [[ "$active_theme_lock" != "$lock_theme" ]] && find_theme "$lock_theme" || find_theme "$lock_theme" skipcheck
 
 # Checks if timeoffset is a number and then if it is range and checks if refreshrate is in a valid format
-[[ "$active_timeoffset" != "$timeoffset" ]] && {
+if [[ "$active_timeoffset" != "$timeoffset" ]] || [[ "$active_timeoffset_lock" != "$lock_timeoffset" ]]; then
   valid1=false
   for ((n=0;n<2;n++)); do
     if ! [ "$timeoffset" -eq "$timeoffset" ] 2> /dev/null; then
@@ -283,19 +298,56 @@ declare -A ext
       if ! [[ "$timeoffset" -le "23" && "$timeoffset" -ge "-23" ]]; then
       	notisend "Time Offset is out of range($timeoffset), loading defaults..."
       	find_defaults "timeoffset=[[:digit:]]"
-      elif [[ $((date + timeoffset)) -gt 24 ]]; then
-      	date=$((date - 24 + timeoffset))
+      elif [[ $((date[real] + timeoffset)) -gt 24 ]]; then
+      	date[desktop]=$((date[real] - 24 + timeoffset))
         valid1=true
-      elif [[ $((date + timeoffset)) -lt 0 ]]; then
-      	date=$((date + 24 + timeoffset))
+      elif [[ $((date[real] + timeoffset)) -lt 0 ]]; then
+      	date[desktop]=$((date[real] + 24 + timeoffset))
         valid1=true
       else
-      	date=$((date + timeoffset))
+      	date[desktop]=$((date[real] + timeoffset))
         valid1=true
       fi
     fi
   done
-}
+
+  valid3=false
+  for ((n=0;n<2;n++)); do
+    if ! [ "$lock_timeoffset" -eq "$lock_timeoffset" ] 2> /dev/null; then
+    	notisend "Invalid Time Offset($lock_timeoffset), loading defaults..."
+    	find_defaults "lock_timeoffset=[[:digit:]]"
+    else
+      if ! [[ "$lock_timeoffset" -le "23" && "$lock_timeoffset" -ge "-23" ]]; then
+      	notisend "Time Offset is out of range($lock_timeoffset), loading defaults..."
+      	find_defaults "lock_timeoffset=[[:digit:]]"
+      elif [[ $((date[real] + lock_timeoffset)) -gt 24 ]]; then
+      	date[lockscreen]=$((date[real] - 24 + lock_timeoffset))
+        valid3=true
+      elif [[ $((date[real] + lock_timeoffset)) -lt 0 ]]; then
+      	date[lockscreen]=$((date[real] + 24 + lock_timeoffset))
+        valid3=true
+      else
+      	date[lockscreen]=$((date[real] + lock_timeoffset))
+        valid3=true
+      fi
+    fi
+  done
+else
+  if [[ $((date[real] + timeoffset)) -gt 24 ]]; then
+    date[desktop]=$((date[real] - 24 + timeoffset))
+  elif [[ $((date[real] + timeoffset)) -lt 0 ]]; then
+    date[desktop]=$((date[real] + 24 + timeoffset))
+  else
+    date[desktop]=$((date[real] + timeoffset))
+  fi
+  if [[ $((date[real] + lock_timeoffset)) -gt 24 ]]; then
+    date[lockscreen]=$((date[real] - 24 + lock_timeoffset))
+  elif [[ $((date[real] + lock_timeoffset)) -lt 0 ]]; then
+    date[lockscreen]=$((date[real] + 24 + lock_timeoffset))
+  else
+    date[lockscreen]=$((date[real] + lock_timeoffset))
+  fi
+fi
 
 [[ $active_refreshrate != "$refreshrate" ]] && {
   valid2=false
@@ -310,18 +362,18 @@ declare -A ext
 }
 
 # Exit if defaults return invalid values
-if ! $valid1 || ! $valid2 ; then
+if ! $valid1 || ! $valid2 || ! $valid3; then
   notisend "There is something wrong with your default config options, reinstall"
   exit 1
 fi
 
 # Checks if date is a number and then if its in a valid range
-if ! [ $date -eq $date ] 2> /dev/null; then
-	notisend "Invalid date($date), loading defaults..."
-	date=$(date +%H | sed 's/\<0//g')
-elif ! [[ "$date" -le "24" && "$date" -ge "0" ]]; then
-	notisend "Date is out of range($date), loading defaults..."
-	date=$(date +%H | sed 's/\<0//g')
+if ! [ ${date[real]} -eq ${date[real]} ] 2> /dev/null; then
+	notisend "Invalid date(${date[real]}), loading defaults..."
+	date[real]=$(date +%H | sed 's/\<0//g')
+elif ! [[ "${date[real]}" -le "24" && "${date[real]}" -ge "0" ]]; then
+	notisend "Date is out of range(${date[real]}), loading defaults..."
+	date[real]=$(date +%H | sed 's/\<0//g')
 fi
 
 # Check what argument was passed to script
@@ -338,15 +390,15 @@ case $1 in
       fi
       active_theme="$previewtheme"
       trap 'echo; break' INT
-      date=$((3 + timeoffset))
-      while [[ $date -lt $((24 + timeoffset)) ]]; do
-        date +"%l:%M %p" -d $((date - timeoffset))
+      date[desktop]=$((3 + timeoffset))
+      while [[ ${date[desktop]} -lt $((24 + timeoffset)) ]]; do
+        date +"%l:%M %p" -d $((date[desktop] - timeoffset))
         main_script
-        ((++date))
+        ((++date[desktop]))
         sleep 1.5
       done
       notisend "Preview complete, reverting to normal..."
-      date=$olddate
+      date[desktop]=$olddate
       active_theme="$cur_theme"
       find_theme "$active_theme"
       main_script
@@ -358,9 +410,10 @@ case $1 in
       echo "\"$2\" is not a valid time"
       exit 1
     elif [[ -n $2 ]]; then
-      date=$(($2 + timeoffset))
+      date[desktop]=$(($2 + timeoffset))
+      date[lockscreen]=$(($2 + timeoffset))
     fi
-    date +"%l:%M %p" -d $((date - timeoffset)) 2> /dev/null || date +"%l:%M %p"
+    date +"%l:%M %p" -d $((date[desktop] - timeoffset)) 2> /dev/null || date +"%l:%M %p"
     if [[ $timeoffset != 0 ]]; then
       echo "offset by $timeoffset"
     fi
@@ -391,26 +444,27 @@ if [[ "$refreshrate" != "$active_refreshrate" ]]; then
 	update_refreshrate
 fi
 
-if [[ "$timeoffset" != "$active_timeoffset" ]]; then
+if [[ "$timeoffset" != "$active_timeoffset" ]] || [[ "$lock_timeoffset" != "$active_timeoffset_lock" ]] ; then
 	update_timeoffset
 fi
 
-if [[ "$active_theme" != "$cur_theme" ]]; then
+if [[ "$active_theme" != "$cur_theme" ]] || [[ "$active_theme_lock" != "$lock_theme" ]] ; then
 	update_theme
 	main_script
-  olddate=$date
+  olddate=${date[desktop]}
+  olddate_lock=${date[lockscreen]}
 fi
 
 if trueorfalse $printvariables; then
   echo "Theme currently in use is $cur_theme"
   echo "Current theme directory is $theme_dir"
-  echo "Time is currently $date"
+  echo "Time is currently ${date[real]}"
   echo "Time offset by $timeoffset"
   echo "Refreshrate is $refreshrate"
 fi
 
 # Check if time has changed since last exec, then set wallpaper based on time
-if [[ "$olddate" != "$date" ]]; then
+if [[ "$olddate" != "${date[desktop]}" ]] || [[ "$olddate_lock" != "${date[lockscreen]}" ]]; then
 	main_script
 else
 	echo "Time hasn't changed since last run, doing nothing..."
