@@ -51,17 +51,17 @@ esac && if [[ -n $2 ]]; then echo "ignoring extra args..."; fi
 function main_script() {
   file=("$theme_dir/$active_theme/$active_theme" "$theme_dir/$lock_theme/$lock_theme")
 	if [[ "$date" -le "4" || "$date" -gt "21" ]]; then
-    desktop="${file[0]}16.$ext"
-    lockscreen="${file[1]}16.$ext"
+    desktop="${file[0]}16.${ext[$cur_theme]}"
+    lockscreen="${file[1]}16.${ext[$lock_theme]}"
 	elif [[ "$date" -le "9" ]]; then
-    desktop="${file[0]}$((date - 4)).$ext"
-    lockscreen="${file[1]}$((date - 4)).$ext"
+    desktop="${file[0]}$((date - 4)).${ext[$cur_theme]}"
+    lockscreen="${file[1]}$((date - 4)).${ext[$lock_theme]}"
 	elif [[ "$date" -le "16" ]]; then
-    desktop="${file[0]}$((date - 5)).$ext"
-    lockscreen="${file[1]}$((date - 5)).$ext"
+    desktop="${file[0]}$((date - 5)).${ext[$cur_theme]}"
+    lockscreen="${file[1]}$((date - 5)).${ext[$lock_theme]}"
 	elif [[ "$date" -le "21" ]]; then
-    desktop="${file[0]}$((date - 6)).$ext"
-    lockscreen="${file[1]}$((date - 6)).$ext"
+    desktop="${file[0]}$((date - 6)).${ext[$cur_theme]}"
+    lockscreen="${file[1]}$((date - 6)).${ext[$lock_theme]}"
 	fi
   set_wallpaper
 	echo "olddate=$date" > "$oldvar_dir/olddate"
@@ -203,18 +203,18 @@ function load_overrides() {
 }
 
 function find_theme() {
-	if find "$theme_dir/$1/$1"* > /dev/null 2>&1; then
+	if [[ $2 = "skipcheck" ]] || find "$theme_dir/$1/$1"* > /dev/null 2>&1; then
 		filedir=$(basename "$(find "$theme_dir" -name "$1*" -type f | tail -1)")
-		ext=${filedir##*.}
-		case $ext in
+		ext[$1]=${filedir##*.}
+		case ${ext[$1]} in
 			jpg | jpeg | png )
-				if [[ $2 != d ]]; then
-					load_overrides
+				if [[ $2 != defaults ]]; then
+					load_overrides $1
 				fi
 				return 0
 				;;
 			* )
-				echo "Incompatible image type($ext), exiting..."
+				echo "Incompatible image type(${ext[$1]}), exiting..."
 				exit 1
 				;;
 		esac
@@ -227,7 +227,7 @@ function find_theme() {
 			echo "Attempting to use default theme directory"
 			find_defaults "theme_dir" "$2"
 		elif [[ $attempts = 2 ]]; then
-			if [[ $3 = "p" ]]; then
+			if [[ $3 = "preview" ]]; then
 				return 1
 			fi
 			echo "Could not find theme in default directory"
@@ -254,11 +254,11 @@ function find_defaults() {
 	eval "$(grep "$1" < "/home/$usrnm/bin/dynamic-wall/default.config")"
   notisend "loaded $(grep "$1" < "/home/$usrnm/bin/dynamic-wall/default.config")"
   if [[ $1 = "theme_dir" ]] || [[ $1 = "cur_theme" ]]; then
-  	if [[ $2 = "p" ]]; then
-  		find_theme "$previewtheme" d p
+  	if [[ $2 = "preview" ]]; then
+  		find_theme "$previewtheme" defaults preview
       return $?
   	elif [[ "$cur_theme" != "$active_theme" ]]; then
-  		if ! find_theme "$cur_theme" d; then
+  		if ! find_theme "$cur_theme" defaults; then
     		echo "Can't locate $cur_theme in default theme directory, exiting..."
     		exit 1
   		fi
@@ -268,21 +268,10 @@ function find_defaults() {
 }
 
 # Checks if users current theme exist
-[[ "$active_theme" != "$cur_theme" ]] && find_theme "$cur_theme" || {
-  filedir=$(basename "$(find "$theme_dir" -name "$cur_theme*" -type f | tail -1)")
-  ext=${filedir##*.}
-  case $ext in
-    jpg | jpeg | png )
-      if [[ $2 != d ]]; then
-        load_overrides
-      fi
-      ;;
-    * )
-      echo "Incompatible image type($ext), exiting..."
-      exit 1
-      ;;
-  esac
-}
+declare -A ext
+[[ "$active_theme" != "$cur_theme" ]] && find_theme "$cur_theme" || find_theme "$cur_theme" skipcheck
+[[ "$active_theme_lock" != "$lock_theme" ]] && find_theme "$lock_theme" || find_theme "$lock_theme" skipcheck
+
 # Checks if timeoffset is a number and then if it is range and checks if refreshrate is in a valid format
 [[ "$active_timeoffset" != "$timeoffset" ]] && {
   valid1=false
@@ -339,15 +328,15 @@ fi
 case $1 in
   --preview | -p )
     previewtheme="$2"
-    if [[ -z $2 ]]; then
+    if [[ -z $previewtheme ]]; then
       printf "no theme selected to preview\\nusage: dynamicwall [--preview] <theme>\\n"
       exit 1
     else
-      if ! find_theme "$2" p; then
-        notisend "Couldn't find $2, exiting..."
+      if ! find_theme "$previewtheme" preview; then
+        notisend "Couldn't find $previewtheme, exiting..."
         exit 1
       fi
-      active_theme="$2"
+      active_theme="$previewtheme"
       trap 'echo; break' INT
       date=$((3 + timeoffset))
       while [[ $date -lt $((24 + timeoffset)) ]]; do
