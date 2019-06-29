@@ -10,7 +10,7 @@ date=$(date +%H | sed 's/\<0//g')
 source "/home/$usrnm/bin/dynamic-wall/dynamicwall.config" || { source "/home/$usrnm/bin/dynamic-wall/default.config"; notisend "Can't find user config files, loading defaults...";} || { notisend "Can't find user or default config files, exiting..."; exit 1; }
 # Get cached values
 oldvar_dir="/home/$usrnm/bin/dynamic-wall/.oldvar"
-eval "$(cat $oldvar_dir/*)"
+source <(cat $oldvar_dir/*)
 
 HELP="\
 Usage: dynamicwall [OPTIONS]
