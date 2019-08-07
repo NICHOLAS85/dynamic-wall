@@ -1,12 +1,25 @@
 #!/bin/bash
 # shellcheck source=bin/dynamic-wall/dynamicwall.config
 
+if [[ $EUID = 0 ]]; then
+   echo "This script must be run without root"
+   exit 1
+fi
+
 usrnm=$(logname)
+skiprm=false
+if which dynamicwall; then
+  install_dir="$(dirname "$(readlink -f "$(which dynamicwall)")")"
+else
+	echo "Error, can't locate dynamicwall installation. Cleaning up everything else."
+	skiprm=true
+fi
+
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "$DIR" || { echo "Error, exiting..."; exit 1; }
 
-eval "$(grep "theme_dir" 2>/dev/null < "/home/$usrnm/bin/dynamic-wall/dynamicwall.config")"
+$skiprm || eval "$(grep "theme_dir" 2>/dev/null < "$install_dir/dynamicwall.config")"
 
 if [[ -f /bin/systemctl ]]; then
 	echo -e "\n\033[0;33mDisabling dynamicwall systemd daemons...\033[0m"
@@ -14,9 +27,9 @@ if [[ -f /bin/systemctl ]]; then
   systemctl --user disable dynamicwall.service dynamicwall.timer
 fi
 
-if crontab -u "$usrnm" -l | grep "/home/$usrnm/bin/dynamic-wall/dynamicwall"; then
+$skiprm || if crontab -u "$usrnm" -l | grep "$install_dir/dynamicwall"; then
   echo -e "\033[0;33mRemoving cronjob...\033[0m"
-  crontab -u "$usrnm" -l | grep -v "/home/$usrnm/bin/dynamic-wall/dynamicwall"  | crontab -u "$usrnm" -
+  crontab -u "$usrnm" -l | grep -v "$install_dir/dynamicwall"  | crontab -u "$usrnm" -
 fi
 
 echo -e "\033[0;33mRemoving software links...\033[0m"
@@ -24,13 +37,14 @@ if sudo rm /usr/local/bin/dynamicwall 2> /dev/null
 then
   echo "Removed symlink /usr/local/bin/dynamicwall."
 fi
-echo ""
+sudo -k
+echo
 
 echo -e "\033[0;33mRemoving software files and directories...\033[0m"
 
 function remove_file(){
   if [[ -f $1 ]]; then
-    if rm -f $1
+    if rm -v -f $1
     then
       echo "removed file: $1"
     fi
@@ -40,14 +54,14 @@ function remove_file(){
 function remove_dir(){
   if [[ -d $1 ]]; then
     if [[ "$2" = "ifempty" ]]; then
-      if rm -d $1  2> /dev/null
+      if rm -v -d $1  2> /dev/null
       then
         echo "removed empty directory: $1"
       else
         echo -e "\e[00;31m$1 contains files not included in default installation, skipping...\e[00m"
       fi
     else
-      if rm -rf $1
+      if rm -v -rf $1
       then
         echo "removed directory: $1"
       fi
@@ -65,8 +79,9 @@ remove_dir "/home/$usrnm/.config/systemd/user/dynamicwall.timer.d"
 remove_dir "/home/$usrnm/.config/systemd/user" "ifempty"
 remove_dir "/home/$usrnm/.config/systemd" "ifempty"
 
-remove_file "/home/$usrnm/bin/dynamic-wall/README.md"
-remove_file "/home/$usrnm/bin/dynamic-wall/remove"
+$skiprm || {
+remove_file "$install_dir/README.md"
+remove_file "$install_dir/remove"
 
 remove_dir "$theme_dir/EarthView"
 remove_dir "$theme_dir/mojave_dynamic"
@@ -74,16 +89,17 @@ remove_dir "$theme_dir/NewOrleans"
 remove_dir "$theme_dir" "ifempty"
 
 if [[ "$1" = "-s" ]]; then
-  remove_file "/home/$usrnm/bin/dynamic-wall/default.config"
-  remove_file "/home/$usrnm/bin/dynamic-wall/dynamicwall.config"
-  remove_file "/home/$usrnm/bin/dynamic-wall/dynamicwall"
-  remove_dir "/home/$usrnm/bin/dynamic-wall/.oldvar"
-	remove_dir "/home/$usrnm/bin/dynamic-wall" "ifempty"
+  remove_file "$install_dir/default.config"
+  remove_file "$install_dir/dynamicwall.config"
+  remove_file "$install_dir/dynamicwall"
+  remove_dir "$install_dir/.oldvar"
+	remove_dir "$install_dir" "ifempty"
 else
-  remove_dir "/home/$usrnm/bin/dynamic-wall"
+  remove_dir "$install_dir"
 fi
 
-remove_dir "/home/$usrnm/bin/" "ifempty"
+remove_dir "$(dirname "$install_dir")" "ifempty"
+}
 
 echo ""
 
