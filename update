@@ -1,9 +1,14 @@
 #!/bin/bash
 
-if grep -q -s "scheduler=systemd" ~/bin/dynamic-wall/dynamicwall.config; then
-  bash ./install --update
-elif grep -q -s "scheduler=cron" ~/bin/dynamic-wall/dynamicwall.config; then
-  bash ./install --cron --update
+if which dynamicwall; then
+  install_dir="$(dirname "$(readlink -f "$(which dynamicwall)")")"
 else
   echo "No dynamic-wall installation found, run ./install to install dynamicwall or ./install --update to pull the latest version from github and install"
+  exit 1
+fi
+
+if grep -q -s "scheduler=systemd" "$install_dir/dynamicwall.config"; then
+  bash ./install --update --install-dir "$(dirname "$install_dir")"
+elif grep -q -s "scheduler=cron" "$install_dir/dynamicwall.config"; then
+  bash ./install --cron --update --install-dir "$(dirname "$install_dir")"
 fi
