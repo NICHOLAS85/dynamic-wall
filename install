@@ -10,7 +10,6 @@ DW_VERSION="2019.5.16"
 trap 'echo "Stopped, Removing any half installed files...";./remove -s;exit 0' SIGINT
 
 usrnm=$(logname)
-method="systemd"
 update=false
 for arg in "$@"
 do
@@ -23,18 +22,19 @@ do
 			update=true
 			shift
 			;;
-		"--install_dir" )
+		"--install-dir" )
 			if ! [ -d "$2" ]; then
 				echo "$2 does not exists, do you want to create it? \n[y/n]:"
 				read key
     	 	if [ "$key" = "y" ]; then
-		 		mkdir -p -v $2 || { echo "Error creating directory, exiting..." ; exit 0; }
+		 		mkdir -p -v $2 || { echo "Error creating directory, exiting..." ; exit 1; }
 				echo "made $2"
 				else
 					exit
 				fi
 			fi
 			install_dir="$(realpath $2)"
+      install_dir_command="--install-dir $install_dir"
 			shift 2
 			;;
 	esac
@@ -43,6 +43,9 @@ done
 if ! [[ -f /bin/systemctl ]] && ! [[ $method = "--cron" ]]; then
 	echo -e "\e[00;31mWarning: systemd seems to be missing. Dynamic-Wall will not work. Run this setup with the --cron argument if you wish to use cron instead of systemd.\e[00m"
   exit 1
+elif [[ -z $DBUS_SESSION_BUS_ADDRESS ]];then
+  echo "Your \$DBUS_SESSION_BUS_ADDRESS is unset, restart your terminal to fix."
+  exit 1
 fi
 
 if $update; then
@@ -50,7 +53,7 @@ if $update; then
   git clean -fdx
   git pull
   echo
-  bash ./$0 $method;
+  bash ./$0 $method $install_dir_command;
   exit 0;
 fi
 
@@ -85,8 +88,11 @@ else
 fi
 
 if [[ -n $install_dir ]]; then
- sed -i "s/install_dir=.*/install_dir=\"$install_dir\"/g" "$DIR/dynamic-wall/dynamicwall"
+ sed -i "s#install_dir=.*#install_dir=\"$install_dir\"#g" "$DIR/dynamic-wall/dynamicwall"
  echo "Updated installation directory to $install_dir/dynamic-wall"
+ sed -i "s#theme_dir=.*#theme_dir=\"$install_dir/dynamic-wall/themes\"#g" "$DIR/dynamic-wall/dynamicwall.config"
+ sed -i "s#theme_dir=.*#theme_dir=\"$install_dir/dynamic-wall/themes\"#g" "$DIR/dynamic-wall/default.config"
+ echo "Updated theme_dir to $install_dir/dynamic-wall/themes"
 else
 	install_dir="/home/$usrnm/bin"
 fi
