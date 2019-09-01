@@ -28,6 +28,11 @@ To install run:
 ```sh
 ./install
 ```
+By default this installs dynamicwall into ~/bin in a folder named dynamic-wall. To change this installation prefix run:
+
+```sh
+./install --install-dir /your/custom/directory
+```
 
 To update an existing installation run :
 
@@ -43,15 +48,9 @@ To uninstall run:
 
 You will be prompted for a password which will add/remove dynamicwall from your $PATH.
 
-To check the status of the timer and service run:
-
-```sh
-dynamicwall --status
-```
-
 ### Cronjob instead of Systemd Service
 
-If you would like to install this script and use cron instead of systemd, simply run install with the --cron argument:
+If you would like to install this script and use cron instead of systemd, simply add the `--cron` argument to your install command:
 
 ```sh
 ./install --cron
@@ -63,24 +62,6 @@ During installation a prompt will appear asking whether or not you would like to
 
 A cronjob will automatically be generated for you. All config options should be adjusted in dynamicwall.config regardless of if you're using cron or systemd.
 
-You can view the cronjob generated for you by running:
-
-```sh
-crontab -l
-```
-
-To check the status of your wake up scripts run:
-
-```sh
-journalctl -b -u systemd-suspend.service
-```
-
-Or simply run the following to view both
-
-```sh
-dynamicwall --status
-```
-
 ## Usage
 
 The systemd service, cronjob, and system-sleep script will automatically change your wallpaper at your set interval if an hour has passed in the day, otherwise it will not do anything. You can run the script manually by typing `dynamicwall` into your terminal.
@@ -91,7 +72,7 @@ Usage: dynamicwall [OPTIONS]
 
 optional args:
   -f, --force [time]     Update wallpaper immediately, optionally to a specific time
-  -p, --preview <theme>  Run a 24 hour preview for a certain theme***EXPERIMENTAL***
+  -p, --preview <theme>  Run a 24 hour preview for a certain theme
   -c, --check            Force check configuration options and push to script
   -s, --status           Display systemd service status/crontab and system-sleep script log
   -l, --list             List available themes to choose from
@@ -102,10 +83,10 @@ optional args:
 
 `-c` forcibly saves all your settings and run's dynamicwall once. The script should automatically detect changes, but this can be used as a backup.
 
-**Warning EXPERIMENTAL, can cause high memory usage and trigger [EARLYOOM](https://github.com/rfjakob/earlyoom) if in use**  
+**Warning, can cause high memory usage**  
 `-p` allows you to preview a specific theme. ex: `dynamicwall --preview EarthView`
 
-`-c` list all folders in your theme directory regardless of if they're in a valid format.
+`-l` list all folders in your theme directory regardless of if they're in a valid format.
 
 ## Configuration
 
