@@ -15,7 +15,7 @@ for arg in "$@"
 do
 	case $arg in
 		"--cron" )
-			method="--cron"
+			method="cron"
 			shift
 			;;
 		"--update" )
@@ -30,7 +30,7 @@ do
 		 		mkdir -p -v $2 || { echo "Error creating directory, exiting..." ; exit 1; }
 				echo "made $2"
 				else
-					exit
+					exit 0
 				fi
 			fi
 			install_dir="$(realpath $2)"
@@ -40,7 +40,7 @@ do
 	esac
 done
 
-if ! [[ -f /bin/systemctl ]] && ! [[ $method = "--cron" ]]; then
+if ! [[ -f /bin/systemctl ]] && ! [[ $method = "cron" ]]; then
 	echo -e "\e[00;31mWarning: systemd seems to be missing. Dynamic-Wall will not work. Run this setup with the --cron argument if you wish to use cron instead of systemd.\e[00m"
   exit 1
 elif [[ -z $DBUS_SESSION_BUS_ADDRESS ]];then
@@ -53,7 +53,7 @@ if $update; then
   git clean -fdx
   git pull
   echo
-  bash ./$0 $method $install_dir_command;
+  bash ./$0 "--$method" $install_dir_command;
   exit 0;
 fi
 
@@ -77,15 +77,8 @@ echo -e "\e[00;32m[2/6] Removing previous versions...\e[00m"
 
 echo -e "\e[00;32m[3/6] Updating fields based on system and arguments...\e[00m"
 
-if [[ $method = "--cron" ]]; then
-  sed -i "s/scheduler=systemd/scheduler=cron/g" "$DIR/dynamic-wall/dynamicwall.config"
-  sed -i "s/scheduler=systemd/scheduler=cron/g" "$DIR/dynamic-wall/default.config"
-  echo "Updated scheduler to cron"
-else
-  sed -i "s/scheduler=cron/scheduler=systemd/g" "$DIR/dynamic-wall/dynamicwall.config"
-  sed -i "s/scheduler=cron/scheduler=systemd/g" "$DIR/dynamic-wall/default.config"
-  echo "Updated scheduler to systemd"
-fi
+sed -i "s/scheduler=.*/scheduler=${method:-systemd}/g" "$DIR/dynamic-wall/dynamicwall"
+echo "Updated scheduler to ${method:-systemd}"
 
 if [[ -n $install_dir ]]; then
  sed -i "s#install_dir=.*#install_dir=\"$install_dir\"#g" "$DIR/dynamic-wall/dynamicwall"
@@ -119,7 +112,7 @@ install_files "dynamic-wall/themes/EarthView" "$install_dir/"
 install_files "dynamic-wall/themes/mojave_dynamic" "$install_dir/"
 install_files "dynamic-wall/themes/NewOrleans" "$install_dir/"
 
-if [[ $method = "--cron" ]]; then
+if [[ $method = "cron" ]]; then
   echo -e "\e[00;32m\nSkipping systemd files due to --cron installation...\e[00m"
 else
   echo -e "\e[00;32m\nInstalling systemd units...\e[00m"
@@ -127,7 +120,7 @@ else
   install_files "config/systemd/user/dynamicwall.timer.d" "/home/$usrnm/."
 fi
 
-if [[ $method = "--cron" ]] && [[ -d /lib/systemd || -d /usr/lib/systemd ]]; then
+if [[ $method = "cron" ]] && [[ -d /lib/systemd || -d /usr/lib/systemd ]]; then
   while true; do
     echo -e "\n\033[0;33mWould you like to install a system-sleep script to trigger dynamicwall on wakeup?\033[0m"
     echo -n "[y/n/?]:"
@@ -157,7 +150,7 @@ if [[ $method = "--cron" ]] && [[ -d /lib/systemd || -d /usr/lib/systemd ]]; the
   done
 else
   echo -e "\e[00;32m\nSkipping system-sleep files...\e[00m"
-  if ! [[ $method = "--cron" ]]; then
+  if ! [[ $method = "cron" ]]; then
     echo "Skipped due to systemd installation"
   else
     echo "Skipped due to incompatible system"
@@ -171,11 +164,11 @@ echo "Enter password to add dynamicwall to you PATH"
 sudo ln -s -f -v "$install_dir/dynamic-wall/dynamicwall" /usr/local/bin/dynamicwall
 sudo -k
 
-if [[ -f /bin/systemctl ]] && ! [[ $method = "--cron" ]]; then
+if [[ -f /bin/systemctl ]] && ! [[ $method = "cron" ]]; then
   echo -e "\e[00;32m\n[6/6] Enabling and starting systemd service...\e[00m"
   systemctl --user enable dynamicwall.service dynamicwall.timer
   systemctl --user start dynamicwall.timer
-elif [[ $method = "--cron" ]]; then
+elif [[ $method = "cron" ]]; then
 	echo -e "\e[00;32m\n[6/6] Creating cronjob...\e[00m"
   crontab -u "$usrnm" -l | { cat; echo "*/45 * * * * $install_dir/dynamic-wall/dynamicwall"; } | crontab -u "$usrnm" -
 else
