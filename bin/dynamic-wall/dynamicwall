@@ -7,12 +7,12 @@ id="$(id -u)"
 # Get current time
 declare -A date
 date[real]=$(date +%H | sed 's/\<0//g')
+install_dir="/home/$usrnm/bin"
+scheduler=systemd
 # Source Config File
-source "/home/$usrnm/bin/dynamic-wall/dynamicwall.config" || { source "/home/$usrnm/bin/dynamic-wall/default.config"; notisend "Can't find user config files, loading defaults...";} || { notisend "Can't find user or default config files, exiting..."; exit 1; }
-date[desktop]=${date[real]}
-date[lockscreen]=${date[real]}
+source "$install_dir/dynamic-wall/dynamicwall.config" || { source "$install_dir/dynamic-wall/default.config"; notisend "Can't find user config files, loading defaults...";} || { notisend "Can't find user or default config files, exiting..."; exit 1; }
 # Get cached values
-oldvar_dir="/home/$usrnm/bin/dynamic-wall/.oldvar"
+oldvar_dir="$install_dir/dynamic-wall/.oldvar"
 source <(cat $oldvar_dir/*)
 
 HELP="\
@@ -172,8 +172,8 @@ function update_refreshrate() {
 					elif [[ "${refreshrate: -1}" = h ]]; then
             prefix=(\"\* \*/"${refreshrate%?}")
 					fi
-          echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v "/home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo '${prefix[*]}' * * * /home/'"$usrnm"'/bin/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
-					echo "active_refreshrate=$refreshrate" > "$oldvar_dir/active_refreshrate"
+          echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v '"$install_dir"'/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo '${prefix[*]}' * * * '"$install_dir"'/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
+					echo "$refreshrate" > "$oldvar_dir/active_refreshrate"
 					notisend "Refresh rate updated, crontab refreshed"
 					break
 				else
@@ -247,7 +247,7 @@ function find_theme() {
 			fi
 			echo "Could not find theme in default directory"
 			echo "Attempting to use default theme in users theme directory"
-			eval "$(grep "theme_dir" < "/home/$usrnm/bin/dynamic-wall/dynamicwall.config")"
+			eval "$(grep "theme_dir" < "$install_dir/dynamic-wall/dynamicwall.config")"
 			find_defaults "cur_theme" "$2"
 		elif [[ $attempts = 3 ]]; then
 			echo "Could not find default theme in users theme directory"
@@ -262,12 +262,12 @@ function find_theme() {
 
 # Loads default value fed into function. If previewing, locate
 function find_defaults() {
-	if ! [[ -f /home/$usrnm/bin/dynamic-wall/default.config ]]; then
+	if ! [[ -f $install_dir/dynamic-wall/default.config ]]; then
 		notisend "Can't find default config file, exiting..."
 		exit 1
 	fi
-	eval "$(grep "$1" < "/home/$usrnm/bin/dynamic-wall/default.config")"
-  notisend "loaded $(grep "$1" < "/home/$usrnm/bin/dynamic-wall/default.config")"
+	eval "$(grep "$1" < "$install_dir/dynamic-wall/default.config")"
+  notisend "loaded $(grep "$1" < "$install_dir/dynamic-wall/default.config")"
   if [[ $1 = "theme_dir" ]] || [[ $1 = "cur_theme" ]]; then
   	if [[ $2 = "preview" ]]; then
   		find_theme "$previewtheme" defaults preview
