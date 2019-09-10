@@ -11,6 +11,8 @@ install_dir="/home/$usrnm/bin"
 scheduler=systemd
 # Source Config File
 source "$install_dir/dynamic-wall/dynamicwall.config" || { source "$install_dir/dynamic-wall/default.config"; notisend "Can't find user config files, loading defaults...";} || { notisend "Can't find user or default config files, exiting..."; exit 1; }
+date[desktop]=${date[real]}
+date[lockscreen]=${date[real]}
 # Get cached values
 oldvar_dir="$install_dir/dynamic-wall/.oldvar"
 source <(cat $oldvar_dir/*)
@@ -172,8 +174,8 @@ function update_refreshrate() {
 					elif [[ "${refreshrate: -1}" = h ]]; then
             prefix=(\"\* \*/"${refreshrate%?}")
 					fi
-          echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v '"$install_dir"'/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo '${prefix[*]}' * * * '"$install_dir"'/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
-					echo "$refreshrate" > "$oldvar_dir/active_refreshrate"
+          echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v "'"$install_dir"'/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo '${prefix[*]}' * * * "'"$install_dir"'/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
+					echo "active_refreshrate=$refreshrate" > "$oldvar_dir/active_refreshrate"
 					notisend "Refresh rate updated, crontab refreshed"
 					break
 				else
