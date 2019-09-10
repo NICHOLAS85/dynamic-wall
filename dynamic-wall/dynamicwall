@@ -81,7 +81,7 @@ function main_script() {
 #Set wallpaper determined in function above
 function set_wallpaper() {
   echo "exec set_wallpaper $desktop"
-  full_image_path=("$(realpath "$desktop")" "$(realpath "$lockscreen")")
+  full_image_path=("$(realpath "$desktop")" "$([[ -z $previewtheme ]] && realpath "$lockscreen")")
 	#Run process as currently logged in user, export display and DBUS session, and then evaluate wallpaper script, needed for automatic updating
   setwallscript="var allDesktops = desktops();
 	    for (i=0;i<allDesktops.length;i++)
