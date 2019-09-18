@@ -73,7 +73,7 @@ Usage: dynamicwall [OPTIONS]
 optional args:
   -f, --force [time]     Update wallpaper immediately, optionally to a specific time
   -p, --preview <theme>  Run a 24 hour preview for a certain theme
-  -c, --check            Force check configuration options and push to script
+  -c, --config         	 Edit your config file using your default editor
   -s, --status           Display systemd service status/crontab and system-sleep script log
   -l, --list             List available themes to choose from
   -h, --help             Show help
@@ -81,10 +81,10 @@ optional args:
 
 `-f` uses your last saved config and ignores any changes added to your config files since. You can optionally set a time to force update the wallpaper to. You timeoffset value is considered when using this command.
 
-`-c` forcibly saves all your settings and run's dynamicwall once. The script should automatically detect changes, but this can be used as a backup.
+`-c` edits your config file using your editor (falls back to nano) and then allows dynamicwall to run, reflecting your changes immediately.
 
 **Warning, can cause high memory usage**  
-`-p` allows you to preview a specific theme. ex: `dynamicwall --preview EarthView`
+`-p` allows you to quickly preview a specific theme. ex: `dynamicwall --preview EarthView`
 
 `-l` list all folders in your theme directory regardless of if they're in a valid format.
 
