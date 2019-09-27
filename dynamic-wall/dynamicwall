@@ -4,9 +4,7 @@
 # Get current user
 usrnm=$(grep -i '1000' -A 0 /etc/passwd | sed 's/:.*//')
 id="$(id -u)"
-# Get current time
-declare -A date
-date[real]=$(date +%H | sed 's/\<0//g')
+
 install_dir="/home/$usrnm/bin"
 scheduler=systemd
 
@@ -41,7 +39,11 @@ case $1 in
   --config | -c)
     ${EDITOR:-nano} "$install_dir/dynamic-wall/dynamicwall.config"
   ;;
-esac && if [[ -n $2 ]]; then echo "ignoring extra args..."; fi
+esac
+
+# Get current time
+declare -A date ext
+date[real]=$(date +%H | sed 's/\<0//g')
 
 # Source Config File
 source "$install_dir/dynamic-wall/dynamicwall.config" || { source "$install_dir/dynamic-wall/default.config"; notisend "Can't find user config files, loading defaults...";} || { notisend "Can't find user or default config files, exiting..."; exit 1; }
@@ -57,29 +59,35 @@ case $1 in
     ls $theme_dir
     exit 0
   ;;
-esac && if [[ -n $2 ]]; then echo "ignoring extra args..."; fi
+esac
 
 #Determine image to use based on time
 function main_script() {
   file=("$theme_dir/$active_theme/$active_theme" "$theme_dir/$active_theme_lock/$active_theme_lock")
 	if [[ "${date[desktop]}" -le "4" || "${date[desktop]}" -gt "21" ]]; then
-    desktop="${file[0]}16.${ext[$active_theme]}"
+    filenum[0]=16
 	elif [[ "${date[desktop]}" -le "9" ]]; then
-    desktop="${file[0]}$((date[desktop] - 4)).${ext[$active_theme]}"
+    filenum[0]=$((date[desktop] - 4))
 	elif [[ "${date[desktop]}" -le "16" ]]; then
-    desktop="${file[0]}$((date[desktop] - 5)).${ext[$active_theme]}"
+    filenum[0]=$((date[desktop] - 5))
 	elif [[ "${date[desktop]}" -le "21" ]]; then
-    desktop="${file[0]}$((date[desktop] - 6)).${ext[$active_theme]}"
+    filenum[0]=$((date[desktop] - 6))
 	fi
-  [[ -z $previewtheme ]] && if [[ "${date[lockscreen]}" -le "4" || "${date[lockscreen]}" -gt "21" ]]; then
-    lockscreen="${file[1]}16.${ext[$active_theme_lock]}"
-	elif [[ "${date[lockscreen]}" -le "9" ]]; then
-    lockscreen="${file[1]}$((date[lockscreen] - 4)).${ext[$active_theme_lock]}"
-	elif [[ "${date[lockscreen]}" -le "16" ]]; then
-    lockscreen="${file[1]}$((date[lockscreen] - 5)).${ext[$active_theme_lock]}"
-	elif [[ "${date[lockscreen]}" -le "21" ]]; then
-    lockscreen="${file[1]}$((date[lockscreen] - 6)).${ext[$active_theme_lock]}"
-	fi
+  desktop="${file[0]}${filenum[0]}.${ext[$active_theme]}"
+
+  [[ -z $previewtheme ]] && {
+    if [[ "${date[lockscreen]}" -le "4" || "${date[lockscreen]}" -gt "21" ]]; then
+      filenum[1]=16
+  	elif [[ "${date[lockscreen]}" -le "9" ]]; then
+      filenum[1]=$((date[lockscreen] - 4))
+  	elif [[ "${date[lockscreen]}" -le "16" ]]; then
+      filenum[1]=$((date[lockscreen] - 5))
+  	elif [[ "${date[lockscreen]}" -le "21" ]]; then
+      filenum[1]=$((date[lockscreen] - 6))
+  	fi
+    lockscreen="${file[1]}${filenum[1]}.${ext[$active_theme_lock]}"
+  }
+
   set_wallpaper
 	echo "olddate=${date[desktop]}" > "$oldvar_dir/olddate"
   echo "olddate_lock=${date[lockscreen]}" > "$oldvar_dir/olddate_lock"
@@ -311,7 +319,6 @@ function find_defaults() {
 }
 
 # Checks if users current theme exist
-declare -A ext
 [[ "$active_theme" != "$cur_theme" ]] && find_theme "cur_theme" || find_theme "cur_theme" skipcheck
 [[ "$active_theme_lock" != "$lock_theme" ]] && find_theme "lock_theme" || find_theme "lock_theme" skipcheck
 
@@ -351,7 +358,7 @@ else
   offsetdate lockscreen lock_timeoffset
 fi
 
-[[ $active_refreshrate != "$refreshrate" ]] && {
+if [[ $active_refreshrate != "$refreshrate" ]]; then
   valid2=false
   for ((n=0;n<2;n++)); do
     if ! [[ "$refreshrate" == [[:xdigit:]][[:xdigit:]][mh] || "$refreshrate" == [[:xdigit:]][mh] ]] || [[ "${refreshrate: -1}" = h && "${refreshrate%?}" -ge 24 || "${refreshrate: -1}" = m && "${refreshrate%?}" -ge 60 || "${refreshrate%?}" -le 0 ]]; then\
@@ -361,7 +368,7 @@ fi
       valid2=true
     fi
   done
-}
+fi
 
 # Exit if defaults return invalid values
 if ! $valid1 || ! $valid2 || ! $valid3; then
@@ -413,11 +420,19 @@ case $1 in
       exit 1
     elif [[ -n $2 ]]; then
       date[desktop]=$(($2 + timeoffset))
-      date[lockscreen]=$(($2 + timeoffset))
+      date[lockscreen]=$(($2 + lock_timeoffset))
     fi
-    date +"%l:%M %p" -d $((date[desktop] - timeoffset)) 2> /dev/null || date +"%l:%M %p"
+
     if [[ $timeoffset != 0 ]]; then
-      echo "offset by $timeoffset"
+      printf "Desktop offset by $timeoffset,   "
+      date +"%l:%M %p" -d ${date[desktop]} 2> /dev/null || date +" %l:%M %p"
+    fi
+    if [[ $lock_timeoffset != 0 ]]; then
+      printf "Lockscreen offset by $lock_timeoffset,"
+      date +"%l:%M %p" -d ${date[lockscreen]} 2> /dev/null || date +" %l:%M %p"
+    fi
+    if ! [[ $timeoffset != 0 || $lock_timeoffset != 0 ]]; then
+      date +"%l:%M %p" -d $((date[desktop] - timeoffset )) 2> /dev/null || date +" %l:%M %p"
     fi
     main_script
     echo "Forced script to run, ignoring config changes"
