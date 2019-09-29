@@ -75,7 +75,7 @@ function main_script() {
 	fi
   desktop="${file[0]}${filenum[0]}.${ext[$active_theme]}"
 
-  [[ -z $previewtheme ]] && {
+  [[ -n $lock_theme ]] && {
     if [[ "${date[lockscreen]}" -le "4" || "${date[lockscreen]}" -gt "21" ]]; then
       filenum[1]=16
   	elif [[ "${date[lockscreen]}" -le "9" ]]; then
@@ -90,13 +90,13 @@ function main_script() {
 
   set_wallpaper
 	echo "olddate=${date[desktop]}" > "$oldvar_dir/olddate"
-  echo "olddate_lock=${date[lockscreen]}" > "$oldvar_dir/olddate_lock"
+  [[ -n $lock_theme ]] && echo "olddate_lock=${date[lockscreen]}" > "$oldvar_dir/olddate_lock"
 }
 
 #Set wallpaper determined in function above
 function set_wallpaper() {
   echo "exec set_wallpaper $desktop"
-  full_image_path=("$(realpath "$desktop")" "$([[ -z $previewtheme ]] && realpath "$lockscreen")")
+  full_image_path=("$(realpath "$desktop")" "$([[ -n $lock_theme ]] && realpath "$lockscreen")")
 	#Run process as currently logged in user, export display and DBUS session, and then evaluate wallpaper script, needed for automatic updating
   setwallscript="var allDesktops = desktops();
 	    for (i=0;i<allDesktops.length;i++)
@@ -116,7 +116,7 @@ function set_wallpaper() {
   fi
   "${prefix[@]}" \
 	qdbus org.kde.plasmashell /PlasmaShell evaluateScript "${setwallscript}" || { notisend "Error setting wallpaper, exiting..." ; exit 1; }
-  if [[ -z $previewtheme ]]; then
+  if [[ -n $lock_theme ]]; then
     echo "exec kwriteconfig5 $lockscreen"
     kwriteconfig5 --file kscreenlockerrc --group Greeter --group Wallpaper --group org.kde.image --group General --key Image "file://${full_image_path[1]}"
   fi
@@ -209,10 +209,13 @@ function update_refreshrate() {
 
 function update_theme() {
 	echo "active_theme=$cur_theme" > "$oldvar_dir/active_theme"
-  echo "active_theme_lock=$lock_theme" > "$oldvar_dir/active_theme_lock"
-	notisend "Desktop theme updated to $cur_theme, Lockscreen theme updated to $lock_theme"
+	notisend "Desktop theme updated to $cur_theme"
 	active_theme="$cur_theme"
-  active_theme_lock="$lock_theme"
+  if [[ -n $lock_theme ]]; then
+    echo "active_theme_lock=$lock_theme" > "$oldvar_dir/active_theme_lock"
+    notisend "Lockscreen theme updated to $lock_theme"
+    active_theme_lock="$lock_theme"
+  fi
 }
 
 function update_timeoffset() {
@@ -319,7 +322,9 @@ function find_defaults() {
 
 # Checks if users current theme exist
 [[ "$active_theme" != "$cur_theme" ]] && find_theme "cur_theme" || find_theme "cur_theme" skipcheck
-[[ "$active_theme_lock" != "$lock_theme" ]] && find_theme "lock_theme" || find_theme "lock_theme" skipcheck
+if [[ -n $lock_theme ]]; then
+  [[ "$active_theme_lock" != "$lock_theme" ]] && find_theme "lock_theme" || find_theme "lock_theme" skipcheck
+fi
 
 # Checks if timeoffset is a number and then if it is range and checks if refreshrate is in a valid format
 if [[ "$active_timeoffset" != "$timeoffset" ]] || [[ "$active_timeoffset_lock" != "$lock_timeoffset" ]]; then
@@ -397,6 +402,8 @@ case $1 in
         exit 1
       fi
       active_theme="$previewtheme"
+      [[ -n $lock_theme ]] && cache=$lock_theme
+      unset lock_theme
       trap 'echo; break' INT
       date[desktop]=$((3 + timeoffset))
       while [[ ${date[desktop]} -lt $((24 + timeoffset)) ]]; do
@@ -408,6 +415,7 @@ case $1 in
       notisend "Preview complete, reverting to normal..."
       date[desktop]=$olddate
       active_theme="$cur_theme"
+      lock_theme=$cache
       find_theme "cur_theme"
       main_script
       exit 0
@@ -426,7 +434,7 @@ case $1 in
       printf "Desktop offset by $timeoffset,   "
       date +"%l:%M %p" -d ${date[desktop]} 2> /dev/null || date +" %l:%M %p"
     fi
-    if [[ $lock_timeoffset != 0 ]]; then
+    if [[ $lock_timeoffset != 0 ]] && [[ -n $lock_theme ]]; then
       printf "Lockscreen offset by $lock_timeoffset,"
       date +"%l:%M %p" -d ${date[lockscreen]} 2> /dev/null || date +" %l:%M %p"
     fi
@@ -452,7 +460,7 @@ if [[ "$timeoffset" != "$active_timeoffset" ]] || [[ "$lock_timeoffset" != "$act
 	update_timeoffset
 fi
 
-if [[ "$active_theme" != "$cur_theme" ]] || [[ "$active_theme_lock" != "$lock_theme" ]] ; then
+if [[ "$active_theme" != "$cur_theme" ]] || [[ -n $lock_theme && "$active_theme_lock" != "$lock_theme" ]] ; then
 	update_theme
 	main_script
   olddate=${date[desktop]}
@@ -468,7 +476,7 @@ if trueorfalse $printvariables; then
 fi
 
 # Check if time has changed since last exec, then set wallpaper based on time
-if [[ "$olddate" != "${date[desktop]}" ]] || [[ "$olddate_lock" != "${date[lockscreen]}" ]]; then
+if [[ "$olddate" != "${date[desktop]}" ]] || [[ -n $lock_theme && "$olddate_lock" != "${date[lockscreen]}" ]]; then
 	main_script
 else
 	echo "Time hasn't changed since last run, doing nothing..."
