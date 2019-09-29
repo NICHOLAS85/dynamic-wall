@@ -81,7 +81,7 @@ optional args:
 
 `-f` uses your last saved config and ignores any changes added to your config files since. You can optionally set a time to force update the wallpaper to. You timeoffset value is considered when using this command.
 
-`-c` edits your config file using your editor (falls back to nano) and then allows dynamicwall to run, reflecting your changes immediately.
+`-c` edits your config file using your $EDITOR (falls back to nano) and then allows dynamicwall to run, reflecting your changes immediately.
 
 **Warning, can cause high memory usage**  
 `-p` allows you to quickly preview a specific theme. ex: `dynamicwall --preview EarthView`
@@ -90,20 +90,22 @@ optional args:
 
 ## Configuration
 
-All config options can be found in `~/bin/dynamic-wall/dynamicwall.config`, adjust settings here. If you mess up your config `default.config` is a backup.<br/>In addition to `dynamicwall.config` there is a file named `override.config` which can be placed into a theme folder. Any variables set in here will override it's corresponding value in `dynamicwall.config` when that theme is loaded, allowing for per-theme configuration.
+All config options can be found in `~/bin/dynamic-wall/dynamicwall.config`. If you mess up your config `default.config` is a backup.<br/>In addition to `dynamicwall.config` there is a file named `override.config` which can be placed into a theme folder. Any variables set in here will override it's corresponding value in `dynamicwall.config` when that theme is loaded, allowing for per-theme configuration.
 
 Available config options:
 
--   `cur_theme`: Choose the theme which will be used.
+-   `cur_theme`: Choose the theme which will be used on your desktop.
+-   `lock_theme`: Choose the theme which will be used on your lockscreen.
     -   Three themes are offered by default:<br/>`mojave_dynamic`, `NewOrleans`, and `EarthView`.
+    -   Lockscreen theming is completely optional, uncomment this option if you would like to theme your lockscreen.
 -   `timeoffset`: Number of hours the cycle is shifted by.
 -   `refreshrate`: Rate at which script is called. Only 16 images are cycled so higher numbers ≠ smoother transitions.
 -   `notifications`: Sets whether or not desktop notifications are shown.
     -   Notifications are normally shown when configuration options are changed, notifying the user their new settings are in effect.
 -   `theme_dir`: Path to your theme folder, if you decide to store themes elsewhere.
--   `date`: Freeze wallpaper cycle at specific time of day.
+-   `date[real]`: Freeze wallpaper cycle at specific time of day.
 
-dynamicwall.config is checked every time the script is run and detects changes automatically, applying these changes immediately if they are valid. Run `dynamicwall` or use the `-c` argument to immediately apply changes as seen in the Usage section above.
+dynamicwall.config is checked every time the script is run and detects changes automatically, applying these changes immediately if they are valid. Run `dynamicwall -c` to make changes and they will be immediately applied.
 
 ## Other Notes
 
