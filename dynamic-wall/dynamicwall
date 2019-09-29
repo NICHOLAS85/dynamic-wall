@@ -163,8 +163,7 @@ function update_refreshrate() {
     elif [[ "${refreshrate: -1}" = h ]]; then
       refreshrate_c="00\/${refreshrate%?}:00"
     fi
-    sed -i '/OnCalendar=00:\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" "/home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf"
-    sed -i '/OnCalendar=\*:0\/'"${active_refreshrate%?}"'/!b;cOnCalendar='"$refreshrate_c" "/home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf"
+    sed -i '/OnCalendar=[0*].*/!b;cOnCalendar='"$refreshrate_c" "/home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf"
 		echo "active_refreshrate=$refreshrate" > "$oldvar_dir/active_refreshrate"
 		notisend "Refresh rate updated, reloading systemd daemons"
 		systemctl --user daemon-reload
