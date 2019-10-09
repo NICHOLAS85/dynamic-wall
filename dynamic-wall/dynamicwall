@@ -237,12 +237,14 @@ offsetdate(){
 }
 
 function load_overrides() {
-	if source "$theme_dir/$cur_theme/override.config" 2> /dev/null
+  overrides="$(grep "$3" "$theme_dir/$1/override.config")"
+	if [[ -n $overrides ]]  2> /dev/null
 	then
+    eval "$overrides"
     if trueorfalse $printvariables; then
-      echo "Loading variable overrides from override.config for $cur_theme"
+      echo "Loading variable overrides from override.config for $1"
       echo "The following variables have been overridden:"
-      awk '/=/ && !/#/' "$theme_dir/$cur_theme/override.config"
+      awk '/=/ && !/#/' "$theme_dir/$1/override.config"
       echo
     fi
 	fi
@@ -255,7 +257,7 @@ function find_theme() {
 		case ${ext[${!1}]} in
 			jpg | jpeg | png )
 				if [[ $2 != defaults ]]; then
-					load_overrides ${!1}
+					load_overrides ${!1} $3
 				fi
         [[ -n $attempts ]] && echo "Successfully loaded default theme ${!1} for $1"
 				return 0
@@ -323,7 +325,7 @@ function find_defaults() {
 # Checks if users current theme exist
 [[ "$active_theme" != "$cur_theme" ]] && find_theme "cur_theme" || find_theme "cur_theme" skipcheck
 if [[ -n $lock_theme ]]; then
-  [[ "$active_theme_lock" != "$lock_theme" ]] && find_theme "lock_theme" || find_theme "lock_theme" skipcheck
+  [[ "$active_theme_lock" != "$lock_theme" ]] && find_theme "lock_theme" "" "lock" || find_theme "lock_theme" skipcheck "lock"
 fi
 
 # Checks if timeoffset is a number and then if it is range and checks if refreshrate is in a valid format
