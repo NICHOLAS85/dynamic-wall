@@ -14,7 +14,7 @@ Started as various edits to the dynamic wallpaper scripts from [Raitaro](https:/
 
 ## Installation
 
-**_Only tested Debian Testing and Manjaro Linux_**
+**_Only tested on Debian Testing and Manjaro Linux_**
 
 **_Only compatible with distros that use KDE Plasma as their DE_**
 
@@ -73,7 +73,7 @@ Usage: dynamicwall [OPTIONS]
 optional args:
   -f, --force [time]     Update wallpaper immediately, optionally to a specific time
   -p, --preview <theme>  Run a 24 hour preview for a certain theme
-  -c, --check            Force check configuration options and push to script
+  -c, --config           Edit your config file using your default editor
   -s, --status           Display systemd service status/crontab and system-sleep script log
   -l, --list             List available themes to choose from
   -h, --help             Show help
@@ -81,29 +81,31 @@ optional args:
 
 `-f` uses your last saved config and ignores any changes added to your config files since. You can optionally set a time to force update the wallpaper to. You timeoffset value is considered when using this command.
 
-`-c` forcibly saves all your settings and run's dynamicwall once. The script should automatically detect changes, but this can be used as a backup.
+`-c` edits your config file using your $EDITOR (falls back to nano) and then allows dynamicwall to run, reflecting your changes immediately.
 
 **Warning, can cause high memory usage**  
-`-p` allows you to preview a specific theme. ex: `dynamicwall --preview EarthView`
+`-p` allows you to quickly preview a specific theme. ex: `dynamicwall --preview EarthView`
 
 `-l` list all folders in your theme directory regardless of if they're in a valid format.
 
 ## Configuration
 
-All config options can be found in `~/bin/dynamic-wall/dynamicwall.config`, adjust settings here. If you mess up your config `default.config` is a backup.<br/>In addition to `dynamicwall.config` there is a file named `override.config` which can be placed into a theme folder. Any variables set in here will override it's corresponding value in `dynamicwall.config` when that theme is loaded, allowing for per-theme configuration.
+All config options can be found in `~/bin/dynamic-wall/dynamicwall.config`. If you mess up your config `default.config` is a backup.<br/>In addition to `dynamicwall.config` there is a file named `override.config` which can be placed into a theme folder. Any variables set in here will override it's corresponding value in `dynamicwall.config` when that theme is loaded, allowing for per-theme configuration.
 
 Available config options:
 
--   `cur_theme`: Choose the theme which will be used.
+-   `cur_theme`: Choose the theme which will be used on your desktop.
+-   `lock_theme`: Choose the theme which will be used on your lockscreen.
     -   Three themes are offered by default:<br/>`mojave_dynamic`, `NewOrleans`, and `EarthView`.
+    -   Lockscreen theming is completely optional, uncomment this option if you would like to theme your lockscreen.
 -   `timeoffset`: Number of hours the cycle is shifted by.
 -   `refreshrate`: Rate at which script is called. Only 16 images are cycled so higher numbers ≠ smoother transitions.
 -   `notifications`: Sets whether or not desktop notifications are shown.
     -   Notifications are normally shown when configuration options are changed, notifying the user their new settings are in effect.
 -   `theme_dir`: Path to your theme folder, if you decide to store themes elsewhere.
--   `date`: Freeze wallpaper cycle at specific time of day.
+-   `date[real]`: Freeze wallpaper cycle at specific time of day.
 
-dynamicwall.config is checked every time the script is run and detects changes automatically, applying these changes immediately if they are valid. Run `dynamicwall` or use the `-c` argument to immediately apply changes as seen in the Usage section above.
+dynamicwall.config is checked every time the script is run and detects changes automatically, applying these changes immediately if they are valid. Run `dynamicwall -c` to make changes and they will be immediately applied.
 
 ## Other Notes
 
