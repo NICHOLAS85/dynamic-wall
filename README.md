@@ -14,7 +14,7 @@ Started as various edits to the dynamic wallpaper scripts from [Raitaro](https:/
 
 ## Installation
 
-**_Only tested Debian Testing and Manjaro Linux_**
+**_Only tested on Debian Testing and Manjaro Linux_**
 
 **_Only compatible with distros that use KDE Plasma as their DE_**
 
@@ -73,7 +73,7 @@ Usage: dynamicwall [OPTIONS]
 optional args:
   -f, --force [time]     Update wallpaper immediately, optionally to a specific time
   -p, --preview <theme>  Run a 24 hour preview for a certain theme
-  -c, --config         	 Edit your config file using your default editor
+  -c, --config           Edit your config file using your default editor
   -s, --status           Display systemd service status/crontab and system-sleep script log
   -l, --list             List available themes to choose from
   -h, --help             Show help
