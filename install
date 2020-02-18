@@ -60,8 +60,8 @@ fi
 # Set the scripts permisions
 
 echo -e "\e[00;32m[1/6] Setting Permissions...\e[00m"
-DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-cd "$DIR" || { echo "Error, exiting..."; exit 1; }
+DIR=$( command cd "$( dirname "${BASH_SOURCE[0]}" )" && command pwd )
+command cd "$DIR" || { echo "Error, exiting..."; exit 1; }
 chmod -v a+x ./remove
 chmod -v +x ./update
 chmod -v a+x ./lib/systemd/system-sleep/dynamicwall.sh
@@ -80,15 +80,14 @@ echo -e "\e[00;32m[3/6] Updating fields based on system and arguments...\e[00m"
 sed -i "s/scheduler=.*/scheduler=${method:-systemd}/g" "$DIR/dynamic-wall/dynamicwall"
 echo "Updated scheduler to ${method:-systemd}"
 
-if [[ -n $install_dir ]]; then
- sed -i "s#install_dir=.*#install_dir=\"$install_dir\"#g" "$DIR/dynamic-wall/dynamicwall"
- echo "Updated installation directory to $install_dir/dynamic-wall"
- sed -i "s#theme_dir=.*#theme_dir=\"$install_dir/dynamic-wall/themes\"#g" "$DIR/dynamic-wall/dynamicwall.config"
- sed -i "s#theme_dir=.*#theme_dir=\"$install_dir/dynamic-wall/themes\"#g" "$DIR/dynamic-wall/default.config"
- echo "Updated theme_dir to $install_dir/dynamic-wall/themes"
-else
-	install_dir="/home/$usrnm/bin"
+if [[ -z $install_dir ]]; then
+  install_dir="/home/$usrnm/bin"
 fi
+sed -i "s#install_dir=.*#install_dir=\"$install_dir\"#g" "$DIR/dynamic-wall/dynamicwall"
+echo "Updated installation directory to $install_dir/dynamic-wall"
+sed -i "s#theme_dir=.*#theme_dir=\"$install_dir/dynamic-wall/themes\"#g" "$DIR/dynamic-wall/dynamicwall.config"
+sed -i "s#theme_dir=.*#theme_dir=\"$install_dir/dynamic-wall/themes\"#g" "$DIR/dynamic-wall/default.config"
+echo "Updated theme_dir to $install_dir/dynamic-wall/themes"
 
 # Start the installation
 

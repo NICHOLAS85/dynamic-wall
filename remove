@@ -16,8 +16,8 @@ else
 fi
 
 
-DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-cd "$DIR" || { echo "Error, exiting..."; exit 1; }
+DIR=$( command cd "$( dirname "${BASH_SOURCE[0]}" )" && command pwd )
+command cd "$DIR" || { echo "Error, exiting..."; exit 1; }
 
 $skiprm || eval "$(grep "theme_dir" 2>/dev/null < "$install_dir/dynamicwall.config")"
 
@@ -86,13 +86,13 @@ remove_file "$install_dir/remove"
 remove_dir "$theme_dir/EarthView"
 remove_dir "$theme_dir/mojave_dynamic"
 remove_dir "$theme_dir/NewOrleans"
-remove_dir "$theme_dir" "ifempty"
 
 if [[ "$1" = "-s" ]]; then
   remove_file "$install_dir/default.config"
   remove_file "$install_dir/dynamicwall.config"
   remove_file "$install_dir/dynamicwall"
   remove_dir "$install_dir/.oldvar"
+  remove_dir "$install_dir/themes" "ifempty"
 	remove_dir "$install_dir" "ifempty"
 else
   remove_dir "$install_dir"
