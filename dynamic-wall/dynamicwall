@@ -51,7 +51,10 @@ date[desktop]=${date[real]}
 date[lockscreen]=${date[real]}
 # Get cached values
 oldvar_dir="$install_dir/dynamic-wall/.oldvar"
+olddate_dir="${TMPDIR:-${TMP:-/tmp}}/dynamicwall"
 source <(cat $oldvar_dir/*)
+mkdir -p -- "$olddate_dir"
+source <(cat $olddate_dir/* 2>/dev/null)
 
 case $1 in
   --list | -l)
@@ -89,8 +92,8 @@ function main_script() {
   }
 
   set_wallpaper
-	echo "olddate=${date[desktop]}" > "$oldvar_dir/olddate"
-  [[ -n $lock_theme ]] && echo "olddate_lock=${date[lockscreen]}" > "$oldvar_dir/olddate_lock"
+	echo "olddate=${date[desktop]}" > "$olddate_dir/olddate"
+  [[ -n $lock_theme ]] && echo "olddate_lock=${date[lockscreen]}" > "$olddate_dir/olddate_lock"
 }
 
 #Set wallpaper determined in function above
