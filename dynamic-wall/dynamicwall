@@ -31,7 +31,7 @@ case $1 in
       [[ -f /lib/systemd/system-sleep/dynamicwall.sh || -f /usr/lib/systemd/system-sleep/dynamicwall.sh ]] && journalctl -b -u systemd-suspend.service
       crontab -l
     else
-      echo "Cant determine scheduler in use, reinstall"
+      echo "Uknown scheduler \"$scheduler\", reinstall"
       exit 1
     fi
     exit 0
@@ -52,7 +52,7 @@ date[lockscreen]=${date[real]}
 # Get cached values
 oldvar_dir="$install_dir/dynamic-wall/.oldvar"
 olddate_dir="${TMPDIR:-${TMP:-/tmp}}/dynamicwall"
-source <(cat $oldvar_dir/*)
+source <(cat $oldvar_dir/* 2>/dev/null)
 mkdir -p -- "$olddate_dir"
 source <(cat $olddate_dir/* 2>/dev/null)
 
