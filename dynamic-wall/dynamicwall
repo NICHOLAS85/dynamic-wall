@@ -1,5 +1,5 @@
 #!/bin/bash
-# shellcheck source=dynamicwall.config
+# shellcheck source=lib/functions
 
 # Get current user
 usrnm=$(users | awk '{print$1}')
@@ -64,265 +64,10 @@ case $1 in
   ;;
 esac
 
-#Determine image to use based on time
-function main_script() {
-  file=("$theme_dir/$active_theme/$active_theme" "$theme_dir/$active_theme_lock/$active_theme_lock")
-	if [[ "${date[desktop]}" -le "4" || "${date[desktop]}" -gt "21" ]]; then
-    filenum[0]=16
-	elif [[ "${date[desktop]}" -le "9" ]]; then
-    filenum[0]=$((date[desktop] - 4))
-	elif [[ "${date[desktop]}" -le "16" ]]; then
-    filenum[0]=$((date[desktop] - 5))
-	elif [[ "${date[desktop]}" -le "21" ]]; then
-    filenum[0]=$((date[desktop] - 6))
-	fi
-  desktop="${file[0]}${filenum[0]}.${ext[$active_theme]}"
+source $install_dir/dynamic-wall/lib/functions
 
-  [[ -n $lock_theme ]] && {
-    if [[ "${date[lockscreen]}" -le "4" || "${date[lockscreen]}" -gt "21" ]]; then
-      filenum[1]=16
-  	elif [[ "${date[lockscreen]}" -le "9" ]]; then
-      filenum[1]=$((date[lockscreen] - 4))
-  	elif [[ "${date[lockscreen]}" -le "16" ]]; then
-      filenum[1]=$((date[lockscreen] - 5))
-  	elif [[ "${date[lockscreen]}" -le "21" ]]; then
-      filenum[1]=$((date[lockscreen] - 6))
-  	fi
-    lockscreen="${file[1]}${filenum[1]}.${ext[$active_theme_lock]}"
-  }
-
-  set_wallpaper
-	echo "olddate=${date[desktop]}" > "$olddate_dir/olddate"
-  [[ -n $lock_theme ]] && echo "olddate_lock=${date[lockscreen]}" > "$olddate_dir/olddate_lock"
-}
-
-#Set wallpaper determined in function above
-function set_wallpaper() {
-  echo "exec set_wallpaper $desktop"
-  full_image_path=("$(realpath "$desktop")" "$([[ -n $lock_theme ]] && realpath "$lockscreen")")
-	#Run process as currently logged in user, export display and DBUS session, and then evaluate wallpaper script, needed for automatic updating
-  setwallscript="var allDesktops = desktops();
-	    for (i=0;i<allDesktops.length;i++)
-	    {
-	        d = allDesktops[i];
-	        d.wallpaperPlugin = 'org.kde.image';
-	        d.currentConfigGroup = Array('Wallpaper', 'org.kde.image', 'General');
-	        d.writeConfig('Image', 'file://${full_image_path[0]}')
-	    }"
-  if [[ $id = 1000 ]]; then
-    prefix=(env "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
-  else
-    prefix=(sudo -u "$usrnm" \
-    "XDG_RUNTIME_DIR=/run/user/1000" \
-    "DISPLAY=:0" \
-    "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
-  fi
-  "${prefix[@]}" \
-	qdbus org.kde.plasmashell /PlasmaShell evaluateScript "${setwallscript}" || { notisend "Error setting wallpaper, exiting..." ; exit 1; }
-  if [[ -n $lock_theme ]]; then
-    echo "exec kwriteconfig5 ... file://$lockscreen"
-    kwriteconfig5 --file kscreenlockerrc --group Greeter --group Wallpaper --group org.kde.image --group General --key Image "file://${full_image_path[1]}"
-  fi
-}
-
-#check true or false config options
-function trueorfalse() {
-  case $1 in
-    TRUE | True | true | T | t | 1 )
-      return 0
-      ;;
-    FALSE | False | false | F | f | 0 )
-      return 1
-      ;;
-    * )
-      echo "Unknown option \"$1\", assuming false. Check your config file...."
-      return 1
-      ;;
-  esac
-}
-
-#Check config and show notifications if enabled
-function notisend() {
-  if trueorfalse $notifications; then
-    if [[ $id = 1000 ]]; then
-      prefix=(env "XDG_RUNTIME_DIR=/run/user/1000")
-    else
-      prefix=(sudo -u "$usrnm" \
-      "XDG_RUNTIME_DIR=/run/user/1000" \
-      "DISPLAY=:0" \
-      "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
-    fi
-    "${prefix[@]}" \
-    kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
-  fi
-  echo "$1"
-}
-
-#Update refreshrate depending on if systemd or cron is in use
-function update_refreshrate() {
-	if [[ "$scheduler" = "systemd" ]]; then
-    if [[ "${refreshrate: -1}" = m ]]; then
-      refreshrate_c="\*:0\/${refreshrate%?}"
-    elif [[ "${refreshrate: -1}" = h ]]; then
-      refreshrate_c="00\/${refreshrate%?}:00"
-    fi
-    sed -i '/OnCalendar=[0*].*/!b;cOnCalendar='"$refreshrate_c" "/home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf"
-		echo "active_refreshrate=$refreshrate" > "$oldvar_dir/active_refreshrate"
-		notisend "Refresh rate updated, reloading systemd daemons"
-		systemctl --user daemon-reload
-	elif [[ "$scheduler" = "cron" ]]; then
-		#Necessary loop to prompt user for password needed for crontab update until correct or skipped
-		wrongpass=false
-		while true; do
-			if ! sudo -n true; then
-				if $wrongpass; then
-          #Changes prompt when an incorrect password is entered
-          passwd=$(kdialog --title "Dynamic Wall" --password "Try Again")
-				else
-          passwd=$(kdialog --title "Dynamic Wall" --password "Enter password to update crontab")
-				fi
-			fi
-			if [[ "$?" = 0 ]]; then #Checks if ok or cancel was selected
-				echo "Selected: OK"
-				if echo "$passwd" | sudo -Svp ''; then
-					echo "correct password"
-					if [[ "${refreshrate: -1}" = m ]]; then
-            prefix=(\"\*/"${refreshrate%?}" \*)
-					elif [[ "${refreshrate: -1}" = h ]]; then
-            prefix=(\"\* \*/"${refreshrate%?}")
-					fi
-          echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v "'"$install_dir"'/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo '${prefix[*]}' * * * "'"$install_dir"'/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
-					echo "active_refreshrate=$refreshrate" > "$oldvar_dir/active_refreshrate"
-					notisend "Refresh rate updated, crontab refreshed"
-					break
-				else
-					echo "Wrong Password entered"
-					wrongpass=true
-				fi
-			else
-				echo "Selected: Cancel"
-				echo "Skipped"
-				break
-			fi
-		done
-	else
-		notisend "Uknown scheduler set in config file, not updating refreshrate..."
-	fi
-}
-
-function update_theme() {
-	echo "active_theme=$cur_theme" > "$oldvar_dir/active_theme"
-	notisend "Desktop theme updated to $cur_theme"
-	active_theme="$cur_theme"
-  if [[ -n $lock_theme ]]; then
-    echo "active_theme_lock=$lock_theme" > "$oldvar_dir/active_theme_lock"
-    notisend "Lockscreen theme updated to $lock_theme"
-    active_theme_lock="$lock_theme"
-  fi
-}
-
-function update_timeoffset() {
-	echo "active_timeoffset=$timeoffset" > "$oldvar_dir/active_timeoffset"
-  echo "active_timeoffset_lock=$lock_timeoffset" > "$oldvar_dir/active_timeoffset_lock"
-	notisend "Desktop time offset updated to $timeoffset, Lockscreen time offset updated to $lock_timeoffset"
-  active_timeoffset=$timeoffset
-  active_timeoffset_lock=$lock_timeoffset
-}
-
-offsetdate(){
-  if [[ $((date[real] + $2)) -gt 24 ]]; then
-    date[$1]=$((date[real] - 24 + $2))
-  elif [[ $((date[real] + $2)) -lt 0 ]]; then
-    date[$1]=$((date[real] + 24 + $2))
-  else
-    date[$1]=$((date[real] + $2))
-  fi
-}
-
-function load_overrides() {
-  overrides="$(grep "$2" "$theme_dir/$1/override.config")"
-	if [[ -n $overrides ]]  2> /dev/null
-	then
-    eval "$overrides"
-    if trueorfalse $printvariables; then
-      echo "Loading variable overrides from $1/override.config"
-      echo "The following variables have been overridden:"
-      awk '/=/ && !/#/' "$theme_dir/$1/override.config"
-      echo
-    fi
-	fi
-}
-
-function find_theme() {
-	if [[ $2 = "skipcheck" ]] || find "$theme_dir/${!1}/${!1}"* > /dev/null 2>&1; then
-		filedir=$(basename "$(find "$theme_dir" -name "${!1}*" -type f | tail -1)")
-		ext[${!1}]=${filedir##*.}
-		case ${ext[${!1}]} in
-			jpg | jpeg | png )
-				if [[ $2 != defaults ]]; then
-					load_overrides ${!1} $3
-				fi
-        [[ -n $attempts ]] && echo "Successfully loaded default theme ${!1} for $1"
-				return 0
-				;;
-			* )
-				echo "Incompatible image type(${ext[${!1}]}), exiting..."
-				exit 1
-				;;
-		esac
-	else
-		((++attempts))
-		printf "\nAttempt $attempts\n"
-		if [[ $attempts = 1 ]]; then
-			notisend "Could not find ${!1}, attempting to recover..."
-			echo "Your theme_dir may not be set correctly or your $1 may be mispelt, check your dynamicwall.config"
-			echo "Attempting to use default theme directory"
-			find_defaults "theme_dir" "$2"
-		elif [[ $attempts = 2 ]]; then
-			if [[ $3 = "preview" ]]; then
-				return 1
-			fi
-			echo "Could not find theme in default directory"
-			echo "Attempting to use default theme in users theme directory"
-			eval "$(grep "theme_dir" < "$install_dir/dynamic-wall/dynamicwall.config")"
-			find_defaults "$1" "$2"
-		elif [[ $attempts = 3 ]]; then
-			echo "Could not find default theme in users theme directory"
-			echo "Attempting to use default theme in default theme directory"
-			find_defaults "theme_dir" "$2"
-		else
-			notisend "There are some major problems with your installation/configuration, reinstall dynamicwall"
-			return 1
-		fi
-	fi
-}
-
-# Loads default value fed into function. If previewing, locate
-function find_defaults() {
-	if ! [[ -f $install_dir/dynamic-wall/default.config ]]; then
-		notisend "Can't find default config file, exiting..."
-		exit 1
-	fi
-	eval "$(grep "$1" < "$install_dir/dynamic-wall/default.config")"
-  notisend "loaded $(grep "$1" < "$install_dir/dynamic-wall/default.config")"
-  if [[ $1 = "theme_dir" ]] || [[ $1 = "cur_theme" ]] || [[ $1 = "lock_theme" ]]; then
-  	if [[ $2 = "preview" ]]; then
-  		find_theme "previewtheme" defaults preview
-      return $?
-  	elif [[ "$cur_theme" != "$active_theme" ]]; then
-  		if ! find_theme "cur_theme" defaults; then
-    		echo "Can't locate $cur_theme in default theme directory, exiting..."
-    		exit 1
-  		fi
-      active_theme="$cur_theme"
-    elif [[ "$lock_theme" != "$active_theme_lock" ]]; then
-  		if ! find_theme "lock_theme" defaults; then
-    		echo "Can't locate $lock_theme in default theme directory, exiting..."
-    		exit 1
-  		fi
-      active_theme_lock="$lock_theme"
-  	fi
-  fi
+sourceorrun(){
+  declare -f $1 >/dev/null && eval "${*}" || source "$install_dir/dynamic-wall/lib/$1" "${@:2}"
 }
 
 # Checks if users current theme exist
@@ -413,7 +158,7 @@ case $1 in
       date[desktop]=$((3 + timeoffset))
       while [[ ${date[desktop]} -lt $((24 + timeoffset)) ]]; do
         date +"%l:%M %p" -d $((date[desktop] - timeoffset))
-        main_script
+        sourceorrun main_script
         ((++date[desktop]))
         sleep 1.5
       done
@@ -422,7 +167,7 @@ case $1 in
       active_theme="$cur_theme"
       lock_theme=$cache
       find_theme "cur_theme"
-      main_script
+      sourceorrun main_script
       exit 0
     fi
   ;;
@@ -446,7 +191,7 @@ case $1 in
     if ! [[ $timeoffset != 0 || $lock_timeoffset != 0 ]]; then
       date +"%l:%M %p" -d $((date[desktop] - timeoffset )) 2> /dev/null || date +" %l:%M %p"
     fi
-    main_script
+    sourceorrun main_script
     echo "Forced script to run, ignoring config changes"
     exit 0
   ;;
@@ -458,16 +203,16 @@ if [[ -n $2 ]]; then
 fi
 # Compares current values to config file and updates script if they dont match, fallsback to defaults if new values are not valid
 if [[ "$refreshrate" != "$active_refreshrate" ]]; then
-	update_refreshrate
+	sourceorrun update_refreshrate
 fi
 
 if [[ "$timeoffset" != "$active_timeoffset" ]] || [[ "$lock_timeoffset" != "$active_timeoffset_lock" ]] ; then
-	update_timeoffset
+	sourceorrun update_timeoffset
 fi
 
 if [[ "$active_theme" != "$cur_theme" ]] || [[ -n $lock_theme && "$active_theme_lock" != "$lock_theme" ]] ; then
-	update_theme
-	main_script
+	sourceorrun update_theme
+	sourceorrun main_script
   olddate=${date[desktop]}
   olddate_lock=${date[lockscreen]}
 fi
@@ -482,7 +227,7 @@ fi
 
 # Check if time has changed since last exec, then set wallpaper based on time
 if [[ "$olddate" != "${date[desktop]}" ]] || [[ -n $lock_theme && "$olddate_lock" != "${date[lockscreen]}" ]]; then
-	main_script
+	sourceorrun main_script
 else
 	echo "Time hasn't changed since last run, doing nothing..."
 fi
