@@ -1,0 +1,12 @@
+# shellcheck source=../dynamicwall
+function offsetdate(){
+  if [[ $((date[real] + $2)) -gt 24 ]]; then
+    date[$1]=$((date[real] - 24 + $2))
+  elif [[ $((date[real] + $2)) -lt 0 ]]; then
+    date[$1]=$((date[real] + 24 + $2))
+  else
+    date[$1]=$((date[real] + $2))
+  fi
+}
+
+offsetdate "${@}"

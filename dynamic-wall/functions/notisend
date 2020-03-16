@@ -1,0 +1,19 @@
+# shellcheck source=../dynamicwall
+#Check config and show notifications if enabled
+function notisend() {
+  if trueorfalse $notifications; then
+    if [[ $id = 1000 ]]; then
+      prefix=(env "XDG_RUNTIME_DIR=/run/user/1000")
+    else
+      prefix=(sudo -u "$usrnm" \
+      "XDG_RUNTIME_DIR=/run/user/1000" \
+      "DISPLAY=:0" \
+      "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
+    fi
+    "${prefix[@]}" \
+    kdialog --title "Dynamic Wallpaper" --passivepopup "$1" 4
+  fi
+  echo "$1"
+}
+
+notisend "${@}"

@@ -1,0 +1,30 @@
+# shellcheck source=../dynamicwall
+# Loads default value fed into function. If previewing, locate
+function find_defaults() {
+	if ! [[ -f $install_dir/dynamic-wall/default.config ]]; then
+		notisend "Can't find default config file, exiting..."
+		exit 1
+	fi
+	eval "$(grep "$1" < "$install_dir/dynamic-wall/default.config")"
+  notisend "loaded $(grep "$1" < "$install_dir/dynamic-wall/default.config")"
+  if [[ $1 = "theme_dir" ]] || [[ $1 = "cur_theme" ]] || [[ $1 = "lock_theme" ]]; then
+  	if [[ $2 = "preview" ]]; then
+  		find_theme "previewtheme" defaults preview
+      return $?
+  	elif [[ "$cur_theme" != "$active_theme" ]]; then
+  		if ! find_theme "cur_theme" defaults; then
+    		echo "Can't locate $cur_theme in default theme directory, exiting..."
+    		exit 1
+  		fi
+      active_theme="$cur_theme"
+    elif [[ "$lock_theme" != "$active_theme_lock" ]]; then
+  		if ! find_theme "lock_theme" defaults; then
+    		echo "Can't locate $lock_theme in default theme directory, exiting..."
+    		exit 1
+  		fi
+      active_theme_lock="$lock_theme"
+  	fi
+  fi
+}
+
+find_defaults "${@}"

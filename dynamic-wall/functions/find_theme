@@ -1,0 +1,46 @@
+# shellcheck source=../dynamicwall
+function find_theme() {
+	if [[ $2 = "skipcheck" ]] || find "$theme_dir/${!1}/${!1}"* > /dev/null 2>&1; then
+		filedir=$(basename "$(find "$theme_dir" -name "${!1}*" -type f | tail -1)")
+		ext[${!1}]=${filedir##*.}
+		case ${ext[${!1}]} in
+			jpg | jpeg | png )
+				if [[ $2 != defaults ]]; then
+					load_overrides ${!1} $3
+				fi
+        [[ -n $attempts ]] && echo "Successfully loaded default theme ${!1} for $1"
+				return 0
+				;;
+			* )
+				echo "Incompatible image type(${ext[${!1}]}), exiting..."
+				exit 1
+				;;
+		esac
+	else
+		((++attempts))
+		printf "\nAttempt $attempts\n"
+		if [[ $attempts = 1 ]]; then
+			notisend "Could not find ${!1}, attempting to recover..."
+			echo "Your theme_dir may not be set correctly or your $1 may be mispelt, check your dynamicwall.config"
+			echo "Attempting to use default theme directory"
+			find_defaults "theme_dir" "$2"
+		elif [[ $attempts = 2 ]]; then
+			if [[ $3 = "preview" ]]; then
+				return 1
+			fi
+			echo "Could not find theme in default directory"
+			echo "Attempting to use default theme in users theme directory"
+			eval "$(grep "theme_dir" < "$install_dir/dynamic-wall/dynamicwall.config")"
+			find_defaults "$1" "$2"
+		elif [[ $attempts = 3 ]]; then
+			echo "Could not find default theme in users theme directory"
+			echo "Attempting to use default theme in default theme directory"
+			find_defaults "theme_dir" "$2"
+		else
+			notisend "There are some major problems with your installation/configuration, reinstall dynamicwall"
+			return 1
+		fi
+	fi
+}
+
+find_theme "${@}"

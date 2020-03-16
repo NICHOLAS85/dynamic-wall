@@ -1,0 +1,16 @@
+# shellcheck source=../dynamicwall
+function load_overrides() {
+  overrides="$(grep "$2" "$theme_dir/$1/override.config")"
+	if [[ -n $overrides ]]  2> /dev/null
+	then
+    eval "$overrides"
+    if trueorfalse $printvariables; then
+      echo "Loading variable overrides from $1/override.config"
+      echo "The following variables have been overridden:"
+      awk '/=/ && !/#/' "$theme_dir/$1/override.config"
+      echo
+    fi
+	fi
+}
+
+load_overrides "${@}"

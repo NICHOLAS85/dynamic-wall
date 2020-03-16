@@ -1,0 +1,10 @@
+# shellcheck source=../dynamicwall
+function update_timeoffset() {
+	echo "active_timeoffset=$timeoffset" > "$oldvar_dir/active_timeoffset"
+  echo "active_timeoffset_lock=$lock_timeoffset" > "$oldvar_dir/active_timeoffset_lock"
+	notisend "Desktop time offset updated to $timeoffset, Lockscreen time offset updated to $lock_timeoffset"
+  active_timeoffset=$timeoffset
+  active_timeoffset_lock=$lock_timeoffset
+}
+
+update_timeoffset "${@}"

@@ -1,0 +1,13 @@
+# shellcheck source=../dynamicwall
+function update_theme() {
+	echo "active_theme=$cur_theme" > "$oldvar_dir/active_theme"
+	notisend "Desktop theme updated to $cur_theme"
+	active_theme="$cur_theme"
+  if [[ -n $lock_theme ]]; then
+    echo "active_theme_lock=$lock_theme" > "$oldvar_dir/active_theme_lock"
+    notisend "Lockscreen theme updated to $lock_theme"
+    active_theme_lock="$lock_theme"
+  fi
+}
+
+update_theme "${@}"

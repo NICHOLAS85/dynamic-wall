@@ -1,0 +1,59 @@
+# shellcheck source=../dynamicwall
+#Determine image to use based on time
+function main_script() {
+  file=("$theme_dir/$active_theme/$active_theme" "$theme_dir/$active_theme_lock/$active_theme_lock")
+	if [[ "${date[desktop]}" -le "4" || "${date[desktop]}" -gt "21" ]]; then
+    filenum[0]=16
+	elif [[ "${date[desktop]}" -le "9" ]]; then
+    filenum[0]=$((date[desktop] - 4))
+	elif [[ "${date[desktop]}" -le "16" ]]; then
+    filenum[0]=$((date[desktop] - 5))
+	elif [[ "${date[desktop]}" -le "21" ]]; then
+    filenum[0]=$((date[desktop] - 6))
+	fi
+  desktop="${file[0]}${filenum[0]}.${ext[$active_theme]}"
+
+  [[ -n $lock_theme ]] && {
+    if [[ "${date[lockscreen]}" -le "4" || "${date[lockscreen]}" -gt "21" ]]; then
+      filenum[1]=16
+  	elif [[ "${date[lockscreen]}" -le "9" ]]; then
+      filenum[1]=$((date[lockscreen] - 4))
+  	elif [[ "${date[lockscreen]}" -le "16" ]]; then
+      filenum[1]=$((date[lockscreen] - 5))
+  	elif [[ "${date[lockscreen]}" -le "21" ]]; then
+      filenum[1]=$((date[lockscreen] - 6))
+  	fi
+    lockscreen="${file[1]}${filenum[1]}.${ext[$active_theme_lock]}"
+  }
+
+  echo "exec set_wallpaper $desktop"
+  full_image_path=("$(realpath "$desktop")" "$([[ -n $lock_theme ]] && realpath "$lockscreen")")
+	#Run process as currently logged in user, export display and DBUS session, and then evaluate wallpaper script, needed for automatic updating
+  setwallscript="var allDesktops = desktops();
+	    for (i=0;i<allDesktops.length;i++)
+	    {
+	        d = allDesktops[i];
+	        d.wallpaperPlugin = 'org.kde.image';
+	        d.currentConfigGroup = Array('Wallpaper', 'org.kde.image', 'General');
+	        d.writeConfig('Image', 'file://${full_image_path[0]}')
+	    }"
+  if [[ $id = 1000 ]]; then
+    prefix=(env "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
+  else
+    prefix=(sudo -u "$usrnm" \
+    "XDG_RUNTIME_DIR=/run/user/1000" \
+    "DISPLAY=:0" \
+    "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus")
+  fi
+  "${prefix[@]}" \
+	qdbus org.kde.plasmashell /PlasmaShell evaluateScript "${setwallscript}" || { notisend "Error setting wallpaper, exiting..." ; exit 1; }
+  if [[ -n $lock_theme ]]; then
+    echo "exec kwriteconfig5 ... file://$lockscreen"
+    kwriteconfig5 --file kscreenlockerrc --group Greeter --group Wallpaper --group org.kde.image --group General --key Image "file://${full_image_path[1]}"
+  fi
+
+	echo "olddate=${date[desktop]}" > "$olddate_dir/olddate"
+  [[ -n $lock_theme ]] && echo "olddate_lock=${date[lockscreen]}" > "$olddate_dir/olddate_lock"
+}
+
+main_script "${@}"

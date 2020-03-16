@@ -1,0 +1,18 @@
+# shellcheck source=../dynamicwall
+#check true or false config options
+function trueorfalse() {
+  case $1 in
+    TRUE | True | true | T | t | 1 )
+      return 0
+      ;;
+    FALSE | False | false | F | f | 0 )
+      return 1
+      ;;
+    * )
+      echo "Unknown option \"$1\", assuming false. Check your config file...."
+      return 1
+      ;;
+  esac
+}
+
+trueorfalse "${@}"

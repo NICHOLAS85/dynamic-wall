@@ -1,0 +1,54 @@
+# shellcheck source=../dynamicwall
+#Update refreshrate depending on if systemd or cron is in use
+function update_refreshrate() {
+	if [[ "$scheduler" = "systemd" ]]; then
+    if [[ "${refreshrate: -1}" = m ]]; then
+      refreshrate_c="\*:0\/${refreshrate%?}"
+    elif [[ "${refreshrate: -1}" = h ]]; then
+      refreshrate_c="00\/${refreshrate%?}:00"
+    fi
+    sed -i '/OnCalendar=[0*].*/!b;cOnCalendar='"$refreshrate_c" "/home/$usrnm/.config/systemd/user/dynamicwall.timer.d/2-timer.conf"
+		echo "active_refreshrate=$refreshrate" > "$oldvar_dir/active_refreshrate"
+		notisend "Refresh rate updated, reloading systemd daemons"
+		systemctl --user daemon-reload
+	elif [[ "$scheduler" = "cron" ]]; then
+		#Necessary loop to prompt user for password needed for crontab update until correct or skipped
+		wrongpass=false
+		while true; do
+			if ! sudo -n true; then
+				if $wrongpass; then
+          #Changes prompt when an incorrect password is entered
+          passwd=$(kdialog --title "Dynamic Wall" --password "Try Again")
+				else
+          passwd=$(kdialog --title "Dynamic Wall" --password "Enter password to update crontab")
+				fi
+			fi
+			if [[ "$?" = 0 ]]; then #Checks if ok or cancel was selected
+				echo "Selected: OK"
+				if echo "$passwd" | sudo -Svp ''; then
+					echo "correct password"
+					if [[ "${refreshrate: -1}" = m ]]; then
+            prefix=(\"\*/"${refreshrate%?}" \*)
+					elif [[ "${refreshrate: -1}" = h ]]; then
+            prefix=(\"\* \*/"${refreshrate%?}")
+					fi
+          echo "$passwd" | sudo sh -c 'crontab -u '"$usrnm"' -l | grep -v "'"$install_dir"'/dynamic-wall/dynamicwall"  | crontab -u '"$usrnm"' - && crontab -u '"$usrnm"' -l | { cat; echo '${prefix[*]}' * * * "'"$install_dir"'/dynamic-wall/dynamicwall"; } | crontab -u '"$usrnm"' -'
+					echo "active_refreshrate=$refreshrate" > "$oldvar_dir/active_refreshrate"
+					notisend "Refresh rate updated, crontab refreshed"
+					break
+				else
+					echo "Wrong Password entered"
+					wrongpass=true
+				fi
+			else
+				echo "Selected: Cancel"
+				echo "Skipped"
+				break
+			fi
+		done
+	else
+		notisend "Uknown scheduler set in config file, not updating refreshrate..."
+	fi
+}
+
+update_refreshrate "${@}"
