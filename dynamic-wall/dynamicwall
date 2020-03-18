@@ -19,50 +19,80 @@ optional args:
   -l, --list             List available themes to choose from
   -h, --help             Show help"
 
-case $1 in
-  --help | -h)
-    printf '%s\n' "$HELP"
-    exit 0
-  ;;
-  --status | -s)
-    if [[ $scheduler = systemd ]]; then
-      systemctl --user status dynamicwall.timer dynamicwall.service
-    elif [[ $scheduler = cron ]]; then
-      [[ -f /lib/systemd/system-sleep/dynamicwall.sh || -f /usr/lib/systemd/system-sleep/dynamicwall.sh ]] && journalctl -b -u systemd-suspend.service
-      crontab -l
-    else
-      echo "Uknown scheduler \"$scheduler\", reinstall"
-      exit 1
-    fi
-    exit 0
-  ;;
-  --config | -c)
-    ${VISUAL:-${EDITOR:-nano}} "$install_dir/dynamic-wall/dynamicwall.config"
-  ;;
-esac
+dtemp="${TMPDIR:-${TMP:-/tmp}}/dynamicwall"
+getopt --test > /dev/null
+if [[ $? -ne 4 ]]; then
+    echo "getopt --test' failed in this environment. Arguments passed will not be considered."
+else
+  OPTIONS=f::p:cslh
+  LONGOPTS=force::,preview:,config,status,list,help
+  ! PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@" 2>$dtemp/stderr )
+  if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+      # e.g. return value is 1
+      #  then getopt has complained about wrong arguments to stdout
+      if [[ $(cat $dtemp/stderr) =~ --preview|'p' ]]; then
+        printf "No theme selected to preview\\nusage: dynamicwall [--preview] <theme>\\n"
+      fi
+      exit 2
+  fi
+  # read getopt’s output this way to handle the quoting right:
+  eval set -- "$PARSED"
 
+  # now enjoy the options in order and nicely split until we see --
+  while true; do
+      case "$1" in
+          -f|--force)
+              force="${4:-now}"
+              shift 2
+              ;;
+          -p|--preview)
+              preview="$2"
+              shift 2
+              ;;
+          -c|--config)
+              ${VISUAL:-${EDITOR:-nano}} "$install_dir/dynamic-wall/dynamicwall.config"
+              shift
+              break
+              ;;
+          -s|--status)
+              if [[ $scheduler = systemd ]]; then
+                systemctl --user status dynamicwall.timer dynamicwall.service
+              elif [[ $scheduler = cron ]]; then
+                [[ -f /lib/systemd/system-sleep/dynamicwall.sh || -f /usr/lib/systemd/system-sleep/dynamicwall.sh ]] && journalctl -b -u systemd-suspend.service
+                crontab -l
+              else
+                echo "Uknown scheduler \"$scheduler\", reinstall"
+                exit 1
+              fi
+              exit 0
+              ;;
+          -l|--list)
+              list=y
+              shift
+              ;;
+          -h|--help)
+              printf '%s\n' "$HELP"
+              exit 0
+              ;;
+          --)
+              shift
+              break
+              ;;
+          *)
+              echo "Programming error"
+              exit 3
+              ;;
+      esac
+  done
+
+  if [[ -n $2 ]]; then
+    printf "Ignoring extra args\n"
+  fi
+fi
 # Get current time
-declare -A date ext
+declare -A date
 date[real]=$(date +%H | sed 's/\<0//g')
 
-# Source Config File
-source "$install_dir/dynamic-wall/dynamicwall.config" || { source "$install_dir/dynamic-wall/default.config"; notisend "Can't find user config files, loading defaults...";} || { notisend "Can't find user or default config files, exiting..."; exit 1; }
-date[desktop]=${date[real]}
-date[lockscreen]=${date[real]}
-# Get cached values
-oldvar_dir="$install_dir/dynamic-wall/.oldvar"
-olddate_dir="${TMPDIR:-${TMP:-/tmp}}/dynamicwall"
-source <(cat $oldvar_dir/* 2>/dev/null)
-mkdir -p -- "$olddate_dir"
-source <(cat $olddate_dir/* 2>/dev/null)
-
-case $1 in
-  --list | -l)
-    echo "Available themes:"
-    ls $theme_dir
-    exit 0
-  ;;
-esac
 functionlist=( main_script trueorfalse notisend update_refreshrate update_theme update_timeoffset offsetdate load_overrides find_theme find_defaults )
 for FUN in "${functionlist[@]}"; do
     eval "$FUN() {
@@ -70,6 +100,23 @@ for FUN in "${functionlist[@]}"; do
       source \"$install_dir/dynamic-wall/functions/$FUN\" \"\${@}\"
     }"
 done
+
+# Source Config File
+source "$install_dir/dynamic-wall/dynamicwall.config" || { source "$install_dir/dynamic-wall/default.config"; notisend "Can't find user config files, loading defaults...";} || { notisend "Can't find user or default config files, exiting..."; exit 1; }
+date[desktop]=${date[real]}
+date[lockscreen]=${date[real]}
+# Get cached values
+oldvar_dir="$install_dir/dynamic-wall/.oldvar"
+olddate_dir="$dtemp"
+source <(cat $oldvar_dir/* 2>/dev/null)
+mkdir -p -- "$olddate_dir"
+source <(cat $olddate_dir/* 2>/dev/null)
+
+if [[ -n $list ]]; then
+  echo "Available themes:"
+  ls $theme_dir
+  exit 0
+fi
 
 # Checks if users current theme exist
 [[ "$active_theme" != "$cur_theme" ]] && find_theme "cur_theme" || find_theme "cur_theme" skipcheck
@@ -141,67 +188,57 @@ elif ! [[ "${date[real]}" -le "24" && "${date[real]}" -ge "0" ]]; then
 fi
 
 # Check what argument was passed to script
-case $1 in
-  --preview | -p )
-    previewtheme="$2"
-    if [[ -z $previewtheme ]]; then
-      printf "no theme selected to preview\\nusage: dynamicwall [--preview] <theme>\\n"
+if [[ -n $preview ]]; then
+  previewtheme="$preview"
+  if ! find_theme "previewtheme" preview; then
+    notisend "Couldn't find $previewtheme, exiting..."
+    exit 1
+  fi
+  active_theme="$previewtheme"
+  [[ -n $lock_theme ]] && cache=$lock_theme
+  unset lock_theme
+  trap 'echo; break' INT
+  date[desktop]=$((3 + timeoffset))
+  while [[ ${date[desktop]} -lt $((24 + timeoffset)) ]]; do
+    date +"%l:%M %p" -d $((date[desktop] - timeoffset))
+    main_script
+    ((++date[desktop]))
+    sleep 1.5
+  done
+  notisend "Preview complete, reverting to normal..."
+  date[desktop]=$olddate
+  active_theme="$cur_theme"
+  lock_theme=$cache
+  find_theme "cur_theme"
+  main_script
+  exit 0
+elif [[ -n $force ]]; then
+  if ! [[ $force = "now" ]]; then
+    if ! [ $force -eq $force ] 2> /dev/null || [[ $force -gt 24 || $force -lt 0 ]]; then
+      echo "\"$force\" is not a valid time"
       exit 1
     else
-      if ! find_theme "previewtheme" preview; then
-        notisend "Couldn't find $previewtheme, exiting..."
-        exit 1
-      fi
-      active_theme="$previewtheme"
-      [[ -n $lock_theme ]] && cache=$lock_theme
-      unset lock_theme
-      trap 'echo; break' INT
-      date[desktop]=$((3 + timeoffset))
-      while [[ ${date[desktop]} -lt $((24 + timeoffset)) ]]; do
-        date +"%l:%M %p" -d $((date[desktop] - timeoffset))
-        main_script
-        ((++date[desktop]))
-        sleep 1.5
-      done
-      notisend "Preview complete, reverting to normal..."
-      date[desktop]=$olddate
-      active_theme="$cur_theme"
-      lock_theme=$cache
-      find_theme "cur_theme"
-      main_script
-      exit 0
+      date[desktop]=$(($force + timeoffset))
+      date[lockscreen]=$(($force + lock_timeoffset))
     fi
-  ;;
-  --force | -f )
-    if ! [ $2 -eq $2 ] 2> /dev/null || [[ $2 -gt 24 || $2 -lt 0 ]]; then
-      echo "\"$2\" is not a valid time"
-      exit 1
-    elif [[ -n $2 ]]; then
-      date[desktop]=$(($2 + timeoffset))
-      date[lockscreen]=$(($2 + lock_timeoffset))
-    fi
+  fi
 
-    if [[ $timeoffset != 0 ]]; then
-      printf "Desktop offset by $timeoffset,   "
-      date +"%l:%M %p" -d ${date[desktop]} 2> /dev/null || date +" %l:%M %p"
-    fi
-    if [[ $lock_timeoffset != 0 ]] && [[ -n $lock_theme ]]; then
-      printf "Lockscreen offset by $lock_timeoffset,"
-      date +"%l:%M %p" -d ${date[lockscreen]} 2> /dev/null || date +" %l:%M %p"
-    fi
-    if ! [[ $timeoffset != 0 || $lock_timeoffset != 0 ]]; then
-      date +"%l:%M %p" -d $((date[desktop] - timeoffset )) 2> /dev/null || date +" %l:%M %p"
-    fi
-    main_script
-    echo "Forced script to run, ignoring config changes"
-    exit 0
-  ;;
-esac && if [[ -n $3 ]]; then echo "Ignoring extra args..."; fi
-
-if [[ -n $2 ]]; then
-  printf '%s\n' "$HELP"
-  exit 1
+  if [[ $timeoffset != 0 ]]; then
+    printf "Desktop offset by $timeoffset,   "
+    date +"%l:%M %p" -d ${date[desktop]} 2> /dev/null || date +" %l:%M %p"
+  fi
+  if [[ $lock_timeoffset != 0 ]] && [[ -n $lock_theme ]]; then
+    printf "Lockscreen offset by $lock_timeoffset,"
+    date +"%l:%M %p" -d ${date[lockscreen]} 2> /dev/null || date +" %l:%M %p"
+  fi
+  if ! [[ $timeoffset != 0 || $lock_timeoffset != 0 ]]; then
+    date +"%l:%M %p" -d $((date[desktop] - timeoffset )) 2> /dev/null || date +" %l:%M %p"
+  fi
+  main_script
+  echo "Forced script to run, ignoring config changes"
+  exit 0
 fi
+
 # Compares current values to config file and updates script if they dont match, fallsback to defaults if new values are not valid
 if [[ "$refreshrate" != "$active_refreshrate" ]]; then
 	update_refreshrate

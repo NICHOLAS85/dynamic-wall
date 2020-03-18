@@ -1,5 +1,6 @@
 # shellcheck source=../dynamicwall
 function find_theme() {
+	declare -A ext
 	if [[ $2 = "skipcheck" ]] || find "$theme_dir/${!1}/${!1}"* > /dev/null 2>&1; then
 		filedir=$(basename "$(find "$theme_dir" -name "${!1}*" -type f | tail -1)")
 		ext[${!1}]=${filedir##*.}
