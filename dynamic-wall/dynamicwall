@@ -100,6 +100,7 @@ for FUN in "${functionlist[@]}"; do
       source \"$install_dir/dynamic-wall/functions/$FUN\" \"\${@}\"
     }"
 done
+trap 'notisend "" push' EXIT
 
 # Source Config File
 source "$install_dir/dynamic-wall/dynamicwall.config" || { source "$install_dir/dynamic-wall/default.config"; notisend "Can't find user config files, loading defaults...";} || { notisend "Can't find user or default config files, exiting..."; exit 1; }

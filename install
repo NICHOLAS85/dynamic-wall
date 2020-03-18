@@ -106,6 +106,7 @@ function install_files(){
 
 install_files "dynamic-wall" "$install_dir/" executable
 install_files "dynamic-wall/.oldvar" "$install_dir/"
+install_files "dynamic-wall/functions" "$install_dir/"
 install_files "dynamic-wall/themes" "$install_dir/"
 install_files "dynamic-wall/themes/EarthView" "$install_dir/"
 install_files "dynamic-wall/themes/mojave_dynamic" "$install_dir/"

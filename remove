@@ -91,6 +91,7 @@ if [[ "$1" = "-s" ]]; then
   remove_file "$install_dir/default.config"
   remove_file "$install_dir/dynamicwall.config"
   remove_file "$install_dir/dynamicwall"
+  remove_dir "$install_dir/functions"
   remove_dir "$install_dir/.oldvar"
   remove_dir "$install_dir/themes" "ifempty"
 	remove_dir "$install_dir" "ifempty"
