@@ -15,8 +15,8 @@ function notisend() {
       "${prefix[@]}" \
       kdialog --title "Dynamic Wallpaper" --passivepopup "${message[*]}" 4
     fi
+    echo "$1"
   fi
-  echo "$1"
 }
 
 notisend "${@}"

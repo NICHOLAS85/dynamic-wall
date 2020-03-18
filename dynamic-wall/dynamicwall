@@ -90,7 +90,7 @@ else
   fi
 fi
 # Get current time
-declare -A date
+declare -A date ext
 date[real]=$(date +%H | sed 's/\<0//g')
 
 functionlist=( main_script trueorfalse notisend update_refreshrate update_theme update_timeoffset offsetdate load_overrides find_theme find_defaults )
