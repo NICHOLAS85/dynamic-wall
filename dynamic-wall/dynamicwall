@@ -20,7 +20,7 @@ optional args:
   -h, --help             Show help"
 
 dtemp="${TMPDIR:-${TMP:-/tmp}}/dynamicwall"
-mkdir -p -- "$dtemp"
+[[ -d "$dtemp" ]] || mkdir -p -- "$dtemp"
 getopt --test > /dev/null
 if [[ $? -ne 4 ]]; then
     echo "getopt --test' failed in this environment. Arguments passed will not be considered."
