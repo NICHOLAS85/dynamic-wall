@@ -20,6 +20,7 @@ optional args:
   -h, --help             Show help"
 
 dtemp="${TMPDIR:-${TMP:-/tmp}}/dynamicwall"
+mkdir -p -- "$dtemp"
 getopt --test > /dev/null
 if [[ $? -ne 4 ]]; then
     echo "getopt --test' failed in this environment. Arguments passed will not be considered."
@@ -110,7 +111,6 @@ date[lockscreen]=${date[real]}
 oldvar_dir="$install_dir/dynamic-wall/.oldvar"
 olddate_dir="$dtemp"
 source <(cat $oldvar_dir/* 2>/dev/null)
-mkdir -p -- "$olddate_dir"
 source <(cat $olddate_dir/* 2>/dev/null)
 
 if [[ -n $list ]]; then
