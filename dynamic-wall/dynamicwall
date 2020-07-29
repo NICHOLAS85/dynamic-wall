@@ -24,7 +24,8 @@ dtemp="${TMPDIR:-${TMP:-/tmp}}/dynamicwall"
 getopt --test > /dev/null
 if [[ $? -ne 4 ]]; then
     echo "getopt --test' failed in this environment. Arguments passed will not be considered."
-else
+elif [[ $# -gt 0 ]]; then
+  #statements
   OPTIONS=f::p:cslh
   LONGOPTS=force::,preview:,config,status,list,help
   ! PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@" 2>$dtemp/stderr )
